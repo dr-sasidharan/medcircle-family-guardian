@@ -29,7 +29,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a medical summary assistant. Generate concise, professional doctor visit summaries. Return plain text, under 400 words."
+            content: `You are a medical summary assistant. Generate concise, professional doctor visit summaries. ${langInstruction} Return plain text, under 400 words.`
           },
           {
             role: "user",

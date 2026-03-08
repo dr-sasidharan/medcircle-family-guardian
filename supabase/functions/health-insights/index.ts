@@ -28,7 +28,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a health tips assistant for elderly patients. Always return valid JSON only, no markdown."
+            content: `You are a health tips assistant for elderly patients. ${langInstruction} Always return valid JSON only, no markdown.`
           },
           {
             role: "user",
