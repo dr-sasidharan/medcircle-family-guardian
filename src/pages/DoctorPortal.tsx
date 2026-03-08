@@ -282,7 +282,7 @@ const DoctorPortal = () => {
                       ))}
                     </div>
                   </div>
-                ))
+                ))}
               </div>
             )}
           </CardContent>
