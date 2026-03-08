@@ -79,7 +79,7 @@ const DailyInsights = () => {
     <div className="px-4 mt-6">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles size={20} className="text-primary" />
-        <h2 className="text-lg font-bold text-foreground">Today's Insights</h2>
+        <h2 className="text-lg font-bold text-foreground">{t("todays_insights")}</h2>
       </div>
       <div className="space-y-3">
         {tips.map((tip, i) => {
