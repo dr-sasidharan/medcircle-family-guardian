@@ -135,7 +135,13 @@ const Profile = () => {
             <h2 className="text-lg font-bold text-foreground">{t("my_care_circle")}</h2>
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              if (patientPlan === "free") {
+                navigate("/paywall", { state: { reason: "caretaker", patientProfileId: profile?.id } });
+              } else {
+                setShowAdd(true);
+              }
+            }}
             className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
           >
             <Plus size={16} /> {t("add")}
