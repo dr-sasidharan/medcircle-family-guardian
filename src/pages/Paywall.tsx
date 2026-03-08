@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, Copy, IndianRupee } from "lucide-react";
+import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, IndianRupee } from "lucide-react";
 import { toast } from "sonner";
-
-const UPI_ID = "saseedharan2004-1@oksbi";
 
 const plans = [
   {
@@ -57,20 +55,38 @@ const plans = [
 ];
 
 const trustBadges = [
-  { icon: Shield, label: "Secure UPI Payment" },
+  { icon: Shield, label: "Secure Payment" },
   { icon: Lock, label: "End-to-End Encrypted" },
   { icon: IndianRupee, label: "Instant Activation" },
   { icon: CheckCircle2, label: "100% Safe" },
 ];
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 const Paywall = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
-  const [transactionId, setTransactionId] = useState("");
-  const [confirming, setConfirming] = useState(false);
+  const [paying, setPaying] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
 
@@ -78,65 +94,82 @@ const Paywall = () => {
   const patientProfileId =
     (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
 
-  const copyUpiId = () => {
-    navigator.clipboard.writeText(UPI_ID);
-    toast.success("UPI ID copied!");
-  };
-
-  const openUpiApp = (plan: typeof plans[0]) => {
-    const upiParams = `pa=${UPI_ID}&pn=MedCircle&am=${plan.price}&cu=INR&tn=MedCircle_${plan.key}_plan`;
-    const upiUrl = `upi://pay?${upiParams}`;
-    
-    // Try opening UPI deep link in a new window (works better outside iframes)
-    const newWindow = window.open(upiUrl, "_blank");
-    
-    // If popup blocked or deep link fails, try direct navigation after a short delay
-    setTimeout(() => {
-      if (!newWindow || newWindow.closed) {
-        // Fallback: try intent URL for Android
-        const intentUrl = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-        window.location.href = intentUrl;
-      }
-    }, 500);
-
-    toast.info("If UPI app didn't open, copy the UPI ID and pay manually from any UPI app.");
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!selectedPlan || !transactionId.trim()) {
-      toast.error("Please enter your UPI transaction ID");
-      return;
-    }
+  const handlePayment = async (plan: typeof plans[0]) => {
     if (!patientProfileId) {
-      toast.error("Patient profile not found");
+      toast.error("Patient profile not found. Please try again from dashboard.");
       return;
     }
 
-    setConfirming(true);
+    setPaying(true);
 
     try {
-      // Save payment record
-      await supabase.from("payments").insert({
-        patient_profile_id: patientProfileId,
-        amount: selectedPlan.price,
-        plan: selectedPlan.plan_value,
-        razorpay_payment_id: transactionId.trim(),
-        razorpay_order_id: `upi_${Date.now()}`,
-        status: "pending_verification",
+      // Load Razorpay script
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        toast.error("Payment gateway failed to load. Please check your internet connection.");
+        setPaying(false);
+        return;
+      }
+
+      // Create order via edge function
+      const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
+        body: { amount: plan.price, plan: plan.plan_value, patient_profile_id: patientProfileId },
       });
 
-      // Update patient plan immediately (manual verification can revoke later)
-      await supabase
-        .from("patient_profiles")
-        .update({ plan: selectedPlan.plan_value })
-        .eq("id", patientProfileId);
+      if (error || !data?.order_id) {
+        toast.error(data?.error || "Failed to create payment order");
+        setPaying(false);
+        return;
+      }
 
-      setActivatedPlan(selectedPlan.plan_value === "pro" ? "Family Pro" : "Family");
-      setShowSuccess(true);
+      // Open Razorpay checkout
+      const options = {
+        key: data.key_id,
+        amount: plan.price * 100,
+        currency: "INR",
+        name: "MedCircle",
+        description: plan.label,
+        order_id: data.order_id,
+        prefill: {},
+        theme: { color: "#0d9488" },
+        handler: async (response: any) => {
+          // Auto-verify payment
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-payment", {
+              body: {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                plan: plan.plan_value,
+                amount: plan.price,
+                patient_profile_id: patientProfileId,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              toast.error("Payment verification failed. Contact support.");
+              setPaying(false);
+              return;
+            }
+
+            setActivatedPlan(plan.plan_value === "pro" ? "Family Pro" : "Family");
+            setShowSuccess(true);
+          } catch {
+            toast.error("Payment verification failed. Please contact support.");
+          }
+          setPaying(false);
+        },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch {
       toast.error("Something went wrong. Please try again.");
-    } finally {
-      setConfirming(false);
+      setPaying(false);
     }
   };
 
@@ -151,88 +184,13 @@ const Paywall = () => {
             Welcome to MedCircle {activatedPlan}! 🎉
           </h1>
           <p className="text-muted-foreground mb-8">
-            Your payment is being verified. All premium features are now unlocked.
+            Payment verified successfully. All premium features are now unlocked.
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
             className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
             Go to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // UPI payment sheet for selected plan
-  if (selectedPlan) {
-    return (
-      <div className="min-h-screen bg-background pb-12 page-transition">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <button onClick={() => setSelectedPlan(null)} className="text-foreground p-1">
-            <ArrowLeft size={24} />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Pay via UPI</h1>
-          <div className="w-6" />
-        </div>
-
-        <div className="p-5 max-w-lg mx-auto space-y-6">
-          {/* Amount */}
-          <div className="bg-accent rounded-2xl p-5 text-center">
-            <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
-            <p className="text-4xl font-extrabold text-primary">₹{selectedPlan.price}</p>
-            <p className="text-sm text-muted-foreground mt-1">{selectedPlan.label}</p>
-          </div>
-
-          {/* UPI ID */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <p className="text-sm font-semibold text-foreground mb-3">Send payment to this UPI ID:</p>
-            <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
-              <span className="text-base font-bold text-foreground flex-1 break-all">{UPI_ID}</span>
-              <button onClick={copyUpiId} className="text-primary hover:opacity-70 transition-opacity">
-                <Copy size={20} />
-              </button>
-            </div>
-            <button
-              onClick={() => openUpiApp(selectedPlan)}
-              className="w-full mt-4 bg-[#5f259f] text-white rounded-xl py-3.5 text-base font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-            >
-              <IndianRupee size={18} />
-              Open UPI App to Pay
-            </button>
-          </div>
-
-          {/* Steps */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <p className="text-sm font-semibold text-foreground mb-3">Steps:</p>
-            <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-              <li>Copy the UPI ID above or tap "Open UPI App"</li>
-              <li>Pay <span className="font-bold text-foreground">₹{selectedPlan.price}</span> from any UPI app (GPay, PhonePe, Paytm, etc.)</li>
-              <li>Enter your UPI Transaction ID below</li>
-              <li>Tap "I've Paid" to activate your plan</li>
-            </ol>
-          </div>
-
-          {/* Transaction ID Input */}
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-1.5 block">
-              UPI Transaction ID / Reference Number
-            </label>
-            <input
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="e.g. 412345678901"
-            />
-          </div>
-
-          {/* Confirm */}
-          <button
-            onClick={handleConfirmPayment}
-            disabled={confirming || !transactionId.trim()}
-            className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {confirming ? "Verifying..." : "I've Paid — Activate Plan"}
           </button>
         </div>
       </div>
@@ -294,14 +252,15 @@ const Paywall = () => {
               ))}
             </ul>
             <button
-              onClick={() => setSelectedPlan(plan)}
-              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all ${
+              onClick={() => handlePayment(plan)}
+              disabled={paying}
+              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all disabled:opacity-50 ${
                 plan.highlighted
                   ? "bg-primary text-primary-foreground shadow-lg hover:opacity-90 text-lg py-4"
                   : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >
-              {plan.buttonText}
+              {paying ? "Processing..." : plan.buttonText}
             </button>
           </div>
         ))}
