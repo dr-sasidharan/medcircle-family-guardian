@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const PLAN_NAMES: Record<string, string> = {
   free: "Free",
@@ -47,7 +49,33 @@ const plans = [
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const [profileId, setProfileId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("patient_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .single();
+        if (data) setProfileId(data.id);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleGetStarted = (planKey: string) => {
+    if (planKey === "free") {
+      navigate("/patient");
+      return;
+    }
+    navigate("/paywall", {
+      state: { reason: "upgrade", patientProfileId: profileId },
+    });
+  };
   return (
     <div className="min-h-screen bg-background pb-12">
       {/* Header */}
@@ -85,13 +113,14 @@ const Pricing = () => {
               ))}
             </ul>
             <button
+              onClick={() => handleGetStarted(plan.key)}
               className={`w-full mt-5 py-3.5 rounded-xl text-base font-bold transition-opacity hover:opacity-90 ${
                 plan.highlighted
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              Get Started
+              {plan.key === "free" ? "Continue Free" : "Get Started"}
             </button>
           </div>
         ))}
