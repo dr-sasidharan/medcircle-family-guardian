@@ -430,6 +430,65 @@ export type Database = {
           },
         ]
       }
+      whatsapp_reminders: {
+        Row: {
+          caretaker_notified: boolean | null
+          created_at: string
+          dosage: string
+          followup_sent_at: string | null
+          id: string
+          medicine_id: string
+          medicine_name: string
+          phone: string
+          response: string | null
+          response_at: string | null
+          scheduled_date: string
+          sent_at: string | null
+          timing: string
+          user_id: string
+        }
+        Insert: {
+          caretaker_notified?: boolean | null
+          created_at?: string
+          dosage: string
+          followup_sent_at?: string | null
+          id?: string
+          medicine_id: string
+          medicine_name: string
+          phone: string
+          response?: string | null
+          response_at?: string | null
+          scheduled_date?: string
+          sent_at?: string | null
+          timing: string
+          user_id: string
+        }
+        Update: {
+          caretaker_notified?: boolean | null
+          created_at?: string
+          dosage?: string
+          followup_sent_at?: string | null
+          id?: string
+          medicine_id?: string
+          medicine_name?: string
+          phone?: string
+          response?: string | null
+          response_at?: string | null
+          scheduled_date?: string
+          sent_at?: string | null
+          timing?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_reminders_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
