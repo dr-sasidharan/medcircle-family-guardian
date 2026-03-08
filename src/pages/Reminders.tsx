@@ -199,7 +199,59 @@ const Reminders = () => {
               </button>
               <h1 className="text-xl font-heading font-bold">Reminders</h1>
             </div>
-            <LanguageToggle />
+            <div className="flex items-center gap-2">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="p-2 rounded-xl bg-white/10 hover:bg-white/20 flex items-center gap-1 text-sm font-medium">
+                    <Plus size={16} /> Add
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Clock size={18} className="text-primary" /> Add Reminder
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Medicine</label>
+                      <Select value={selectedMedicineId} onValueChange={setSelectedMedicineId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select medicine" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allMedicines.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name} ({m.dosage})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Timing</label>
+                      <Select value={selectedTiming} onValueChange={setSelectedTiming}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select timing" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="morning">☀️ Morning</SelectItem>
+                          <SelectItem value="afternoon">🌤️ Afternoon</SelectItem>
+                          <SelectItem value="night">🌙 Night</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleAddReminder}
+                      disabled={addingReminder || !selectedMedicineId || !selectedTiming}
+                      className="w-full"
+                    >
+                      {addingReminder ? "Adding..." : "Add Reminder"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <LanguageToggle />
           </div>
 
           {/* Progress glass card */}
