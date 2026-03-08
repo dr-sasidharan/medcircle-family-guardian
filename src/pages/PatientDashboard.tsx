@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
-import { Sun, CloudSun, Moon, Check, Plus, ScanLine, HelpCircle } from "lucide-react";
+import { Sun, CloudSun, Moon, Check, Plus, ScanLine, HelpCircle, FlaskConical } from "lucide-react";
+import DailyInsights from "@/components/DailyInsights";
 
 interface Medicine {
   id: number;
@@ -124,6 +125,9 @@ const PatientDashboard = () => {
         })}
       </div>
 
+      {/* Daily Insights */}
+      <DailyInsights />
+
       {/* Action Buttons */}
       <div className="px-4 mt-6 space-y-3">
         <button
@@ -139,6 +143,13 @@ const PatientDashboard = () => {
         >
           <HelpCircle size={22} />
           What Is This Tablet?
+        </button>
+        <button
+          onClick={() => navigate("/drug-interaction")}
+          className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-foreground hover:bg-secondary transition-colors"
+        >
+          <FlaskConical size={22} className="text-warning" />
+          Drug Interaction Checker
         </button>
       </div>
 

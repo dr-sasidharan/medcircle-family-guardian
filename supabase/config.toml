@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.scan-tablet]
 verify_jwt = false
+
+[functions.health-insights]
+verify_jwt = false
+
+[functions.drug-interaction]
+verify_jwt = false
+
+[functions.doctor-summary]
+verify_jwt = false
