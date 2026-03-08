@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      caretakers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          patient_profile_id: string
+          phone: string
+          relationship: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          patient_profile_id: string
+          phone: string
+          relationship: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          patient_profile_id?: string
+          phone?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caretakers_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doses: {
         Row: {
           created_at: string
@@ -58,6 +99,88 @@ export type Database = {
           },
         ]
       }
+      hospital_visits: {
+        Row: {
+          created_at: string
+          diagnosis: string
+          doctor_name: string
+          hospital_name: string
+          id: string
+          notes: string | null
+          patient_profile_id: string
+          report_url: string | null
+          visit_date: string
+        }
+        Insert: {
+          created_at?: string
+          diagnosis: string
+          doctor_name: string
+          hospital_name: string
+          id?: string
+          notes?: string | null
+          patient_profile_id: string
+          report_url?: string | null
+          visit_date: string
+        }
+        Update: {
+          created_at?: string
+          diagnosis?: string
+          doctor_name?: string
+          hospital_name?: string
+          id?: string
+          notes?: string | null
+          patient_profile_id?: string
+          report_url?: string | null
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_visits_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicine_refills: {
+        Row: {
+          created_at: string
+          id: string
+          medicine_id: string
+          refill_date: string | null
+          tablets_remaining: number
+          total_tablets: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medicine_id: string
+          refill_date?: string | null
+          tablets_remaining?: number
+          total_tablets?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medicine_id?: string
+          refill_date?: string | null
+          tablets_remaining?: number
+          total_tablets?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicine_refills_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medicines: {
         Row: {
           created_at: string
@@ -95,6 +218,54 @@ export type Database = {
           photo_url?: string | null
           purpose?: string | null
           timing?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      patient_profiles: {
+        Row: {
+          age: number
+          allergies: string[] | null
+          blood_group: string | null
+          chronic_conditions: string[] | null
+          created_at: string
+          emergency_contact: string | null
+          emergency_notes: string | null
+          id: string
+          last_active_at: string | null
+          name: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          age?: number
+          allergies?: string[] | null
+          blood_group?: string | null
+          chronic_conditions?: string[] | null
+          created_at?: string
+          emergency_contact?: string | null
+          emergency_notes?: string | null
+          id?: string
+          last_active_at?: string | null
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          age?: number
+          allergies?: string[] | null
+          blood_group?: string | null
+          chronic_conditions?: string[] | null
+          created_at?: string
+          emergency_contact?: string | null
+          emergency_notes?: string | null
+          id?: string
+          last_active_at?: string | null
+          name?: string
+          photo_url?: string | null
           updated_at?: string
           user_id?: string | null
         }
