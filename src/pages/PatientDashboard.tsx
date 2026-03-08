@@ -240,6 +240,11 @@ const PatientDashboard = () => {
             <FlaskConical size={40} className="text-warning" />
             <span className="text-lg font-heading font-bold text-foreground">Drug Interaction</span>
           </button>
+          <button onClick={() => navigate("/hospital-booking")}
+            className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
+            <Stethoscope size={40} className="text-primary" />
+            <span className="text-lg font-heading font-bold text-foreground">Book Checkup</span>
+          </button>
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Settings size={40} className="text-primary" />
