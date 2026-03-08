@@ -36,7 +36,7 @@ const BottomNav = () => {
     { path: "/patient", icon: Pill, label: "Medicines" },
     { path: "/reminders", icon: Clock, label: "History" },
     { path: "__add__", icon: Plus, label: "" },
-    { path: "/caretaker", icon: Users, label: "Family" },
+    { path: "/symptoms", icon: Stethoscope, label: "Symptoms" },
     { path: "/profile", icon: User, label: "Profile" },
   ];
 
