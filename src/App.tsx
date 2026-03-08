@@ -30,6 +30,7 @@ import SymptomChecker from "./pages/SymptomChecker";
 import ResetPassword from "./pages/ResetPassword";
 import NotificationLog from "./pages/NotificationLog";
 import HospitalBooking from "./pages/HospitalBooking";
+import DoctorPortal from "./pages/DoctorPortal";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 
