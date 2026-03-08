@@ -13,6 +13,7 @@ import Pricing from "./pages/Pricing";
 import ScanPrescription from "./pages/ScanPrescription";
 import ScanTablet from "./pages/ScanTablet";
 import Reminders from "./pages/Reminders";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/scan" element={<ScanPrescription />} />
             <Route path="/scan-tablet" element={<ScanTablet />} />
             <Route path="/reminders" element={<Reminders />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
