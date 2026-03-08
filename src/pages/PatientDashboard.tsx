@@ -27,11 +27,11 @@ interface MissedDose {
 const MEDICINE_ICONS = ["💊", "🩹", "💉", "🧬", "🫀", "🧪"];
 const ICON_COLORS = ["#0d9488", "#f59e0b", "#8b5cf6", "#3b82f6", "#f43f5e", "#10b981"];
 
-const FOOD_LABELS: Record<string, string> = {
-  before_food: "Before Food",
-  after_food: "After Food",
-  with_food: "With Food",
-};
+const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
+  before_food: t("before_food"),
+  after_food: t("after_food"),
+  with_food: t("with_food"),
+});
 
 const sectionConfig = {
   morning: { emoji: "☀️", label: "Morning", gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
