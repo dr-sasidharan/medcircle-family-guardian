@@ -89,23 +89,30 @@ const Paywall = () => {
 
     setConfirming(true);
     try {
-      // Record payment as pending verification
+      // Record payment as success and activate plan instantly
       const { error: payErr } = await supabase.from("payments").insert({
         patient_profile_id: patientProfileId,
         amount: selectedPlan.price,
         plan: selectedPlan.plan_value,
-        status: "pending_verification",
+        status: "success",
       });
 
       if (payErr) throw payErr;
 
-      // Show success — admin will verify and approve
+      // Activate the plan immediately
+      const { error: planErr } = await supabase
+        .from("patient_profiles")
+        .update({ plan: selectedPlan.plan_value })
+        .eq("id", patientProfileId);
+
+      if (planErr) throw planErr;
+
       setActivatedPlan(selectedPlan.label);
       setShowSuccess(true);
-      toast.success("Payment submitted! Your plan will be activated shortly.");
+      toast.success("Plan activated! 🎉");
     } catch (err: any) {
       console.error("Payment confirm error:", err);
-      toast.error("Failed to record payment. Please try again.");
+      toast.error("Failed to activate plan. Please try again.");
     } finally {
       setConfirming(false);
     }
@@ -119,13 +126,10 @@ const Paywall = () => {
             <CheckCircle2 size={40} className="text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground mb-2">
-            Payment Submitted! 🎉
+            Welcome to MedCircle {activatedPlan}! 🎉
           </h1>
-          <p className="text-muted-foreground mb-2">
-            Your payment for <span className="font-bold text-foreground">{activatedPlan}</span> is under verification.
-          </p>
-          <p className="text-sm text-muted-foreground mb-8">
-            Your plan will be activated within a few minutes once verified by our team.
+          <p className="text-muted-foreground mb-8">
+            Your plan is now active. All premium features are unlocked!
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
