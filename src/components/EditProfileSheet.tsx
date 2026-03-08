@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface EditProfileSheetProps {
@@ -14,6 +14,7 @@ interface EditProfileSheetProps {
     allergies: string[] | null;
     chronic_conditions: string[] | null;
     emergency_contact: string | null;
+    photo_url: string | null;
   };
   onSaved: () => void;
 }
@@ -29,7 +30,10 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
   const [conditions, setConditions] = useState<string[]>(profile.chronic_conditions || []);
   const [newCondition, setNewCondition] = useState("");
   const [emergencyContact, setEmergencyContact] = useState(profile.emergency_contact || "");
+  const [photoUrl, setPhotoUrl] = useState(profile.photo_url || "");
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -39,10 +43,44 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
       setAllergies(profile.allergies || []);
       setConditions(profile.chronic_conditions || []);
       setEmergencyContact(profile.emergency_contact || "");
+      setPhotoUrl(profile.photo_url || "");
       setNewAllergy("");
       setNewCondition("");
     }
   }, [open, profile]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${profile.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("profile-photos")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error("Failed to upload photo");
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("profile-photos").getPublicUrl(filePath);
+    // Add cache-busting param
+    setPhotoUrl(`${data.publicUrl}?t=${Date.now()}`);
+    setUploading(false);
+    toast.success("Photo uploaded!");
+  };
 
   const addAllergy = () => {
     const val = newAllergy.trim();
@@ -81,6 +119,7 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
         allergies: allergies.length > 0 ? allergies : null,
         chronic_conditions: conditions.length > 0 ? conditions : null,
         emergency_contact: emergencyContact.trim() || null,
+        photo_url: photoUrl || null,
       })
       .eq("id", profile.id);
 
@@ -104,6 +143,28 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-heading font-bold text-foreground">Edit Profile</h2>
           <button onClick={onClose} className="text-muted-foreground p-1"><X size={20} /></button>
+        </div>
+
+        {/* Profile Photo */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            {photoUrl ? (
+              <img src={photoUrl} alt="Profile" className="w-20 h-20 rounded-2xl object-cover border-2 border-border" />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-heading font-bold text-primary">
+                {name.charAt(0) || "?"}
+              </div>
+            )}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md"
+            >
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+            </button>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+          <p className="text-xs text-muted-foreground">Tap camera icon to change photo</p>
         </div>
 
         {/* Name */}
