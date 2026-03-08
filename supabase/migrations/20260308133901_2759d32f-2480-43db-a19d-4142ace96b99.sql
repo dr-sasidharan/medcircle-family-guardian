@@ -1,0 +1,1 @@
+ALTER TABLE public.patient_profiles ADD COLUMN emergency_token uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE;
