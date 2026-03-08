@@ -282,10 +282,15 @@ export default function AdminDashboard() {
               Last refreshed: {lastRefresh.toLocaleTimeString("en-IN")} · Auto-refresh every 60s
             </p>
           </div>
-          <Button variant="outline" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <Lock className="w-4 h-4 mr-2" /> Logout
+            </Button>
+          </div>
         </div>
       </div>
 
