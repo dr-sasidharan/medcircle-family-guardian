@@ -315,7 +315,7 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/hospital-booking")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Stethoscope size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Book Checkup</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("book_checkup")}</span>
           </button>
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
