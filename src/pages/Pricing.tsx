@@ -48,8 +48,33 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const navigate = useNavigate();
+  const [profileId, setProfileId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("patient_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .single();
+        if (data) setProfileId(data.id);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleGetStarted = (planKey: string) => {
+    if (planKey === "free") {
+      navigate("/patient");
+      return;
+    }
+    navigate("/paywall", {
+      state: { reason: "upgrade", patientProfileId: profileId },
+    });
+  };
   return (
     <div className="min-h-screen bg-background pb-12">
       {/* Header */}
