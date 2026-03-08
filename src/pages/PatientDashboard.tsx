@@ -126,7 +126,13 @@ const PatientDashboard = () => {
 
       setTakenIds((prev) => new Set([...prev, medicineId]));
       setMissedDoses((prev) => prev.filter((d) => d.medicine_name !== med?.name));
-      toast.success(`${med?.name} marked as taken!`);
+      toast.success(`${med?.name} marked as taken!`, {
+        action: {
+          label: "Undo",
+          onClick: () => handleUndoTaken(medicineId),
+        },
+        duration: 5000,
+      });
     } catch (err: any) {
       toast.error("Failed to mark as taken");
     }
