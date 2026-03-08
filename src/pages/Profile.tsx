@@ -4,6 +4,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Crown } from "lucide-react";
+import EmergencyQRSection from "@/components/EmergencyQRSection";
 import { toast } from "sonner";
 
 interface Caretaker {
@@ -21,6 +22,8 @@ interface PatientProfile {
   blood_group: string | null;
   allergies: string[] | null;
   chronic_conditions: string[] | null;
+  emergency_contact: string | null;
+  emergency_token: string;
 }
 
 const Profile = () => {
@@ -267,6 +270,17 @@ const Profile = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Emergency QR Code */}
+      {profile && (
+        <EmergencyQRSection
+          emergencyToken={profile.emergency_token}
+          patientName={profile.name}
+          bloodGroup={profile.blood_group}
+          allergies={profile.allergies}
+          emergencyContact={profile.emergency_contact}
+        />
       )}
 
       {/* Quick Links */}

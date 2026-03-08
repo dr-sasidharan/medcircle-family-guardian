@@ -24,6 +24,7 @@ import DrugInteraction from "./pages/DrugInteraction";
 import DoctorSummary from "./pages/DoctorSummary";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
+import EmergencyCard from "./pages/EmergencyCard";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 
@@ -60,6 +61,7 @@ const App = () => (
                   <Route path="/doctor-summary" element={<P><DoctorSummary /></P>} />
                   <Route path="/settings" element={<P><Settings /></P>} />
                   <Route path="/admin" element={<P><AdminDashboard /></P>} />
+                  <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatedPage>

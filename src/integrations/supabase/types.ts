@@ -232,6 +232,7 @@ export type Database = {
           created_at: string
           emergency_contact: string | null
           emergency_notes: string | null
+          emergency_token: string
           id: string
           last_active_at: string | null
           name: string
@@ -248,6 +249,7 @@ export type Database = {
           created_at?: string
           emergency_contact?: string | null
           emergency_notes?: string | null
+          emergency_token?: string
           id?: string
           last_active_at?: string | null
           name?: string
@@ -264,6 +266,7 @@ export type Database = {
           created_at?: string
           emergency_contact?: string | null
           emergency_notes?: string | null
+          emergency_token?: string
           id?: string
           last_active_at?: string | null
           name?: string
