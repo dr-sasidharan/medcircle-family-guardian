@@ -10,8 +10,9 @@ type AuthMode = "email" | "phone" | "login" | "caretaker";
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const initialMode = (searchParams.get("mode") as AuthMode) || "email";
+  const isDemoRequest = searchParams.get("demo") === "true";
   const [mode, setMode] = useState<AuthMode>(initialMode === "login" ? "email" : initialMode);
-  const [isLogin, setIsLogin] = useState(initialMode === "login" || !searchParams.get("mode"));
+  const [isLogin, setIsLogin] = useState(initialMode === "login" || !searchParams.get("mode") || isDemoRequest);
 
   // Email fields
   const [email, setEmail] = useState("");
@@ -28,7 +29,30 @@ export default function Auth() {
   const [caretakerCode, setCaretakerCode] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "demo@medcircle.app",
+        password: "medcircle2026",
+      });
+      if (error) throw error;
+      toast.success("Welcome to the demo!");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+    setDemoLoading(false);
+  };
+
+  // Auto-trigger demo login if demo=true
+  useEffect(() => {
+    if (isDemoRequest) {
+      handleDemoLogin();
+    }
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -558,6 +582,30 @@ export default function Auth() {
               {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
               Link & Continue
             </button>
+          </div>
+        )}
+
+        {/* Demo Button */}
+        {isLogin && mode === "email" && (
+          <div className="mt-4">
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-3 text-muted-foreground">or try it out</span>
+              </div>
+            </div>
+            <button
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              className="w-full flex items-center justify-center gap-2 bg-[#f59e0b]/10 border-2 border-[#f59e0b]/30 text-[#b45309] rounded-2xl py-3.5 text-base font-heading font-bold hover:bg-[#f59e0b]/20 transition-colors"
+            >
+              {demoLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "🎮"} Try Demo Account
+            </button>
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Explore with pre-loaded medicines & health data
+            </p>
           </div>
         )}
 
