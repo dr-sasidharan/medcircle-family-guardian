@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, CreditCard, TrendingUp, IndianRupee, Download, RefreshCw,
-  Shield, Lock, BarChart3, PieChart as PieChartIcon,
+  Shield, Lock, BarChart3, PieChart as PieChartIcon, CheckCircle2, XCircle, Clock,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -42,7 +42,9 @@ interface PaymentRow {
   id: string;
   amount: number;
   plan: string;
+  status: string;
   razorpay_payment_id: string | null;
+  razorpay_order_id: string | null;
   created_at: string;
   patient_profile_id: string;
   patient_name?: string;
@@ -59,6 +61,8 @@ export default function AdminDashboard() {
   });
   const [users, setUsers] = useState<UserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [userGrowth, setUserGrowth] = useState<{ date: string; users: number }[]>([]);
   const [revenueChart, setRevenueChart] = useState<{ date: string; revenue: number }[]>([]);
   const [planDist, setPlanDist] = useState<{ name: string; value: number; color: string }[]>([]);
@@ -86,11 +90,10 @@ export default function AdminDashboard() {
       const allUsers = profiles || [];
       setUsers(allUsers);
 
-      // Fetch all successful payments
+      // Fetch all payments
       const { data: allPayments } = await supabase
         .from("payments")
         .select("*")
-        .eq("status", "success")
         .order("created_at", { ascending: false });
 
       const paymentsList = allPayments || [];
@@ -101,7 +104,8 @@ export default function AdminDashboard() {
         ...p,
         patient_name: profileMap.get(p.patient_profile_id) || "Unknown",
       }));
-      setPayments(enrichedPayments);
+      setPayments(enrichedPayments.filter((p) => p.status === "success"));
+      setPendingPayments(enrichedPayments.filter((p) => p.status === "pending_verification"));
 
       // Metrics
       const totalUsers = allUsers.length;
@@ -201,6 +205,31 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     setAuthenticated(false);
     setPassword("");
+  };
+
+  const handlePaymentAction = async (payment: PaymentRow, action: "approve" | "reject") => {
+    setActionLoading(payment.id);
+    try {
+      const newStatus = action === "approve" ? "success" : "failed";
+      await supabase.from("payments").update({ status: newStatus }).eq("id", payment.id);
+
+      if (action === "approve") {
+        await supabase
+          .from("patient_profiles")
+          .update({ plan: payment.plan })
+          .eq("id", payment.patient_profile_id);
+      } else {
+        await supabase
+          .from("patient_profiles")
+          .update({ plan: "free" })
+          .eq("id", payment.patient_profile_id);
+      }
+
+      await fetchData();
+    } catch (err) {
+      console.error("Payment action error:", err);
+    }
+    setActionLoading(null);
   };
 
   const exportCSV = () => {
@@ -423,6 +452,87 @@ export default function AdminDashboard() {
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending UPI Payments */}
+        <Card className="border-2 border-yellow-500/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="w-5 h-5 text-yellow-600" />
+              Pending UPI Payments
+              {pendingPayments.length > 0 && (
+                <Badge variant="destructive" className="ml-2">{pendingPayments.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border border-border overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Patient</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>UPI Txn ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingPayments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No pending payments to verify
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    pendingPayments.map((p) => (
+                      <TableRow key={p.id} className="bg-yellow-500/5">
+                        <TableCell className="font-medium">{p.patient_name}</TableCell>
+                        <TableCell className="font-semibold">₹{p.amount}</TableCell>
+                        <TableCell>
+                          <Badge variant={planBadgeColor(p.plan)}>
+                            {p.plan.charAt(0).toUpperCase() + p.plan.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {p.razorpay_payment_id || "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(p.created_at).toLocaleString("en-IN", {
+                            day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              disabled={actionLoading === p.id}
+                              onClick={() => handlePaymentAction(p, "approve")}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={actionLoading === p.id}
+                              onClick={() => handlePaymentAction(p, "reject")}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
