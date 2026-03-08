@@ -96,23 +96,31 @@ const Paywall = () => {
 
     setConfirming(true);
     try {
-      // Record payment with transaction ID — pending admin verification
+      // Record payment with transaction ID — auto-activated
       const { error: payErr } = await supabase.from("payments").insert({
         patient_profile_id: patientProfileId,
         amount: selectedPlan.price,
         plan: selectedPlan.plan_value,
-        status: "pending_verification",
-        razorpay_payment_id: txnId, // storing UPI txn ID here
+        status: "success",
+        upi_transaction_id: txnId,
       } as any);
 
       if (payErr) throw payErr;
 
+      // Activate plan immediately
+      const { error: planErr } = await supabase
+        .from("patient_profiles")
+        .update({ plan: selectedPlan.plan_value })
+        .eq("id", patientProfileId);
+
+      if (planErr) throw planErr;
+
       setActivatedPlan(selectedPlan.label);
       setShowSuccess(true);
-      toast.success("Payment submitted for verification!");
+      toast.success("Plan activated successfully!");
     } catch (err: any) {
       console.error("Payment confirm error:", err);
-      toast.error("Failed to submit payment. Please try again.");
+      toast.error("Failed to activate plan. Please try again.");
     } finally {
       setConfirming(false);
     }
@@ -126,13 +134,13 @@ const Paywall = () => {
             <CheckCircle2 size={40} className="text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground mb-2">
-            Payment Submitted! 🎉
+            Plan Activated! 🎉
           </h1>
           <p className="text-muted-foreground mb-2">
-            Your payment for <span className="font-bold text-foreground">{activatedPlan}</span> is being verified.
+            Your <span className="font-bold text-foreground">{activatedPlan}</span> plan is now active.
           </p>
           <p className="text-sm text-muted-foreground mb-8">
-            Your plan will be activated once we verify your UPI transaction. This usually takes just a few minutes.
+            All premium features are unlocked. Enjoy MedCircle!
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
