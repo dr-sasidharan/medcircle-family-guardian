@@ -137,6 +137,20 @@ const SymptomChecker = () => {
   const notifyCaretakers = async (symptomText: string, data: SymptomResult) => {
     try {
       if (!profile?.id) return;
+
+      // Send SMS via Twilio edge function
+      await supabase.functions.invoke("caretaker-alert", {
+        body: {
+          type: "symptom",
+          details: {
+            symptom: symptomText,
+            urgency: data.urgency,
+          },
+        },
+      });
+      toast.info("SMS alert sent to caretakers");
+
+      // Also open WhatsApp as backup
       const { data: caretakers } = await supabase
         .from("caretakers")
         .select("name, phone")
@@ -149,7 +163,6 @@ const SymptomChecker = () => {
         );
         const firstPhone = caretakers[0].phone.replace(/\s+/g, "").replace("+", "");
         window.open(`https://wa.me/${firstPhone}?text=${message}`, "_blank");
-        toast.info(`Alert sent to ${caretakers[0].name} via WhatsApp`);
       }
     } catch { /* silent */ }
   };
