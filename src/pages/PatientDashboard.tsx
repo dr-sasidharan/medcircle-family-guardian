@@ -429,7 +429,7 @@ const PatientDashboard = () => {
         ];
         return (
           <div className="px-4 mt-5">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Weekly Progress</h3>
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">{t("weekly_progress")}</h3>
             <div className="bg-card rounded-2xl border border-border p-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
