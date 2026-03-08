@@ -3,7 +3,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeft, Eye, Sun, Moon } from "lucide-react";
+import { ArrowLeft, Eye, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Settings = () => {
   const { t } = useLanguage();
