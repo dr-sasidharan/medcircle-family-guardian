@@ -90,11 +90,10 @@ export default function AdminDashboard() {
       const allUsers = profiles || [];
       setUsers(allUsers);
 
-      // Fetch all successful payments
+      // Fetch all payments
       const { data: allPayments } = await supabase
         .from("payments")
         .select("*")
-        .eq("status", "success")
         .order("created_at", { ascending: false });
 
       const paymentsList = allPayments || [];
