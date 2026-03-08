@@ -52,7 +52,10 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: profiles } = await supabase.from("patient_profiles").select("name").limit(1);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profiles } = await supabase.from("patient_profiles").select("name").eq("user_id", user.id).limit(1);
       if (profiles?.length) setPatientName(profiles[0].name);
 
       const { data } = await supabase.from("medicines").select("id, name, dosage, timing, food_instruction").eq("is_active", true);

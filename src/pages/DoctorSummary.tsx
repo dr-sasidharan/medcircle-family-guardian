@@ -16,7 +16,9 @@ const DoctorSummary = () => {
   const generateSummary = async () => {
     setLoading(true);
     try {
-      const { data: profiles } = await supabase.from("patient_profiles").select("*").limit(1);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Please sign in first"); setLoading(false); return; }
+      const { data: profiles } = await supabase.from("patient_profiles").select("*").eq("user_id", user.id).limit(1);
       const { data: medicines } = await supabase.from("medicines").select("*").eq("is_active", true);
 
       if (!profiles?.length) {

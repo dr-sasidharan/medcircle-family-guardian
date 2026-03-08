@@ -54,8 +54,10 @@ const CaretakerDashboard = () => {
   const [activeTab, setActiveTab] = useState<"today" | "history" | "visits">("today");
 
   const fetchAll = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     // Profile
-    const { data: profiles } = await supabase.from("patient_profiles").select("*").limit(1);
+    const { data: profiles } = await supabase.from("patient_profiles").select("*").eq("user_id", user.id).limit(1);
     if (profiles && profiles.length > 0) setProfile(profiles[0] as any);
     const profileId = profiles?.[0]?.id;
 

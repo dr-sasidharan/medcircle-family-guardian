@@ -41,7 +41,9 @@ const Profile = () => {
   const [newEmail, setNewEmail] = useState("");
 
   const fetchData = useCallback(async () => {
-    const { data: profiles } = await supabase.from("patient_profiles").select("*").limit(1);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profiles } = await supabase.from("patient_profiles").select("*").eq("user_id", user.id).limit(1);
     if (profiles && profiles.length > 0) {
       setProfile(profiles[0] as any);
       setPatientPlan((profiles[0] as any).plan || "free");

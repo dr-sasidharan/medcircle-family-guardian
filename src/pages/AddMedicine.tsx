@@ -13,8 +13,10 @@ const AddMedicine = () => {
   const [food, setFood] = useState("after_food");
 
   const checkPlanLimit = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     const { data: meds } = await supabase.from("medicines").select("id").eq("is_active", true);
-    const { data: profiles } = await supabase.from("patient_profiles").select("id, plan").limit(1);
+    const { data: profiles } = await supabase.from("patient_profiles").select("id, plan").eq("user_id", user.id).limit(1);
     const profile = profiles?.[0];
     const plan = (profile as any)?.plan || "free";
 
@@ -36,11 +38,15 @@ const AddMedicine = () => {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Please sign in first"); return; }
+
     const { error } = await supabase.from("medicines").insert({
       name: name.trim(),
       dosage: dosage.trim(),
       timing,
       food_instruction: food,
+      user_id: user.id,
     });
 
     if (error) {
