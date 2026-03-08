@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, CreditCard, TrendingUp, IndianRupee, Download, RefreshCw,
-  Shield, Lock, BarChart3, PieChart as PieChartIcon,
+  Shield, Lock, BarChart3, PieChart as PieChartIcon, CheckCircle2, XCircle, Clock,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
