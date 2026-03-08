@@ -98,7 +98,6 @@ export default {
         "scale-in": "scale-in 0.4s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
       },
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],
