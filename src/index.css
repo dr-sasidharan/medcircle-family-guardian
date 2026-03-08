@@ -106,3 +106,61 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+/* Page transition */
+.page-transition {
+  animation: page-fade-in 0.3s ease-out;
+}
+
+@keyframes page-fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Elderly Mode Overrides */
+.elderly-mode {
+  font-size: 130%;
+}
+
+.elderly-mode * {
+  line-height: 1.5;
+}
+
+.elderly-mode button,
+.elderly-mode a,
+.elderly-mode [role="button"] {
+  min-height: 64px;
+}
+
+.elderly-mode .text-xs {
+  font-size: 0.875rem;
+}
+
+.elderly-mode .text-sm {
+  font-size: 1rem;
+}
+
+.elderly-mode .text-base {
+  font-size: 1.2rem;
+}
+
+.elderly-mode .text-lg {
+  font-size: 1.4rem;
+}
+
+.elderly-mode .text-xl {
+  font-size: 1.6rem;
+}
+
+.elderly-mode .text-2xl {
+  font-size: 1.875rem;
+}
+
+/* Higher contrast for elderly mode */
+.elderly-mode {
+  --foreground: 200 15% 5%;
+  --muted-foreground: 200 10% 30%;
+  --primary: 174 90% 28%;
+  --destructive: 0 80% 45%;
+  --success: 142 80% 38%;
+}
