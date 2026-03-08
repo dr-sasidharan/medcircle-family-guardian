@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Pill, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Check, Pill, AlertTriangle, ArrowLeft, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FOOD_LABELS: Record<string, string> = {
   before_food: "Before Food",
@@ -43,6 +46,11 @@ const Reminders = () => {
   const [doses, setDoses] = useState<DoseWithMedicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [allMedicines, setAllMedicines] = useState<{ id: string; name: string; dosage: string }[]>([]);
+  const [selectedMedicineId, setSelectedMedicineId] = useState("");
+  const [selectedTiming, setSelectedTiming] = useState("");
+  const [addingReminder, setAddingReminder] = useState(false);
 
   const fetchDoses = useCallback(async () => {
     const today = new Date().toISOString().split("T")[0];
@@ -80,6 +88,66 @@ const Reminders = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchDoses]);
+
+  // Fetch all active medicines for the add reminder dialog
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      const { data } = await supabase
+        .from("medicines")
+        .select("id, name, dosage")
+        .eq("is_active", true);
+      setAllMedicines(data || []);
+    };
+    fetchMedicines();
+  }, []);
+
+  const handleAddReminder = async () => {
+    if (!selectedMedicineId || !selectedTiming) {
+      toast.error("Please select a medicine and timing");
+      return;
+    }
+    setAddingReminder(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const today = new Date().toISOString().split("T")[0];
+
+      // Check if dose already exists
+      const { data: existing } = await supabase
+        .from("doses")
+        .select("id")
+        .eq("medicine_id", selectedMedicineId)
+        .eq("scheduled_date", today)
+        .eq("scheduled_time", selectedTiming)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error("Reminder already exists for this medicine and timing today");
+        setAddingReminder(false);
+        return;
+      }
+
+      await supabase.from("doses").insert({
+        medicine_id: selectedMedicineId,
+        user_id: user.id,
+        scheduled_date: today,
+        scheduled_time: selectedTiming,
+        taken: false,
+        missed: false,
+      });
+
+      toast.success("Reminder added! ⏰");
+      setDialogOpen(false);
+      setSelectedMedicineId("");
+      setSelectedTiming("");
+      fetchDoses();
+    } catch (err) {
+      toast.error("Failed to add reminder");
+    } finally {
+      setAddingReminder(false);
+    }
+  };
 
   const markAsTaken = async (doseId: string) => {
     setAnimatingId(doseId);
@@ -131,9 +199,61 @@ const Reminders = () => {
               </button>
               <h1 className="text-xl font-heading font-bold">Reminders</h1>
             </div>
-            <LanguageToggle />
+            <div className="flex items-center gap-2">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="p-2 rounded-xl bg-white/10 hover:bg-white/20 flex items-center gap-1 text-sm font-medium">
+                    <Plus size={16} /> Add
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Clock size={18} className="text-primary" /> Add Reminder
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Medicine</label>
+                      <Select value={selectedMedicineId} onValueChange={setSelectedMedicineId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select medicine" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allMedicines.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name} ({m.dosage})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Timing</label>
+                      <Select value={selectedTiming} onValueChange={setSelectedTiming}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select timing" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="morning">☀️ Morning</SelectItem>
+                          <SelectItem value="afternoon">🌤️ Afternoon</SelectItem>
+                          <SelectItem value="night">🌙 Night</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleAddReminder}
+                      disabled={addingReminder || !selectedMedicineId || !selectedTiming}
+                      className="w-full"
+                    >
+                      {addingReminder ? "Adding..." : "Add Reminder"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <LanguageToggle />
+            </div>
           </div>
-
           {/* Progress glass card */}
           <div className="glass-card rounded-2xl p-4 mt-2">
             <div className="flex justify-between items-baseline mb-2">
