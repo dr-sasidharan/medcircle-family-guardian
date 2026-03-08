@@ -138,8 +138,8 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
   const inputClass = "w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
 
   return (
-    <div className="fixed inset-0 bg-ink/50 z-50 flex items-end">
-      <div className="bg-card w-full rounded-t-3xl p-6 space-y-4 animate-slide-up max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-ink/50 z-[60] flex items-end">
+      <div className="bg-card w-full rounded-t-3xl p-6 pb-8 space-y-4 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-heading font-bold text-foreground">Edit Profile</h2>
           <button onClick={onClose} className="text-muted-foreground p-1"><X size={20} /></button>
