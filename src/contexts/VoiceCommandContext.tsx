@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -161,10 +161,16 @@ const PAGE_NAMES: Record<VoiceLang, Record<string, string>> = {
 };
 
 export const VoiceCommandProvider = ({ children }: { children: ReactNode }) => {
+  const { language } = useLanguage();
   const [isListening, setIsListening] = useState(false);
-  const [voiceLang, setVoiceLang] = useState<VoiceLang>("en");
+  const [voiceLang, setVoiceLang] = useState<VoiceLang>(language as VoiceLang);
   const [lastTranscript, setLastTranscript] = useState("");
   const [feedback, setFeedback] = useState("");
+
+  // Sync voice language with app UI language
+  useEffect(() => {
+    setVoiceLang(language as VoiceLang);
+  }, [language]);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
 
