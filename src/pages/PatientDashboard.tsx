@@ -286,8 +286,8 @@ const PatientDashboard = () => {
             {missedDoses.map((d) => (
               <div key={d.id} className="bg-[#fff1f2] border-2 border-[#fda4af] rounded-2xl p-4 flex items-center gap-3 pulse-alert">
                 <AlertTriangle className="text-coral flex-shrink-0" size={24} />
-                <span className="text-[#9f1239] font-heading font-extrabold text-base">
-                  Missed: {d.medicine_name} ({d.scheduled_time})
+                 <span className="text-[#9f1239] font-heading font-extrabold text-base">
+                   {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
                 </span>
               </div>
             ))}
