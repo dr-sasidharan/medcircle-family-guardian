@@ -31,6 +31,8 @@ const ScanTablet = () => {
   const [result, setResult] = useState<TabletResult | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [selectedTiming, setSelectedTiming] = useState("morning");
+  const [selectedFood, setSelectedFood] = useState("after_food");
 
   const handleUpload = async (file: File) => {
     setLoading(true);
