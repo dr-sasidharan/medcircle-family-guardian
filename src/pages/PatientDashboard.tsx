@@ -451,13 +451,13 @@ const PatientDashboard = () => {
           <div className="w-24 h-24 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
             <Pill size={48} className="text-primary" />
           </div>
-          <h2 className="text-xl font-heading font-bold text-foreground">No Medicines Yet</h2>
-          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">Add your first medicine to start tracking</p>
+          <h2 className="text-xl font-heading font-bold text-foreground">{t("no_medicines_title")}</h2>
+          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine_tracking")}</p>
           <button onClick={() => navigate("/add-medicine")}
             className="mt-6 text-white px-8 py-4 rounded-2xl text-base font-heading font-bold shadow-lg hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
           >
-            + Add Medicine
+            {t("add_medicine_btn")}
           </button>
         </div>
       )}
