@@ -601,7 +601,7 @@ const PatientDashboard = () => {
           className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary rounded-2xl py-4 text-base font-heading font-bold text-primary hover:bg-secondary transition-colors"
           style={{ boxShadow: "0 2px 12px rgba(13,148,136,0.1)" }}
         >
-          <ScanLine size={22} /> Scan Prescription
+          <ScanLine size={22} /> {t("scan_prescription")}
         </button>
         <button onClick={() => navigate("/scan-tablet?mode=identify")}
           className="w-full flex items-center justify-center gap-3 bg-secondary rounded-2xl py-4 text-base font-heading font-bold text-secondary-foreground hover:bg-accent transition-colors">
