@@ -32,6 +32,11 @@ interface Metrics {
   mrr: number;
   oneTimeTotal: number;
   revenueToday: number;
+  retentionRate: number;
+  churnRate: number;
+  conversionRate: number;
+  arpu: number;
+  activeUsers7d: number;
 }
 
 interface UserRow {
