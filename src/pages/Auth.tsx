@@ -29,7 +29,30 @@ export default function Auth() {
   const [caretakerCode, setCaretakerCode] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "demo@medcircle.app",
+        password: "medcircle2026",
+      });
+      if (error) throw error;
+      toast.success("Welcome to the demo!");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+    setDemoLoading(false);
+  };
+
+  // Auto-trigger demo login if demo=true
+  useEffect(() => {
+    if (isDemoRequest) {
+      handleDemoLogin();
+    }
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
