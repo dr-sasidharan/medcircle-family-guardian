@@ -92,22 +92,17 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all patient profiles
-      const { data: profiles } = await supabase
-        .from("patient_profiles")
-        .select("id, name, plan, created_at, last_active_at")
-        .order("created_at", { ascending: false });
+      // Fetch all data via admin edge function (bypasses RLS)
+      const { data: adminData, error: fnError } = await supabase.functions.invoke("admin-metrics", {
+        body: { password: ADMIN_PASSWORD },
+      });
 
-      const allUsers = profiles || [];
+      if (fnError) throw fnError;
+
+      const allUsers = adminData?.profiles || [];
       setUsers(allUsers);
 
-      // Fetch all payments
-      const { data: allPayments } = await supabase
-        .from("payments")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      const paymentsList = allPayments || [];
+      const paymentsList = adminData?.payments || [];
 
       // Map patient names to payments
       const profileMap = new Map(allUsers.map((u) => [u.id, u.name]));
