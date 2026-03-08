@@ -74,11 +74,24 @@ const PatientDashboard = () => {
         .eq("missed", true)
         .eq("taken", false);
 
-      setMissedDoses((missed || []).map((d: any) => ({
+      const missedList = (missed || []).map((d: any) => ({
         id: d.id,
         medicine_name: d.medicines?.name || "Unknown",
         scheduled_time: d.scheduled_time,
-      })));
+      }));
+      setMissedDoses(missedList);
+
+      // Send SMS alert to caretakers for each missed dose
+      if (missedList.length > 0) {
+        for (const md of missedList) {
+          supabase.functions.invoke("caretaker-alert", {
+            body: {
+              type: "missed_dose",
+              details: { medicine_name: md.medicine_name, timing: md.scheduled_time },
+            },
+          }).catch(() => {}); // fire-and-forget
+        }
+      }
 
       setLoading(false);
     };
