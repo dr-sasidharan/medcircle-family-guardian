@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { AlertTriangle, Package } from "lucide-react";
 
 interface RefillData {
@@ -9,6 +10,7 @@ interface RefillData {
 }
 
 const RefillBanner = () => {
+  const { t } = useLanguage();
   const [lowRefills, setLowRefills] = useState<RefillData[]>([]);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ const RefillBanner = () => {
                 {r.medicine_name}
               </p>
               <p className={`text-xs ${isUrgent ? "text-[#e11d48]/70" : "text-[#b45309]/70"}`}>
-                {r.tablets_remaining} days remaining · Time to refill
+                {r.tablets_remaining} {t("days")} · {t("time_to_refill")}
               </p>
             </div>
             <button

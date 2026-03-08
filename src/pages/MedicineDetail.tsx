@@ -80,7 +80,7 @@ const MedicineDetail = () => {
     fetchMedicine();
   }, [id]);
 
-  const timingLabel = medicine?.timing === "morning" ? "Morning" : medicine?.timing === "afternoon" ? "Afternoon" : "Night";
+  const timingLabel = medicine?.timing === "morning" ? t("morning") : medicine?.timing === "afternoon" ? t("afternoon") : t("night");
   const timingColor = medicine?.timing === "morning" ? "#f59e0b" : medicine?.timing === "afternoon" ? "#3b82f6" : "#8b5cf6";
 
   if (loading) {
@@ -142,7 +142,7 @@ const MedicineDetail = () => {
                     color: "white",
                   }}
                 >
-                  {medicine.food_instruction === "before_food" ? "Before Food" : medicine.food_instruction === "after_food" ? "After Food" : "With Food"}
+                  {medicine.food_instruction === "before_food" ? t("before_food") : medicine.food_instruction === "after_food" ? t("after_food") : t("with_food")}
                 </span>
               </div>
             </div>
