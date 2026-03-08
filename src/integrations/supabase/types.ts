@@ -318,6 +318,56 @@ export type Database = {
           },
         ]
       }
+      symptom_checks: {
+        Row: {
+          created_at: string
+          id: string
+          is_side_effect: boolean
+          likely_medicine: string | null
+          patient_profile_id: string
+          summary: string | null
+          symptom: string
+          tamil_explanation: string | null
+          urgency: string
+          urgency_color: string
+          what_to_do: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_side_effect?: boolean
+          likely_medicine?: string | null
+          patient_profile_id: string
+          summary?: string | null
+          symptom: string
+          tamil_explanation?: string | null
+          urgency?: string
+          urgency_color?: string
+          what_to_do?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_side_effect?: boolean
+          likely_medicine?: string | null
+          patient_profile_id?: string
+          summary?: string | null
+          symptom?: string
+          tamil_explanation?: string | null
+          urgency?: string
+          urgency_color?: string
+          what_to_do?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "symptom_checks_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
