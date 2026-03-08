@@ -114,7 +114,7 @@ const MedicineDetail = () => {
             <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
               <ArrowLeft size={18} />
             </button>
-            <h1 className="text-lg font-heading font-bold">{t("medicines")}</h1>
+            <h1 className="text-lg font-heading font-bold">Medicines</h1>
           </div>
 
           {/* Medicine name card */}
