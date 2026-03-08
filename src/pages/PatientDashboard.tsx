@@ -92,6 +92,45 @@ const PatientDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const handleMarkTaken = async (medicineId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().split("T")[0];
+      const med = medicines.find((m) => m.id === medicineId);
+      const scheduledTime = med?.timing === "morning" ? "08:00" : med?.timing === "afternoon" ? "14:00" : "21:00";
+
+      // Try to update existing dose first
+      const { data: existing } = await supabase
+        .from("doses")
+        .select("id")
+        .eq("medicine_id", medicineId)
+        .eq("scheduled_date", today)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from("doses").update({ taken: true, missed: false, taken_at: new Date().toISOString() }).eq("id", existing.id);
+      } else {
+        await supabase.from("doses").insert({
+          medicine_id: medicineId,
+          user_id: user.id,
+          scheduled_date: today,
+          scheduled_time: scheduledTime,
+          taken: true,
+          missed: false,
+          taken_at: new Date().toISOString(),
+        });
+      }
+
+      setTakenIds((prev) => new Set([...prev, medicineId]));
+      setMissedDoses((prev) => prev.filter((d) => d.medicine_name !== med?.name));
+      toast.success(`${med?.name} marked as taken!`);
+    } catch (err: any) {
+      toast.error("Failed to mark as taken");
+    }
+  };
+
   const takenCount = medicines.filter((m) => takenIds.has(m.id)).length;
   const totalCount = medicines.length;
   const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
