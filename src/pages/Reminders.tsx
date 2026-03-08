@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { Sun, CloudSun, Moon, Check, Pill, AlertTriangle } from "lucide-react";
+import { Check, Pill, AlertTriangle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 interface DoseWithMedicine {
@@ -23,6 +23,15 @@ interface DoseWithMedicine {
     photo_url: string | null;
   };
 }
+
+const MEDICINE_ICONS = ["💊", "🩹", "💉", "🧬", "🫀", "🧪"];
+const ICON_COLORS = ["#0d9488", "#f59e0b", "#8b5cf6", "#3b82f6", "#f43f5e", "#10b981"];
+
+const sectionConfig = {
+  morning: { emoji: "☀️", label: "Morning", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
+  afternoon: { emoji: "🌤️", label: "Afternoon", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
+  night: { emoji: "🌙", label: "Night", pillBg: "bg-[#ede9fe]", iconBg: "bg-[#8b5cf6]", text: "text-[#4c1d95]", line: "bg-[#c4b5fd]" },
+};
 
 const Reminders = () => {
   const { t } = useLanguage();
@@ -59,23 +68,17 @@ const Reminders = () => {
 
   useEffect(() => {
     fetchDoses();
-
-    // Subscribe to realtime changes on doses
     const channel = supabase
       .channel("doses-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "doses" }, () => {
         fetchDoses();
       })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [fetchDoses]);
 
   const markAsTaken = async (doseId: string) => {
     setAnimatingId(doseId);
-
     const { error } = await supabase
       .from("doses")
       .update({ taken: true, taken_at: new Date().toISOString(), missed: false })
@@ -88,7 +91,6 @@ const Reminders = () => {
       return;
     }
 
-    // Show success after brief animation
     setTimeout(() => {
       setAnimatingId(null);
       toast.success("Well done! Medicine taken. 💊");
@@ -101,70 +103,75 @@ const Reminders = () => {
   const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
   const missedDoses = doses.filter((d) => d.missed && !d.taken);
 
-  const sections: { key: string; icon: React.ReactNode }[] = [
-    { key: "morning", icon: <Sun size={20} /> },
-    { key: "afternoon", icon: <CloudSun size={20} /> },
-    { key: "night", icon: <Moon size={20} /> },
+  const sections = [
+    { key: "morning" },
+    { key: "afternoon" },
+    { key: "night" },
   ];
 
-  const foodBadge = (instruction: string) => {
-    if (instruction === "before_food") {
-      return <span className="bg-destructive/15 text-destructive px-2.5 py-1 rounded-lg text-xs font-bold">{t("before_food")}</span>;
-    }
-    if (instruction === "after_food") {
-      return <span className="bg-success/15 text-success px-2.5 py-1 rounded-lg text-xs font-bold">{t("after_food")}</span>;
-    }
-    return <span className="bg-warning/15 text-warning px-2.5 py-1 rounded-lg text-xs font-bold">{t("with_food")}</span>;
-  };
-
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-surface pb-24 page-transition">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-lg font-bold text-foreground">Reminders</h1>
-        <LanguageToggle />
+      <div
+        className="text-white p-5 rounded-b-[28px] relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #0c3532 100%)" }}
+      >
+        <div className="absolute top-[-40px] right-[-40px] w-[140px] h-[140px] rounded-full bg-white/5 animate-float" />
+        <div className="absolute bottom-[-20px] left-[-20px] w-[100px] h-[100px] rounded-full bg-white/5 animate-float" style={{ animationDelay: "3s" }} />
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                <ArrowLeft size={18} />
+              </button>
+              <h1 className="text-xl font-heading font-bold">Reminders</h1>
+            </div>
+            <LanguageToggle />
+          </div>
+
+          {/* Progress glass card */}
+          <div className="glass-card rounded-2xl p-4 mt-2">
+            <div className="flex justify-between items-baseline mb-2">
+              <span className="font-heading font-extrabold text-2xl">
+                {takenCount}<span className="text-white/50 text-base font-normal">/{totalCount}</span>
+              </span>
+              <span className="font-heading font-bold text-[#f59e0b]">{Math.round(progressPercent)}%</span>
+            </div>
+            <div className="w-full h-3 bg-white/15 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full animate-progress-fill"
+                style={{
+                  background: "linear-gradient(90deg, #34d399, #f59e0b, #f97316)",
+                  "--progress-width": `${progressPercent}%`,
+                  width: `${progressPercent}%`,
+                } as React.CSSProperties}
+              />
+            </div>
+            <p className="text-white/50 text-xs mt-2">{t("medicines_taken")} today</p>
+          </div>
+        </div>
       </div>
 
       {/* Missed Dose Alerts */}
       {missedDoses.length > 0 && (
         <div className="px-4 mt-4 space-y-2">
           {missedDoses.map((dose) => (
-            <div key={dose.id} className="bg-destructive/10 border border-destructive/30 rounded-2xl p-3.5 flex items-center gap-3 pulse-alert">
-              <AlertTriangle className="text-destructive flex-shrink-0" size={20} />
-              <span className="text-destructive font-bold text-sm">
-                You missed your {dose.medicine.name} ({dose.scheduled_time})
+            <div
+              key={dose.id}
+              className="border rounded-2xl p-3.5 flex items-center gap-3 pulse-alert"
+              style={{ background: "linear-gradient(135deg, #fff1f2, #ffe4e6)", borderColor: "#fda4af" }}
+            >
+              <div className="w-9 h-9 rounded-xl bg-[#fda4af]/30 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={18} className="text-[#e11d48]" />
+              </div>
+              <span className="text-[#9f1239] font-heading font-bold text-sm">
+                Missed: {dose.medicine.name} ({dose.scheduled_time})
               </span>
             </div>
           ))}
         </div>
       )}
-
-      {/* Today's Summary */}
-      <div className="px-4 mt-4">
-        <div className="bg-card rounded-2xl border border-border p-5">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-base font-bold text-foreground">Today's Summary</h2>
-            <span className="text-sm font-semibold text-primary">{Math.round(progressPercent)}%</span>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Taken: {takenCount} {t("of")} {totalCount} {t("medicines_taken")}
-          </p>
-          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${progressPercent}%`,
-                background:
-                  progressPercent >= 80
-                    ? "hsl(var(--success))"
-                    : progressPercent >= 50
-                    ? "hsl(var(--warning))"
-                    : "hsl(var(--destructive))",
-              }}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Loading */}
       {loading && (
@@ -177,65 +184,96 @@ const Reminders = () => {
       {!loading && (
         <div className="px-4 mt-6 space-y-6">
           {sections.map((section) => {
+            const config = sectionConfig[section.key as keyof typeof sectionConfig];
             const sectionDoses = doses.filter((d) => d.scheduled_time === section.key);
             if (sectionDoses.length === 0) return null;
             return (
               <div key={section.key}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-primary">{section.icon}</span>
-                  <h2 className="text-lg font-bold text-foreground">{t(section.key)}</h2>
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    {sectionDoses.filter((d) => d.taken).length}/{sectionDoses.length} taken
+                {/* Section header pill + line */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`flex items-center gap-2 ${config.pillBg} rounded-full px-3 py-1.5 flex-shrink-0`}>
+                    <div className={`w-7 h-7 ${config.iconBg} rounded-full flex items-center justify-center text-sm`}>
+                      {config.emoji}
+                    </div>
+                    <span className={`font-heading font-bold text-sm ${config.text}`}>{config.label}</span>
+                  </div>
+                  <div className={`flex-1 h-[2px] ${config.line} rounded-full`} />
+                  <span className="text-xs text-muted-foreground font-semibold">
+                    {sectionDoses.filter((d) => d.taken).length}/{sectionDoses.length}
                   </span>
                 </div>
+
                 <div className="space-y-3">
-                  {sectionDoses.map((dose) => {
+                  {sectionDoses.map((dose, idx) => {
                     const isAnimating = animatingId === dose.id;
+                    const iconIdx = idx % MEDICINE_ICONS.length;
+                    const colorIdx = idx % ICON_COLORS.length;
+
                     return (
                       <div
                         key={dose.id}
-                        className={`bg-card rounded-2xl p-4 border transition-all ${
-                          dose.taken ? "border-success/30 bg-success/5" : dose.missed ? "border-destructive/30 bg-destructive/5" : "border-border"
-                        }`}
+                        className="bg-card rounded-[18px] p-4 flex items-center gap-3 animate-slide-up"
+                        style={{
+                          borderLeft: `4px solid ${dose.taken ? "#10b981" : dose.missed ? "#f43f5e" : "#f59e0b"}`,
+                          background: dose.taken ? "#ecfdf5" : dose.missed ? "#fff1f2" : "white",
+                          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                          animationDelay: `${idx * 80}ms`,
+                        }}
                       >
-                        <div className="flex items-center gap-3">
-                          {/* Tablet Icon / Photo */}
-                          <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {dose.medicine.photo_url ? (
-                              <img src={dose.medicine.photo_url} alt={dose.medicine.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <Pill size={28} className="text-primary" />
-                            )}
-                          </div>
+                        {/* Icon */}
+                        <div
+                          className="w-[46px] h-[46px] flex items-center justify-center flex-shrink-0 text-xl overflow-hidden"
+                          style={{ background: `${ICON_COLORS[colorIdx]}15`, borderRadius: "14px" }}
+                        >
+                          {dose.medicine.photo_url ? (
+                            <img src={dose.medicine.photo_url} alt={dose.medicine.name} className="w-full h-full object-cover" />
+                          ) : (
+                            MEDICINE_ICONS[iconIdx]
+                          )}
+                        </div>
 
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-extrabold text-foreground truncate">{dose.medicine.name}</h3>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-sm text-muted-foreground">{dose.medicine.dosage}</span>
-                              {foodBadge(dose.medicine.food_instruction)}
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-heading font-bold text-[15px] text-ink truncate">{dose.medicine.name}</h3>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-muted-foreground text-xs">{dose.medicine.dosage}</span>
+                            <span
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                              style={{
+                                background: dose.medicine.food_instruction === "before_food" ? "#ccfbf1" : dose.medicine.food_instruction === "after_food" ? "#fef3c7" : "#dbeafe",
+                                color: dose.medicine.food_instruction === "before_food" ? "#0d9488" : dose.medicine.food_instruction === "after_food" ? "#b45309" : "#1e40af",
+                              }}
+                            >
+                              {t(dose.medicine.food_instruction) || dose.medicine.food_instruction}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action */}
+                        <div className="flex-shrink-0">
+                          {dose.taken ? (
+                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
+                              <Check size={14} /> {t("taken")}
                             </div>
-                          </div>
-
-                          {/* Action Button */}
-                          <div className="flex-shrink-0">
-                            {dose.taken ? (
-                              <div className="w-12 h-12 rounded-xl bg-success/15 flex items-center justify-center">
-                                <Check size={24} className="text-success" />
-                              </div>
-                            ) : isAnimating ? (
-                              <div className="w-12 h-12 rounded-xl bg-success flex items-center justify-center animate-scale-in">
-                                <Check size={24} className="text-success-foreground" />
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => markAsTaken(dose.id)}
-                                className="bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition-opacity"
-                              >
-                                {t("mark_taken")}
-                              </button>
-                            )}
-                          </div>
+                          ) : isAnimating ? (
+                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1 animate-scale-in">
+                              <Check size={14} /> ✓
+                            </div>
+                          ) : dose.missed ? (
+                            <button
+                              onClick={() => markAsTaken(dose.id)}
+                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral"
+                            >
+                              Take Now
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => markAsTaken(dose.id)}
+                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/5"
+                            >
+                              {t("mark_taken")}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -246,10 +284,12 @@ const Reminders = () => {
           })}
 
           {doses.length === 0 && !loading && (
-            <div className="text-center py-16">
-              <Pill size={48} className="text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-semibold text-foreground">No medicines scheduled</p>
-              <p className="text-sm text-muted-foreground">Add medicines to see reminders here</p>
+            <div className="text-center py-16 animate-fade-in">
+              <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
+                <Pill size={40} className="text-primary" />
+              </div>
+              <p className="text-lg font-heading font-bold text-foreground">No medicines scheduled</p>
+              <p className="text-sm text-muted-foreground mt-1">Add medicines to see reminders here</p>
             </div>
           )}
         </div>
