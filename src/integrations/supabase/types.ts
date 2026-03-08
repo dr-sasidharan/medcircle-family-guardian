@@ -435,6 +435,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_linked_patient_ids: { Args: never; Returns: string[] }
       get_my_profile_id: { Args: never; Returns: string }
       is_my_medicine: { Args: { _medicine_id: string }; Returns: boolean }
     }
