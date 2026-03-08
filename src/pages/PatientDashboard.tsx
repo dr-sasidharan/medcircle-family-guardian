@@ -8,7 +8,7 @@ import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle } from "lucide-react";
+import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 
@@ -284,6 +284,9 @@ const PatientDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => navigate("/notifications")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                <Bell size={18} />
+              </button>
               <button onClick={() => navigate("/settings")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
                 <Settings size={18} />
               </button>
