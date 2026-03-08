@@ -23,7 +23,7 @@ const plans = [
   },
   {
     key: "family",
-    price: 29,
+    price: 42,
     label: "Family Plan",
     period: "/month",
     plan_value: "family",
