@@ -47,3 +47,12 @@ verify_jwt = false
 
 [functions.caretaker-alert]
 verify_jwt = false
+
+[functions.admin-metrics]
+verify_jwt = false
+
+[functions.medicine-info]
+verify_jwt = false
+
+[functions.create-razorpay-order]
+verify_jwt = false
