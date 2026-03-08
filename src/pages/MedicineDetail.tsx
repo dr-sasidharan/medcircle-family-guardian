@@ -30,7 +30,7 @@ const SECTION_ICONS: Record<string, { icon: string; color: string; bg: string }>
 };
 
 const MedicineDetail = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [medicine, setMedicine] = useState<MedicineData | null>(null);
@@ -66,7 +66,7 @@ const MedicineDetail = () => {
       setInfoLoading(true);
       try {
         const { data: fnData, error: fnError } = await supabase.functions.invoke("medicine-info", {
-          body: { medicine_name: data.name, dosage: data.dosage },
+          body: { medicine_name: data.name, dosage: data.dosage, language },
         });
         if (!fnError && fnData) {
           setInfo(fnData as MedicineInfo);
