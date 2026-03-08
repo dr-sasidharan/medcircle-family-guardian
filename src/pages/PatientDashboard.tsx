@@ -546,7 +546,7 @@ const PatientDashboard = () => {
                           {isTaken ? (
                             <>
                               <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                                <Check size={14} /> Taken
+                                <Check size={14} /> {t("taken_label")}
                               </div>
                               <button
                                 onClick={() => handleUndoTaken(med.id)}
