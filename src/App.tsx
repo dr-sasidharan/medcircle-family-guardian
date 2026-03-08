@@ -25,6 +25,7 @@ import DoctorSummary from "./pages/DoctorSummary";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmergencyCard from "./pages/EmergencyCard";
+import SymptomChecker from "./pages/SymptomChecker";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 
