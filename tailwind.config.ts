@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        heading: ['"Syne"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -58,6 +59,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        amber: "hsl(var(--amber))",
+        coral: "hsl(var(--coral))",
+        violet: "hsl(var(--violet))",
+        blue: "hsl(var(--blue))",
+        emerald: "hsl(var(--emerald))",
+        ink: "hsl(var(--ink))",
+        surface: "hsl(var(--surface))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
