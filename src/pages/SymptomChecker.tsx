@@ -60,7 +60,9 @@ const SymptomChecker = () => {
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const { data: profiles } = await supabase.from("patient_profiles").select("id, name, age, emergency_contact").limit(1);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profiles } = await supabase.from("patient_profiles").select("id, name, age, emergency_contact").eq("user_id", user.id).limit(1);
     if (profiles?.length) setProfile(profiles[0]);
 
     const { data: meds } = await supabase.from("medicines").select("name, dosage, timing, food_instruction").eq("is_active", true);

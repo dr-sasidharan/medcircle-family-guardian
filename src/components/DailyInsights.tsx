@@ -31,7 +31,9 @@ const DailyInsights = () => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const { data: profiles } = await supabase.from("patient_profiles").select("name, age").limit(1);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setLoading(false); return; }
+        const { data: profiles } = await supabase.from("patient_profiles").select("name, age").eq("user_id", user.id).limit(1);
         const { data: medicines } = await supabase.from("medicines").select("name, dosage, timing, food_instruction").eq("is_active", true);
 
         if (!profiles?.length || !medicines?.length) {
