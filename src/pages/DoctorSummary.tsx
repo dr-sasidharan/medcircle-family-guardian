@@ -99,7 +99,7 @@ const DoctorSummary = () => {
             </div>
             <button onClick={generateSummary} disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50">
-              {loading ? (<><Loader2 size={20} className="animate-spin" />{t("generating_summary")}</>) : (<><FileText size={20} />{t("generate_summary")}</>)}
+              {loading ? (<><Loader2 size={20} className="animate-spin" />Generating Summary...</>) : (<><FileText size={20} />Generate Summary</>)}
             </button>
           </div>
         ) : (
