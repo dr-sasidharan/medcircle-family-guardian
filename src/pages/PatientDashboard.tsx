@@ -353,19 +353,25 @@ const PatientDashboard = () => {
                         </div>
 
                         {/* Status badge */}
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           {isTaken ? (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
                               <Check size={14} /> Taken
                             </div>
                           ) : isMissed ? (
-                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral">
-                              Missed
-                            </div>
+                            <button
+                              onClick={() => handleMarkTaken(med.id)}
+                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral hover:opacity-90 transition-opacity"
+                            >
+                              Take Now
+                            </button>
                           ) : (
-                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white">
+                            <button
+                              onClick={() => handleMarkTaken(med.id)}
+                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
+                            >
                               Mark Taken
-                            </div>
+                            </button>
                           )}
                         </div>
                       </div>
