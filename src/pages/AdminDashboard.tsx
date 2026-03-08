@@ -260,21 +260,15 @@ export default function AdminDashboard() {
   const handlePaymentAction = async (payment: PaymentRow, action: "approve" | "reject") => {
     setActionLoading(payment.id);
     try {
-      const newStatus = action === "approve" ? "success" : "failed";
-      await supabase.from("payments").update({ status: newStatus }).eq("id", payment.id);
-
-      if (action === "approve") {
-        await supabase
-          .from("patient_profiles")
-          .update({ plan: payment.plan })
-          .eq("id", payment.patient_profile_id);
-      } else {
-        await supabase
-          .from("patient_profiles")
-          .update({ plan: "free" })
-          .eq("id", payment.patient_profile_id);
-      }
-
+      await supabase.functions.invoke("admin-metrics", {
+        body: {
+          password: ADMIN_PASSWORD,
+          action,
+          paymentId: payment.id,
+          paymentPlan: payment.plan,
+          patientProfileId: payment.patient_profile_id,
+        },
+      });
       await fetchData();
     } catch (err) {
       console.error("Payment action error:", err);
