@@ -202,7 +202,7 @@ const Profile = () => {
           <button
             onClick={() => {
               if (patientPlan === "free") {
-                navigate("/paywall", { state: { reason: "caretaker", patientProfileId: profile?.id } });
+                setShowUpgradePrompt(true);
               } else {
                 setShowAdd(true);
               }
