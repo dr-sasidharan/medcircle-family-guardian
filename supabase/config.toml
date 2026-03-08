@@ -38,3 +38,12 @@ verify_jwt = false
 
 [functions.setup-demo]
 verify_jwt = false
+
+[functions.whatsapp-reminder]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.caretaker-alert]
+verify_jwt = false
