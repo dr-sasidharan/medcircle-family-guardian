@@ -6,6 +6,7 @@ const LanguageToggle = () => {
     { code: "en" as const, label: "EN" },
     { code: "ta" as const, label: "தமிழ்" },
     { code: "hi" as const, label: "हिं" },
+    { code: "ml" as const, label: "മല" },
   ];
 
   return (
