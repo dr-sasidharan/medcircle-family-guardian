@@ -238,7 +238,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.foods_to_avoid.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.foods_to_avoid.color }}>
-                  {t("foods_to_avoid")}
+                  Foods to Avoid
                 </h3>
               </div>
               <ul className="space-y-2">
