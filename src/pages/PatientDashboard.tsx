@@ -8,7 +8,7 @@ import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell } from "lucide-react";
+import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 import { useNotificationReminders } from "@/hooks/useNotificationReminders";
@@ -239,6 +239,11 @@ const PatientDashboard = () => {
             className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <FlaskConical size={40} className="text-warning" />
             <span className="text-lg font-heading font-bold text-foreground">Drug Interaction</span>
+          </button>
+          <button onClick={() => navigate("/hospital-booking")}
+            className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
+            <Stethoscope size={40} className="text-primary" />
+            <span className="text-lg font-heading font-bold text-foreground">Book Checkup</span>
           </button>
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">

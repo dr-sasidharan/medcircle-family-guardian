@@ -63,6 +63,8 @@ Deno.serve(async (req) => {
       message = `⚠️ MedCircle Alert: ${profile.name} missed their ${details.timing} dose of ${details.medicine_name}. Please check on them.`;
     } else if (type === "symptom") {
       message = `🏥 MedCircle Alert: ${profile.name} reported a symptom - "${details.symptom}" (Urgency: ${details.urgency}). Please check on them.`;
+    } else if (type === "booking") {
+      message = `📅 MedCircle Alert: ${profile.name} booked a hospital appointment.\n\n👨‍⚕️ Doctor: ${details.doctor_name}\n🏥 Hospital: ${details.hospital}\n📋 ${details.specialty}\n📆 ${details.date} at ${details.time}\n\nPlease note this in your calendar.`;
     } else {
       throw new Error("Invalid alert type");
     }

@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          caretaker_notified: boolean
+          created_at: string
+          doctor_id: string
+          doctor_slot_id: string
+          id: string
+          notes: string | null
+          patient_profile_id: string
+          status: string
+        }
+        Insert: {
+          caretaker_notified?: boolean
+          created_at?: string
+          doctor_id: string
+          doctor_slot_id: string
+          id?: string
+          notes?: string | null
+          patient_profile_id: string
+          status?: string
+        }
+        Update: {
+          caretaker_notified?: boolean
+          created_at?: string
+          doctor_id?: string
+          doctor_slot_id?: string
+          id?: string
+          notes?: string | null
+          patient_profile_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_doctor_slot_id_fkey"
+            columns: ["doctor_slot_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caretaker_links: {
         Row: {
           caretaker_user_id: string
@@ -83,6 +138,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doctor_slots: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          is_booked: boolean
+          slot_date: string
+          slot_time: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          is_booked?: boolean
+          slot_date: string
+          slot_time: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          is_booked?: boolean
+          slot_date?: string
+          slot_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_slots_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          created_at: string
+          hospital_name: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          photo_url: string | null
+          specialty: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          specialty: string
+        }
+        Update: {
+          created_at?: string
+          hospital_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          specialty?: string
+        }
+        Relationships: []
       }
       doses: {
         Row: {
