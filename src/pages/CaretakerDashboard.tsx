@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
-import { ArrowLeft, Check, X, AlertTriangle, Pill, Phone, ShieldAlert, Calendar, Clock, FileText, ChevronRight, Activity } from "lucide-react";
+import { ArrowLeft, Check, X, AlertTriangle, Pill, Phone, ShieldAlert, Calendar, Clock, FileText, ChevronRight, Activity, Stethoscope } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
