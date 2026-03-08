@@ -81,11 +81,16 @@ const ScanPrescription = () => {
         return;
       }
 
+      const validTimings = ["morning", "afternoon", "night"];
+      const validFood = ["before_food", "after_food", "with_food"];
+      const timing = validTimings.includes(med.timing) ? med.timing : "morning";
+      const foodInstruction = validFood.includes(med.foodInstruction) ? med.foodInstruction : "after_food";
+
       const { error } = await supabase.from("medicines").insert({
         name: med.name,
         dosage: med.dosage,
-        timing: med.timing,
-        food_instruction: med.foodInstruction,
+        timing,
+        food_instruction: foodInstruction,
         purpose: med.purpose,
         user_id: user.id,
         is_active: true,
