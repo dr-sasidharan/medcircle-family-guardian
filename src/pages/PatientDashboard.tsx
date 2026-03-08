@@ -1,43 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
-import { Sun, CloudSun, Moon, Check, Plus, ScanLine, HelpCircle, FlaskConical } from "lucide-react";
+import EmergencyInfoButton from "@/components/EmergencyInfoButton";
+import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
+import { supabase } from "@/integrations/supabase/client";
+import { Sun, CloudSun, Moon, Check, Plus, ScanLine, HelpCircle, FlaskConical, Pill, Settings } from "lucide-react";
 
 interface Medicine {
-  id: number;
+  id: string;
   name: string;
   dosage: string;
-  timing: "morning" | "afternoon" | "night";
-  food: string;
-  taken: boolean;
+  timing: string;
+  food_instruction: string;
+  taken?: boolean;
 }
-
-const defaultMedicines: Medicine[] = [
-  { id: 1, name: "Metformin", dosage: "500mg", timing: "morning", food: "After Food", taken: false },
-  { id: 2, name: "Amlodipine", dosage: "5mg", timing: "morning", food: "Before Food", taken: true },
-  { id: 3, name: "Pantoprazole", dosage: "40mg", timing: "morning", food: "Before Food", taken: true },
-  { id: 4, name: "Metformin", dosage: "500mg", timing: "afternoon", food: "After Food", taken: false },
-  { id: 5, name: "Atorvastatin", dosage: "10mg", timing: "night", food: "After Food", taken: false },
-  { id: 6, name: "Telmisartan", dosage: "40mg", timing: "night", food: "After Food", taken: true },
-];
 
 const PatientDashboard = () => {
   const { t } = useLanguage();
+  const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
-  const [medicines, setMedicines] = useState(defaultMedicines);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [takenIds, setTakenIds] = useState<Set<string>>(new Set());
 
-  const takenCount = medicines.filter((m) => m.taken).length;
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      const { data } = await supabase.from("medicines").select("id, name, dosage, timing, food_instruction").eq("is_active", true);
+      setMedicines((data || []) as Medicine[]);
+
+      // Get today's doses
+      const today = new Date().toISOString().split("T")[0];
+      const { data: doses } = await supabase.from("doses").select("medicine_id").eq("scheduled_date", today).eq("taken", true);
+      setTakenIds(new Set((doses || []).map((d: any) => d.medicine_id)));
+      setLoading(false);
+    };
+
+    fetchMedicines();
+
+    const channel = supabase
+      .channel("dashboard-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "doses" }, () => fetchMedicines())
+      .on("postgres_changes", { event: "*", schema: "public", table: "medicines" }, () => fetchMedicines())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const takenCount = medicines.filter((m) => takenIds.has(m.id)).length;
   const totalCount = medicines.length;
-  const progressPercent = (takenCount / totalCount) * 100;
+  const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
 
-  const toggleTaken = (id: number) => {
-    setMedicines((prev) => prev.map((m) => (m.id === id ? { ...m, taken: !m.taken } : m)));
-  };
-
-  const sections: { key: "morning" | "afternoon" | "night"; icon: React.ReactNode }[] = [
+  const sections: { key: string; icon: React.ReactNode }[] = [
     { key: "morning", icon: <Sun size={20} /> },
     { key: "afternoon", icon: <CloudSun size={20} /> },
     { key: "night", icon: <Moon size={20} /> },
@@ -47,8 +64,66 @@ const PatientDashboard = () => {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
+  // Elderly simplified home: 4 large icon buttons only
+  if (elderlyMode) {
+    return (
+      <div className="min-h-screen bg-background pb-24 page-transition">
+        <div className="bg-primary text-primary-foreground p-6 rounded-b-3xl">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h1 className="text-2xl font-extrabold">{t("good_morning")}</h1>
+              <p className="text-primary-foreground/80 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken")}</p>
+            </div>
+            <button onClick={() => navigate("/settings")} className="p-2">
+              <Settings size={24} />
+            </button>
+          </div>
+          <div className="w-full h-4 bg-primary-foreground/20 rounded-full overflow-hidden mt-3">
+            <div className="h-full bg-primary-foreground rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+
+        <RefillBanner />
+
+        <div className="px-4 mt-8 grid grid-cols-2 gap-4">
+          <button
+            onClick={() => navigate("/reminders")}
+            className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors"
+          >
+            <Pill size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("medicines")}</span>
+          </button>
+          <button
+            onClick={() => navigate("/scan")}
+            className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors"
+          >
+            <ScanLine size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("scan")}</span>
+          </button>
+          <button
+            onClick={() => navigate("/drug-interaction")}
+            className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors"
+          >
+            <FlaskConical size={40} className="text-warning" />
+            <span className="text-lg font-bold text-foreground">{t("drug_interaction_checker")}</span>
+          </button>
+          <button
+            onClick={() => navigate("/profile")}
+            className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors"
+          >
+            <Settings size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("profile")}</span>
+          </button>
+        </div>
+
+        <EmergencyInfoButton />
+        <BottomNav />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 page-transition">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-5 rounded-b-3xl">
         <div className="flex justify-between items-start mb-4">
@@ -61,7 +136,12 @@ const PatientDashboard = () => {
               <p className="text-primary-foreground/80 text-sm">{today}</p>
             </div>
           </div>
-          <LanguageToggle />
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate("/settings")} className="p-1.5 rounded-lg bg-primary-foreground/10">
+              <Settings size={18} />
+            </button>
+            <LanguageToggle />
+          </div>
         </div>
 
         {/* Progress */}
@@ -79,51 +159,75 @@ const PatientDashboard = () => {
         </div>
       </div>
 
+      {/* Refill Banner */}
+      <RefillBanner />
+
+      {/* Empty State */}
+      {!loading && medicines.length === 0 && (
+        <div className="px-4 mt-12 text-center animate-fade-in">
+          <div className="w-24 h-24 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
+            <Pill size={48} className="text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">{t("no_medicines_yet")}</h2>
+          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine")}</p>
+          <button
+            onClick={() => navigate("/add-medicine")}
+            className="mt-6 bg-primary text-primary-foreground px-8 py-4 rounded-2xl text-base font-bold shadow-lg hover:opacity-90 transition-opacity"
+          >
+            + {t("add_medicine")}
+          </button>
+        </div>
+      )}
+
       {/* Medicine Sections */}
-      <div className="px-4 mt-6 space-y-6">
-        {sections.map((section) => {
-          const sectionMeds = medicines.filter((m) => m.timing === section.key);
-          if (sectionMeds.length === 0) return null;
-          return (
-            <div key={section.key}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-primary">{section.icon}</span>
-                <h2 className="text-lg font-bold text-foreground">{t(section.key)}</h2>
-              </div>
-              <div className="space-y-3">
-                {sectionMeds.map((med) => (
-                  <div
-                    key={med.id}
-                    className={`bg-card rounded-2xl p-4 border transition-all cursor-pointer ${
-                      med.taken ? "border-success/30 bg-success/5" : "border-border"
-                    }`}
-                    onClick={() => navigate("/medicine-detail")}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-base font-bold text-foreground">{med.name}</h3>
-                        <p className="text-muted-foreground text-sm">{med.dosage} · {med.food}</p>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleTaken(med.id); }}
-                        className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                          med.taken
-                            ? "bg-success text-success-foreground"
-                            : "bg-primary text-primary-foreground shadow-md hover:opacity-90"
+      {medicines.length > 0 && (
+        <div className="px-4 mt-6 space-y-6">
+          {sections.map((section) => {
+            const sectionMeds = medicines.filter((m) => m.timing === section.key);
+            if (sectionMeds.length === 0) return null;
+            return (
+              <div key={section.key}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-primary">{section.icon}</span>
+                  <h2 className="text-lg font-bold text-foreground">{t(section.key)}</h2>
+                </div>
+                <div className="space-y-3">
+                  {sectionMeds.map((med) => {
+                    const isTaken = takenIds.has(med.id);
+                    return (
+                      <div
+                        key={med.id}
+                        className={`bg-card rounded-2xl p-4 border transition-all cursor-pointer ${
+                          isTaken ? "border-success/30 bg-success/5" : "border-border"
                         }`}
+                        onClick={() => navigate("/medicine-detail")}
                       >
-                        {med.taken ? (
-                          <span className="flex items-center gap-1"><Check size={16} /> {t("taken")}</span>
-                        ) : t("mark_taken")}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="text-base font-bold text-foreground">{med.name}</h3>
+                            <p className="text-muted-foreground text-sm">{med.dosage} · {med.food_instruction}</p>
+                          </div>
+                          <div
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold ${
+                              isTaken
+                                ? "bg-success text-success-foreground"
+                                : "bg-primary text-primary-foreground shadow-md"
+                            }`}
+                          >
+                            {isTaken ? (
+                              <span className="flex items-center gap-1"><Check size={16} /> {t("taken")}</span>
+                            ) : t("mark_taken")}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Daily Insights */}
       <DailyInsights />
@@ -135,21 +239,21 @@ const PatientDashboard = () => {
           className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary rounded-2xl py-4 text-base font-bold text-primary hover:bg-secondary transition-colors"
         >
           <ScanLine size={22} />
-          Scan Prescription
+          {t("scan_prescription")}
         </button>
         <button
           onClick={() => navigate("/scan-tablet?mode=identify")}
           className="w-full flex items-center justify-center gap-3 bg-secondary rounded-2xl py-4 text-base font-bold text-secondary-foreground hover:bg-accent transition-colors"
         >
           <HelpCircle size={22} />
-          What Is This Tablet?
+          {t("what_is_tablet")}
         </button>
         <button
           onClick={() => navigate("/drug-interaction")}
           className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-foreground hover:bg-secondary transition-colors"
         >
           <FlaskConical size={22} className="text-warning" />
-          Drug Interaction Checker
+          {t("drug_interaction_checker")}
         </button>
       </div>
 
@@ -161,6 +265,7 @@ const PatientDashboard = () => {
         <Plus size={28} />
       </button>
 
+      <EmergencyInfoButton />
       <BottomNav />
     </div>
   );
