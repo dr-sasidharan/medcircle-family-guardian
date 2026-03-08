@@ -62,6 +62,7 @@ const App = () => (
                   <Route path="/doctor-summary" element={<P><DoctorSummary /></P>} />
                   <Route path="/settings" element={<P><Settings /></P>} />
                   <Route path="/admin" element={<P><AdminDashboard /></P>} />
+                  <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
