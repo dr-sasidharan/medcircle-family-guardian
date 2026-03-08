@@ -10,7 +10,7 @@ const UPI_ID = "saseedharan2004-1@oksbi";
 const plans = [
   {
     key: "one_time",
-    price: 49,
+    price: 15,
     label: "One-Time Setup",
     period: "once",
     plan_value: "family",
@@ -20,11 +20,11 @@ const plans = [
       "First month Family Plan included",
     ],
     highlighted: false,
-    buttonText: "Pay ₹49",
+    buttonText: "Pay ₹15",
   },
   {
     key: "family",
-    price: 42,
+    price: 10,
     label: "Family Plan",
     period: "/month",
     plan_value: "family",
@@ -35,11 +35,11 @@ const plans = [
       "1 caretaker",
     ],
     highlighted: false,
-    buttonText: "Pay ₹42",
+    buttonText: "Pay ₹10",
   },
   {
     key: "pro",
-    price: 49,
+    price: 30,
     label: "Family Pro",
     period: "/month",
     plan_value: "pro",
@@ -52,7 +52,7 @@ const plans = [
       "3 caretakers",
     ],
     highlighted: true,
-    buttonText: "Pay ₹49",
+    buttonText: "Pay ₹30",
   },
 ];
 
