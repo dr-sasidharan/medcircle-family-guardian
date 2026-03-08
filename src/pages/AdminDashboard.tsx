@@ -104,7 +104,8 @@ export default function AdminDashboard() {
         ...p,
         patient_name: profileMap.get(p.patient_profile_id) || "Unknown",
       }));
-      setPayments(enrichedPayments);
+      setPayments(enrichedPayments.filter((p) => p.status === "success"));
+      setPendingPayments(enrichedPayments.filter((p) => p.status === "pending_verification"));
 
       // Metrics
       const totalUsers = allUsers.length;
