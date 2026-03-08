@@ -3,7 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import Welcome from "./pages/Welcome";
+import PatientDashboard from "./pages/PatientDashboard";
+import AddMedicine from "./pages/AddMedicine";
+import CaretakerDashboard from "./pages/CaretakerDashboard";
+import MedicineDetail from "./pages/MedicineDetail";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -11,15 +17,21 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <LanguageProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Welcome />} />
+            <Route path="/patient" element={<PatientDashboard />} />
+            <Route path="/add-medicine" element={<AddMedicine />} />
+            <Route path="/caretaker" element={<CaretakerDashboard />} />
+            <Route path="/medicine-detail" element={<MedicineDetail />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
