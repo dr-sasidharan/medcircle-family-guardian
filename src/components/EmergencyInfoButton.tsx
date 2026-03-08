@@ -17,7 +17,9 @@ const EmergencyInfoButton = () => {
   const [medicines, setMedicines] = useState<{ name: string; dosage: string }[]>([]);
 
   const fetchData = useCallback(async () => {
-    const { data: profiles } = await supabase.from("patient_profiles").select("name, age, blood_group, allergies, emergency_contact, emergency_notes").limit(1);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profiles } = await supabase.from("patient_profiles").select("name, age, blood_group, allergies, emergency_contact, emergency_notes").eq("user_id", user.id).limit(1);
     if (profiles?.length) setData(profiles[0] as any);
 
     const { data: meds } = await supabase.from("medicines").select("name, dosage").eq("is_active", true);
