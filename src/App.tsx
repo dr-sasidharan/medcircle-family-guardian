@@ -72,6 +72,7 @@ const App = () => (
                   <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
                   <Route path="/notifications" element={<P><NotificationLog /></P>} />
                   <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
+                  <Route path="/doctor-portal" element={<P><DoctorPortal /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
