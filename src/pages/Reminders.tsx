@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Pill, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Check, Pill, AlertTriangle, ArrowLeft, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FOOD_LABELS: Record<string, string> = {
   before_food: "Before Food",
