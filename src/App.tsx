@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import DrugInteraction from "./pages/DrugInteraction";
 import DoctorSummary from "./pages/DoctorSummary";
 import Settings from "./pages/Settings";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/drug-interaction" element={<DrugInteraction />} />
               <Route path="/doctor-summary" element={<DoctorSummary />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
