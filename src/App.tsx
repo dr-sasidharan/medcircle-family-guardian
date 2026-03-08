@@ -12,6 +12,7 @@ import MedicineDetail from "./pages/MedicineDetail";
 import Pricing from "./pages/Pricing";
 import ScanPrescription from "./pages/ScanPrescription";
 import ScanTablet from "./pages/ScanTablet";
+import Reminders from "./pages/Reminders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/scan" element={<ScanPrescription />} />
             <Route path="/scan-tablet" element={<ScanTablet />} />
+            <Route path="/reminders" element={<Reminders />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
