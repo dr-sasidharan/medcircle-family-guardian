@@ -126,7 +126,7 @@ const Profile = () => {
               >
                 {profile.name.charAt(0)}
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="font-heading font-extrabold text-xl">{profile.name}</h2>
                 <p className="text-white/60 text-sm">
                   Age {profile.age} · Blood Group {profile.blood_group}
@@ -137,6 +137,12 @@ const Profile = () => {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => setShowEdit(true)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 flex-shrink-0"
+              >
+                <Pencil size={16} />
+              </button>
             </div>
           )}
         </div>
