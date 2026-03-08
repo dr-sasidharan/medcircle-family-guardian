@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, Clock, Users, User, Plus } from "lucide-react";
+import { Pill, Clock, Users, User, Plus, Stethoscope } from "lucide-react";
 
 const BottomNav = () => {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ const BottomNav = () => {
     { path: "/patient", icon: Pill, label: "Medicines" },
     { path: "/reminders", icon: Clock, label: "History" },
     { path: "__add__", icon: Plus, label: "" },
-    { path: "/caretaker", icon: Users, label: "Family" },
+    { path: "/symptoms", icon: Stethoscope, label: "Symptoms" },
     { path: "/profile", icon: User, label: "Profile" },
   ];
 
