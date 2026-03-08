@@ -410,6 +410,49 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Advanced Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {advancedMetricCards.map((m) => (
+            <Card key={m.label} className="relative overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <m.icon className={`w-4 h-4 ${m.color}`} />
+                  </div>
+                </div>
+                <p className={`text-3xl font-bold tracking-tight ${m.color}`}>{m.fmt(m.value)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* DAU Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" /> Daily Active Users (14 days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ ...chartConfig, dau: { label: "DAU", color: "hsl(var(--primary))" } }} className="h-[250px] w-full">
+              <AreaChart data={dauChart}>
+                <defs>
+                  <linearGradient id="dauGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area type="monotone" dataKey="dau" stroke="hsl(var(--primary))" fill="url(#dauGradient)" strokeWidth={2} />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
         {/* Charts */}
         <div className="grid md:grid-cols-3 gap-6">
           {/* User Growth */}
