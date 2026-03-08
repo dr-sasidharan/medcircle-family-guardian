@@ -84,7 +84,7 @@ const DoctorSummary = () => {
     <div className="min-h-screen bg-background pb-24 page-transition">
       <div className="flex items-center gap-3 p-4 border-b border-border">
         <button onClick={() => navigate(-1)} className="text-foreground p-1"><ArrowLeft size={22} /></button>
-        <h1 className="text-lg font-bold text-foreground">{t("doctor_visit_summary")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Doctor Visit Summary</h1>
       </div>
 
       <div className="px-4 mt-6">
@@ -94,12 +94,12 @@ const DoctorSummary = () => {
               <FileText size={36} className="text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">{t("prepare_visit")}</h2>
-              <p className="text-muted-foreground text-sm mt-2">{t("prepare_visit_desc")}</p>
+              <h2 className="text-xl font-bold text-foreground">Prepare for Your Visit</h2>
+              <p className="text-muted-foreground text-sm mt-2">AI will generate a concise summary of your medicines, adherence, and suggested questions for your doctor.</p>
             </div>
             <button onClick={generateSummary} disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50">
-              {loading ? (<><Loader2 size={20} className="animate-spin" />{t("generating_summary")}</>) : (<><FileText size={20} />{t("generate_summary")}</>)}
+              {loading ? (<><Loader2 size={20} className="animate-spin" />Generating Summary...</>) : (<><FileText size={20} />Generate Summary</>)}
             </button>
           </div>
         ) : (
@@ -107,27 +107,27 @@ const DoctorSummary = () => {
             <div className="bg-card border border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <FileText size={20} className="text-primary" />
-                <h2 className="text-base font-bold text-foreground">{t("your_summary")}</h2>
+                <h2 className="text-base font-bold text-foreground">Your Summary</h2>
               </div>
               <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">{summary}</div>
             </div>
             <div className="flex gap-3">
               <button onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-3.5 text-sm font-bold hover:opacity-90 transition-opacity">
-                <Share2 size={18} />{t("share")}
+                <Share2 size={18} />Share
               </button>
               <button onClick={handlePrint}
                 className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground rounded-2xl py-3.5 text-sm font-bold hover:bg-accent transition-colors">
-                <Printer size={18} />{t("print")}
+                <Printer size={18} />Print
               </button>
             </div>
             <button onClick={generateSummary} disabled={loading}
               className="w-full text-center text-sm font-semibold text-primary py-2">
-              {loading ? t("generating_summary") : t("regenerate")}
+              {loading ? "Generating Summary..." : "Regenerate"}
             </button>
           </div>
         )}
-        <p className="text-xs text-muted-foreground text-center mt-6 italic">{t("ai_disclaimer")}</p>
+        <p className="text-xs text-muted-foreground text-center mt-6 italic">AI-generated content is for awareness only. Always consult your doctor.</p>
       </div>
 
       <BottomNav />
