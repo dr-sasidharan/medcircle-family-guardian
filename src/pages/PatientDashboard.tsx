@@ -310,7 +310,7 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/drug-interaction")}
             className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <FlaskConical size={40} className="text-warning" />
-            <span className="text-lg font-heading font-bold text-foreground">Drug Interaction</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("drug_interaction_checker")}</span>
           </button>
           <button onClick={() => navigate("/hospital-booking")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
