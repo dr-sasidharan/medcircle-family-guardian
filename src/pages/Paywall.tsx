@@ -89,23 +89,30 @@ const Paywall = () => {
 
     setConfirming(true);
     try {
-      // Record payment as pending verification
+      // Record payment as success and activate plan instantly
       const { error: payErr } = await supabase.from("payments").insert({
         patient_profile_id: patientProfileId,
         amount: selectedPlan.price,
         plan: selectedPlan.plan_value,
-        status: "pending_verification",
+        status: "success",
       });
 
       if (payErr) throw payErr;
 
-      // Show success — admin will verify and approve
+      // Activate the plan immediately
+      const { error: planErr } = await supabase
+        .from("patient_profiles")
+        .update({ plan: selectedPlan.plan_value })
+        .eq("id", patientProfileId);
+
+      if (planErr) throw planErr;
+
       setActivatedPlan(selectedPlan.label);
       setShowSuccess(true);
-      toast.success("Payment submitted! Your plan will be activated shortly.");
+      toast.success("Plan activated! 🎉");
     } catch (err: any) {
       console.error("Payment confirm error:", err);
-      toast.error("Failed to record payment. Please try again.");
+      toast.error("Failed to activate plan. Please try again.");
     } finally {
       setConfirming(false);
     }
