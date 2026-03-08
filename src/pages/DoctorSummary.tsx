@@ -118,7 +118,7 @@ const DoctorSummary = () => {
               </button>
               <button onClick={handlePrint}
                 className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground rounded-2xl py-3.5 text-sm font-bold hover:bg-accent transition-colors">
-                <Printer size={18} />{t("print")}
+                <Printer size={18} />Print
               </button>
             </div>
             <button onClick={generateSummary} disabled={loading}
