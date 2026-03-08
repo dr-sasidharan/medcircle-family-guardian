@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
@@ -8,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Settings = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const { elderlyMode, setElderlyMode } = useElderlyMode();
 
@@ -18,7 +16,7 @@ const Settings = () => {
         <button onClick={() => navigate(-1)} className="text-foreground p-1">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t("settings")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Settings</h1>
         <div className="ml-auto">
           <LanguageToggle />
         </div>
@@ -33,8 +31,8 @@ const Settings = () => {
                 <Eye size={24} className="text-primary" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-foreground">{t("elderly_mode")}</h2>
-                <p className="text-sm text-muted-foreground">{t("elderly_mode_desc")}</p>
+                <h2 className="text-base font-bold text-foreground">Elderly Mode</h2>
+                <p className="text-sm text-muted-foreground">Larger text, simpler layout</p>
               </div>
             </div>
             <button
@@ -53,7 +51,7 @@ const Settings = () => {
           {elderlyMode && (
             <div className="mt-4 bg-success/10 border border-success/30 rounded-xl p-3 animate-fade-in">
               <p className="text-sm text-success font-semibold">
-                ✅ {t("elderly_mode")} enabled — larger text, higher contrast, simplified layout
+                ✅ Elderly Mode enabled — larger text, higher contrast, simplified layout
               </p>
             </div>
           )}
@@ -61,7 +59,7 @@ const Settings = () => {
 
         {/* Language Section */}
         <div className="bg-card border border-border rounded-2xl p-5">
-          <h2 className="text-base font-bold text-foreground mb-3">Language / மொழி / भாஷை</h2>
+          <h2 className="text-base font-bold text-foreground mb-3">Language / மொழி / भाषा / ഭാഷ</h2>
           <LanguageToggle />
         </div>
 
@@ -78,7 +76,7 @@ const Settings = () => {
             <LogOut size={24} className="text-destructive" />
           </div>
           <div className="text-left">
-            <h2 className="text-base font-bold text-destructive">{t("logout") || "Logout"}</h2>
+            <h2 className="text-base font-bold text-destructive">Logout</h2>
             <p className="text-sm text-muted-foreground">Sign out of your account</p>
           </div>
         </button>

@@ -21,7 +21,7 @@ const verdictConfig = {
 
 const DrugInteraction = () => {
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [med1, setMed1] = useState("");
   const [med2, setMed2] = useState("");
   const [result, setResult] = useState<InteractionResult | null>(null);
@@ -56,24 +56,24 @@ const DrugInteraction = () => {
         <button onClick={() => navigate(-1)} className="text-foreground p-1">
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t("drug_interaction_checker")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Drug Interaction Checker</h1>
       </div>
 
       <div className="px-4 mt-6 space-y-4">
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("medicine_1")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Medicine 1</label>
           <input value={med1} onChange={(e) => setMed1(e.target.value)} placeholder="e.g. Metformin"
             className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("medicine_2")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Medicine 2</label>
           <input value={med2} onChange={(e) => setMed2(e.target.value)} placeholder="e.g. Aspirin"
             className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
 
         <button onClick={checkInteraction} disabled={loading}
           className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50">
-          {loading ? (<><Loader2 size={20} className="animate-spin" />{t("checking")}</>) : (<><Search size={20} />{t("check_interaction")}</>)}
+          {loading ? (<><Loader2 size={20} className="animate-spin" />Checking...</>) : (<><Search size={20} />Check Interaction</>)}
         </button>
 
         {result && config && (
@@ -91,7 +91,7 @@ const DrugInteraction = () => {
               <div className="mt-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye size={16} className="text-muted-foreground" />
-                  <h3 className="text-sm font-bold text-foreground">{t("symptoms_to_watch")}</h3>
+                  <h3 className="text-sm font-bold text-foreground">Symptoms to Watch</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {result.symptoms_to_watch.map((s, i) => (
@@ -103,7 +103,7 @@ const DrugInteraction = () => {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground text-center italic">{t("ai_disclaimer")}</p>
+        <p className="text-xs text-muted-foreground text-center italic">AI-generated content is for awareness only. Always consult your doctor.</p>
       </div>
 
       <BottomNav />

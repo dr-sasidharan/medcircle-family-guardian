@@ -24,7 +24,7 @@ const colorMap = {
 };
 
 const DailyInsights = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,11 +61,11 @@ const DailyInsights = () => {
       <div className="px-4 mt-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={20} className="text-primary" />
-          <h2 className="text-lg font-bold text-foreground">{t("todays_insights")}</h2>
+          <h2 className="text-lg font-bold text-foreground">Today's Insights</h2>
         </div>
         <div className="flex items-center justify-center py-8">
           <Loader2 size={24} className="animate-spin text-primary" />
-          <span className="ml-2 text-sm text-muted-foreground">{t("generating_insights")}</span>
+          <span className="ml-2 text-sm text-muted-foreground">Generating insights...</span>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ const DailyInsights = () => {
     <div className="px-4 mt-6">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles size={20} className="text-primary" />
-        <h2 className="text-lg font-bold text-foreground">{t("todays_insights")}</h2>
+        <h2 className="text-lg font-bold text-foreground">Today's Insights</h2>
       </div>
       <div className="space-y-3">
         {tips.map((tip, i) => {
@@ -101,7 +101,7 @@ const DailyInsights = () => {
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground text-center mt-3 italic">{t("ai_disclaimer")}</p>
+      <p className="text-xs text-muted-foreground text-center mt-3 italic">AI-generated content is for awareness only. Always consult your doctor.</p>
     </div>
   );
 };
