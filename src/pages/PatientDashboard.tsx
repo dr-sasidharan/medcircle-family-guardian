@@ -605,7 +605,7 @@ const PatientDashboard = () => {
         </button>
         <button onClick={() => navigate("/scan-tablet?mode=identify")}
           className="w-full flex items-center justify-center gap-3 bg-secondary rounded-2xl py-4 text-base font-heading font-bold text-secondary-foreground hover:bg-accent transition-colors">
-          <HelpCircle size={22} /> What Is This Tablet?
+          <HelpCircle size={22} /> {t("what_is_tablet")}
         </button>
         <button onClick={() => navigate("/drug-interaction")}
           className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-heading font-bold text-foreground hover:bg-secondary transition-colors">
