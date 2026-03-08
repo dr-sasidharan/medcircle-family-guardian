@@ -2,3 +2,6 @@ project_id = "zaxlecwjefylqgshrpyw"
 
 [functions.scan-prescription]
 verify_jwt = false
+
+[functions.scan-tablet]
+verify_jwt = false
