@@ -108,7 +108,7 @@ export default function Auth() {
         if (error) throw error;
         toast.success("Logged in successfully!");
       } else {
-        const { data: signUpData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -117,11 +117,7 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        if (signUpData?.session) {
-          toast.success("Account created! Welcome to MedCircle! 🎉");
-        } else {
-          toast.success("Account created! You can now log in.");
-        }
+        toast.success("Check your email for verification link!");
       }
     } catch (error: any) {
       toast.error(error.message);
