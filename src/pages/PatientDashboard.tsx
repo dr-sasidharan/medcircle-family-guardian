@@ -37,11 +37,11 @@ const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
   with_food: t("with_food"),
 });
 
-const sectionConfig = {
-  morning: { emoji: "☀️", label: "Morning", gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
-  afternoon: { emoji: "🌤️", label: "Afternoon", gradient: "from-[#dbeafe] to-[#eff6ff]", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
-  night: { emoji: "🌙", label: "Night", gradient: "from-[#ede9fe] to-[#f5f3ff]", pillBg: "bg-[#ede9fe]", iconBg: "bg-[#8b5cf6]", text: "text-[#4c1d95]", line: "bg-[#c4b5fd]" },
-};
+const sectionConfig = (t: (key: string) => string) => ({
+  morning: { emoji: "☀️", label: t("morning"), gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
+  afternoon: { emoji: "🌤️", label: t("afternoon"), gradient: "from-[#dbeafe] to-[#eff6ff]", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
+  night: { emoji: "🌙", label: t("night"), gradient: "from-[#ede9fe] to-[#f5f3ff]", pillBg: "bg-[#ede9fe]", iconBg: "bg-[#8b5cf6]", text: "text-[#4c1d95]", line: "bg-[#c4b5fd]" },
+});
 
 const PatientDashboard = () => {
   const { t } = useLanguage();
