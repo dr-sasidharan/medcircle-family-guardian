@@ -153,6 +153,23 @@ const CaretakerDashboard = () => {
         <LanguageToggle />
       </div>
 
+      {/* Book Appointment for Patient */}
+      <div className="mx-4 mt-4">
+        <button
+          onClick={() => navigate("/hospital-booking")}
+          className="w-full bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-center gap-3 hover:bg-primary/20 transition-colors"
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Stethoscope size={24} className="text-primary" />
+          </div>
+          <div className="text-left flex-1">
+            <h3 className="font-bold text-foreground text-sm">Book Hospital Checkup</h3>
+            <p className="text-xs text-muted-foreground">Schedule an appointment for {profile?.name || "patient"}</p>
+          </div>
+          <ChevronRight size={18} className="text-muted-foreground" />
+        </button>
+      </div>
+
       {/* Missed Alert */}
       {missedDoses.length > 0 && (
         <div className="mx-4 mt-4 bg-destructive/10 border border-destructive/30 rounded-2xl p-4 flex items-start gap-3 pulse-alert">
