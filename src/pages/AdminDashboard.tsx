@@ -67,7 +67,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
     totalUsers: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
+    retentionRate: 0, churnRate: 0, conversionRate: 0, arpu: 0, activeUsers7d: 0,
   });
+  const [dauChart, setDauChart] = useState<{ date: string; dau: number }[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
