@@ -63,11 +63,11 @@ const DailyInsights = () => {
       <div className="px-4 mt-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={20} className="text-primary" />
-          <h2 className="text-lg font-bold text-foreground">Today's Insights</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("todays_insights")}</h2>
         </div>
         <div className="flex items-center justify-center py-8">
           <Loader2 size={24} className="animate-spin text-primary" />
-          <span className="ml-2 text-sm text-muted-foreground">Generating insights...</span>
+          <span className="ml-2 text-sm text-muted-foreground">{t("generating_insights")}</span>
         </div>
       </div>
     );
