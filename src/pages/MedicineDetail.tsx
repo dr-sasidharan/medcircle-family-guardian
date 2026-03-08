@@ -30,7 +30,7 @@ const SECTION_ICONS: Record<string, { icon: string; color: string; bg: string }>
 };
 
 const MedicineDetail = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [medicine, setMedicine] = useState<MedicineData | null>(null);
