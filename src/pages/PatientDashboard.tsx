@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
+import { useNotificationReminders } from "@/hooks/useNotificationReminders";
 
 interface Medicine {
   id: string;
@@ -46,6 +47,7 @@ const PatientDashboard = () => {
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
   const FOOD_LABELS = getFoodLabels(t);
+  useNotificationReminders();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [takenIds, setTakenIds] = useState<Set<string>>(new Set());
