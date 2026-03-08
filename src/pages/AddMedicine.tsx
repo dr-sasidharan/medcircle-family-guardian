@@ -36,11 +36,15 @@ const AddMedicine = () => {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Please sign in first"); return; }
+
     const { error } = await supabase.from("medicines").insert({
       name: name.trim(),
       dosage: dosage.trim(),
       timing,
       food_instruction: food,
+      user_id: user.id,
     });
 
     if (error) {
