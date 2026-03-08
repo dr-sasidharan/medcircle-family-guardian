@@ -70,14 +70,14 @@ export default function Onboarding() {
 
       const { error } = await supabase
         .from("patient_profiles")
-        .update({
+        .upsert({
+          user_id: userId!,
           name: name.trim(),
           age: Number(age),
           blood_group: bloodGroup || null,
           allergies: finalAllergies.length > 0 ? finalAllergies : null,
           onboarding_complete: true,
-        })
-        .eq("user_id", userId!);
+        }, { onConflict: "user_id" });
 
       if (error) throw error;
 
