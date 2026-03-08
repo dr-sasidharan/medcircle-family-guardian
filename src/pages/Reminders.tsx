@@ -149,6 +149,7 @@ const Reminders = () => {
     }
   };
 
+  const markAsTaken = async (doseId: string) => {
     setAnimatingId(doseId);
     const { error } = await supabase
       .from("doses")
