@@ -103,7 +103,7 @@ const DailyInsights = () => {
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground text-center mt-3 italic">AI-generated content is for awareness only. Always consult your doctor.</p>
+      <p className="text-xs text-muted-foreground text-center mt-3 italic">{t("ai_disclaimer")}</p>
     </div>
   );
 };
