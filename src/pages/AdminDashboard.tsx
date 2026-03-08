@@ -48,6 +48,8 @@ interface PaymentRow {
   patient_name?: string;
 }
 
+const TIMEOUT_MS = 15 * 60 * 1000;
+
 export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
