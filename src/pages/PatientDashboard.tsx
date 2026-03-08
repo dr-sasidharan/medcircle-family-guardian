@@ -476,7 +476,7 @@ const PatientDashboard = () => {
               <span className="text-xs font-heading font-bold text-primary">{t("scan")}</span>
             </button>
           </div>
-          {sections.map((section) => {
+          const configs = sectionConfig(t);
             const config = sectionConfig[section.key as keyof typeof sectionConfig];
             const sectionMeds = medicines.filter((m) => m.timing === section.key);
             if (sectionMeds.length === 0) return null;
