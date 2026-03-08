@@ -265,7 +265,7 @@ const MedicineDetail = () => {
                   <AlertTriangle size={16} className="text-[#e11d48]" />
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-[#9f1239]">
-                  {t("drug_interaction")}
+                  Drug Interaction
                 </h3>
               </div>
               <p className="text-[#9f1239] leading-relaxed text-[15px]">{info.drug_interactions}</p>
