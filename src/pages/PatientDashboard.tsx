@@ -320,7 +320,7 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Settings size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Profile</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("profile")}</span>
           </button>
         </div>
 
