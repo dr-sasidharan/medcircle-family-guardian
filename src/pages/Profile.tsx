@@ -272,6 +272,17 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Emergency QR Code */}
+      {profile && (
+        <EmergencyQRSection
+          emergencyToken={profile.emergency_token}
+          patientName={profile.name}
+          bloodGroup={profile.blood_group}
+          allergies={profile.allergies}
+          emergencyContact={profile.emergency_contact}
+        />
+      )}
+
       {/* Quick Links */}
       <div className="px-4 mt-6 space-y-3">
         <button onClick={() => navigate("/doctor-summary")}
