@@ -10,6 +10,7 @@ interface RefillData {
 }
 
 const RefillBanner = () => {
+  const { t } = useLanguage();
   const [lowRefills, setLowRefills] = useState<RefillData[]>([]);
 
   useEffect(() => {
