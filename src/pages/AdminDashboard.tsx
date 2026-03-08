@@ -143,7 +143,51 @@ export default function AdminDashboard() {
         .filter((p) => p.created_at >= todayStart)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday });
+      // Advanced metrics
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const activeUsers7d = allUsers.filter(
+        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
+      ).length;
+
+      // Retention: users active in last 7 days who signed up more than 7 days ago
+      const usersOlderThan7d = allUsers.filter((u) => new Date(u.created_at) < sevenDaysAgo);
+      const retainedUsers = usersOlderThan7d.filter(
+        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
+      ).length;
+      const retentionRate = usersOlderThan7d.length > 0
+        ? Math.round((retainedUsers / usersOlderThan7d.length) * 100)
+        : 0;
+
+      // Churn: users older than 7d who haven't been active in 7 days
+      const churnRate = usersOlderThan7d.length > 0
+        ? Math.round(((usersOlderThan7d.length - retainedUsers) / usersOlderThan7d.length) * 100)
+        : 0;
+
+      // Conversion: free to paid
+      const conversionRate = totalUsers > 0
+        ? Math.round((payingUsers / totalUsers) * 100)
+        : 0;
+
+      // ARPU
+      const totalRevenue = paymentsList.filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0);
+      const arpu = payingUsers > 0 ? Math.round(totalRevenue / payingUsers) : 0;
+
+      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
+
+      // DAU chart (last 14 days)
+      const dauData = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+        const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+        const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
+        const dau = allUsers.filter(
+          (u) => u.last_active_at && u.last_active_at >= dayStart && u.last_active_at < dayEnd
+        ).length;
+        dauData.push({ date: dateStr, dau });
+      }
+      setDauChart(dauData);
 
       // User growth chart (last 7 days)
       const growthData = [];
