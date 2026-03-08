@@ -134,13 +134,13 @@ const Paywall = () => {
             <CheckCircle2 size={40} className="text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground mb-2">
-            Payment Submitted! 🎉
+            Plan Activated! 🎉
           </h1>
           <p className="text-muted-foreground mb-2">
-            Your payment for <span className="font-bold text-foreground">{activatedPlan}</span> is being verified.
+            Your <span className="font-bold text-foreground">{activatedPlan}</span> plan is now active.
           </p>
           <p className="text-sm text-muted-foreground mb-8">
-            Your plan will be activated once we verify your UPI transaction. This usually takes just a few minutes.
+            All premium features are unlocked. Enjoy MedCircle!
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
