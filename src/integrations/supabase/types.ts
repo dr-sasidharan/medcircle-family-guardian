@@ -236,6 +236,7 @@ export type Database = {
           last_active_at: string | null
           name: string
           photo_url: string | null
+          plan: string
           updated_at: string
           user_id: string | null
         }
@@ -251,6 +252,7 @@ export type Database = {
           last_active_at?: string | null
           name?: string
           photo_url?: string | null
+          plan?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -266,10 +268,52 @@ export type Database = {
           last_active_at?: string | null
           name?: string
           photo_url?: string | null
+          plan?: string
           updated_at?: string
           user_id?: string | null
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          patient_profile_id: string
+          plan: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          patient_profile_id: string
+          plan: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          patient_profile_id?: string
+          plan?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
