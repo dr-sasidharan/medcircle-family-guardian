@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
 
       if (!caretakers?.length) continue;
 
-      // Send SMS to each caretaker
+      // Send WhatsApp + SMS to each caretaker
       const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
       const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
       const fromPhone = Deno.env.get("TWILIO_PHONE_NUMBER");
@@ -119,12 +119,29 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const message = `⚠️ MedCircle Alert: ${profile.name} missed their ${med.timing} dose of ${med.name} (${med.dosage}). Please check on them.`;
+      const timingTamil: Record<string, string> = {
+        morning: "காலை",
+        afternoon: "மதியம்",
+        night: "இரவு",
+      };
+
+      const whatsappMessage = `⚠️ MedCircle பராமரிப்பாளர் எச்சரிக்கை
+
+${profile.name} அவர்கள் ${timingTamil[med.timing] || med.timing} மருந்தை எடுக்கவில்லை:
+💊 ${med.name} - ${med.dosage}
+
+தயவுசெய்து அவர்களை சரிபார்க்கவும்.
+
+— MedCircle Family Guardian`;
+
+      const smsMessage = `⚠️ MedCircle Alert: ${profile.name} missed their ${med.timing} dose of ${med.name} (${med.dosage}). Please check on them.`;
 
       for (const caretaker of caretakers) {
         const phone = caretaker.phone.replace(/\s/g, "");
+        
+        // Send WhatsApp message
         try {
-          const res = await fetch(
+          const waRes = await fetch(
             `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
             {
               method: "POST",
@@ -133,19 +150,40 @@ Deno.serve(async (req) => {
                 Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
               },
               body: new URLSearchParams({
-                To: phone,
-                From: fromPhone,
-                Body: message,
+                To: `whatsapp:${phone}`,
+                From: `whatsapp:${fromPhone}`,
+                Body: whatsappMessage,
               }),
             }
           );
 
-          if (res.ok) {
+          if (waRes.ok) {
             alertsSent++;
-            console.log(`Alert sent to ${caretaker.name} for ${med.name}`);
+            console.log(`WhatsApp alert sent to ${caretaker.name} for ${med.name}`);
           } else {
-            const err = await res.json();
-            console.error(`Twilio error for ${caretaker.name}:`, err);
+            const err = await waRes.json();
+            console.error(`WhatsApp error for ${caretaker.name}:`, err);
+            
+            // Fallback to SMS if WhatsApp fails
+            const smsRes = await fetch(
+              `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+                },
+                body: new URLSearchParams({
+                  To: phone,
+                  From: fromPhone,
+                  Body: smsMessage,
+                }),
+              }
+            );
+            if (smsRes.ok) {
+              alertsSent++;
+              console.log(`SMS fallback sent to ${caretaker.name}`);
+            }
           }
         } catch (e) {
           console.error(`Failed to send to ${caretaker.name}:`, e);
