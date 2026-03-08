@@ -48,6 +48,7 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const navigate = useNavigate();
   const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
