@@ -123,7 +123,7 @@ const DoctorSummary = () => {
             </div>
             <button onClick={generateSummary} disabled={loading}
               className="w-full text-center text-sm font-semibold text-primary py-2">
-              {loading ? t("generating_summary") : t("regenerate")}
+              {loading ? "Generating Summary..." : "Regenerate"}
             </button>
           </div>
         )}
