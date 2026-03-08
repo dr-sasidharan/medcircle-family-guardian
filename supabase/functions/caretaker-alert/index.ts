@@ -76,10 +76,12 @@ Deno.serve(async (req) => {
 
     const results = [];
     for (const caretaker of caretakers) {
-      // Clean phone number
       const phone = caretaker.phone.replace(/\s/g, "");
+      let sent = false;
+
+      // Try WhatsApp first
       try {
-        const twilioRes = await fetch(
+        const waRes = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
           {
             method: "POST",
@@ -88,23 +90,52 @@ Deno.serve(async (req) => {
               Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
             },
             body: new URLSearchParams({
-              To: phone,
-              From: fromPhone,
+              To: `whatsapp:${phone}`,
+              From: `whatsapp:${fromPhone}`,
               Body: message,
             }),
           }
         );
 
-        if (!twilioRes.ok) {
-          const err = await twilioRes.json();
-          console.error(`Twilio error for ${caretaker.name}:`, err);
-          results.push({ name: caretaker.name, sent: false, error: err.message });
+        if (waRes.ok) {
+          sent = true;
+          results.push({ name: caretaker.name, sent: true, channel: "whatsapp" });
         } else {
-          results.push({ name: caretaker.name, sent: true });
+          const err = await waRes.json();
+          console.error(`WhatsApp error for ${caretaker.name}:`, err);
         }
       } catch (e) {
-        console.error(`Failed to send to ${caretaker.name}:`, e);
-        results.push({ name: caretaker.name, sent: false, error: e.message });
+        console.error(`WhatsApp failed for ${caretaker.name}:`, e);
+      }
+
+      // Fallback to SMS if WhatsApp failed
+      if (!sent) {
+        try {
+          const smsRes = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+              },
+              body: new URLSearchParams({
+                To: phone,
+                From: fromPhone,
+                Body: message,
+              }),
+            }
+          );
+
+          if (smsRes.ok) {
+            results.push({ name: caretaker.name, sent: true, channel: "sms" });
+          } else {
+            const err = await smsRes.json();
+            results.push({ name: caretaker.name, sent: false, error: err.message });
+          }
+        } catch (e) {
+          results.push({ name: caretaker.name, sent: false, error: e.message });
+        }
       }
     }
 
