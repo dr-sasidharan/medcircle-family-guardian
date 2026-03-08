@@ -223,23 +223,66 @@ const ScanTablet = () => {
               <p className="text-foreground text-sm leading-relaxed">{result.storage}</p>
             </div>
 
-            {/* Save Button */}
+            {/* Timing & Food Selectors + Save */}
             {!isIdentifyMode && (
-              <button
-                onClick={handleSave}
-                disabled={saved}
-                className={`w-full py-4 rounded-2xl text-lg font-bold transition-all ${
-                  saved
-                    ? "bg-success/15 text-success"
-                    : "bg-primary text-primary-foreground shadow-lg hover:opacity-90"
-                }`}
-              >
-                {saved ? (
-                  <span className="flex items-center justify-center gap-2"><Check size={20} /> Saved to Medicine List</span>
-                ) : (
-                  "Confirm & Add to Medicines"
-                )}
-              </button>
+              <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
+                {/* Timing */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">When to take</label>
+                  <div className="flex gap-2">
+                    {(["morning", "afternoon", "night"] as const).map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTiming(time)}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                          selectedTiming === time
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {time === "morning" ? "☀️" : time === "afternoon" ? "🌤️" : "🌙"} {time.charAt(0).toUpperCase() + time.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Food Instruction */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food instruction</label>
+                  <div className="flex gap-2">
+                    {(["before_food", "after_food", "with_food"] as const).map((food) => (
+                      <button
+                        key={food}
+                        onClick={() => setSelectedFood(food)}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                          selectedFood === food
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {food === "before_food" ? "Before" : food === "after_food" ? "After" : "With"} Food
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSave}
+                  disabled={saved}
+                  className={`w-full py-4 rounded-2xl text-lg font-bold transition-all ${
+                    saved
+                      ? "bg-success/15 text-success"
+                      : "bg-primary text-primary-foreground shadow-lg hover:opacity-90"
+                  }`}
+                >
+                  {saved ? (
+                    <span className="flex items-center justify-center gap-2"><Check size={20} /> Saved to Medicine List</span>
+                  ) : (
+                    "Confirm & Add to Medicines"
+                  )}
+                </button>
+              </div>
             )}
 
             {/* Scan Again */}
