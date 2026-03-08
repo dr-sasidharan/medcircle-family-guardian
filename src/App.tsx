@@ -68,6 +68,7 @@ const App = () => (
                   <Route path="/settings" element={<P><Settings /></P>} />
                   <Route path="/admin" element={<P><AdminDashboard /></P>} />
                   <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
+                  <Route path="/notifications" element={<P><NotificationLog /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
