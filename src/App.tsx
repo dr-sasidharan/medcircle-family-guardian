@@ -24,6 +24,7 @@ import DrugInteraction from "./pages/DrugInteraction";
 import DoctorSummary from "./pages/DoctorSummary";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
+import EmergencyCard from "./pages/EmergencyCard";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 

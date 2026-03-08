@@ -4,6 +4,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Crown } from "lucide-react";
+import EmergencyQRSection from "@/components/EmergencyQRSection";
 import { toast } from "sonner";
 
 interface Caretaker {
