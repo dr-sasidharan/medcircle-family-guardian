@@ -239,8 +239,20 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
             {conditions.map((c, i) => (
               <span key={i} className="bg-accent text-accent-foreground px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5">
                 {c}
-                <button onClick={() => setConditions(conditions.filter((_, j) => j !== i))}><Trash2 size={12} /></button>
+                <button onClick={() => setConditions(conditions.filter((_, j) => j !== i))} className="p-0.5 hover:text-destructive"><Trash2 size={12} /></button>
               </span>
+            ))}
+          </div>
+          {/* Quick-add common conditions */}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {COMMON_CONDITIONS.filter(c => !conditions.includes(c)).slice(0, 6).map((c) => (
+              <button
+                key={c}
+                onClick={() => setConditions([...conditions, c])}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border transition-colors"
+              >
+                + {c}
+              </button>
             ))}
           </div>
           <div className="flex gap-2">
