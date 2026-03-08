@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
+import WhatsAppPreview from "@/components/WhatsAppPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
@@ -502,6 +503,14 @@ const PatientDashboard = () => {
 
       {/* Daily Insights */}
       <DailyInsights />
+
+      {/* WhatsApp Preview */}
+      <div className="px-4 mt-6">
+        <h2 className="text-base font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="text-xl">💬</span> WhatsApp Reminders Preview
+        </h2>
+        <WhatsAppPreview />
+      </div>
 
       {/* Action Buttons */}
       <div className="px-4 mt-6 space-y-3">

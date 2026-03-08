@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
             patient_profile_id: profile.id,
             name: "Priya Kumar",
             relationship: "Daughter",
-            phone: "+91 87654 32109",
+            phone: "+919003650607",
             email: "priya@example.com",
           },
           {
