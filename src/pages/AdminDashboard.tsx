@@ -48,6 +48,8 @@ interface PaymentRow {
   patient_name?: string;
 }
 
+const TIMEOUT_MS = 15 * 60 * 1000;
+
 export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
@@ -179,6 +181,28 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [authenticated, fetchData]);
 
+  // Session timeout after 15 minutes of inactivity
+  useEffect(() => {
+    if (!authenticated) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setAuthenticated(false), TIMEOUT_MS);
+    };
+    const events = ["mousedown", "keydown", "scroll", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [authenticated]);
+
+  const handleLogout = () => {
+    setAuthenticated(false);
+    setPassword("");
+  };
+
   const exportCSV = () => {
     const header = "Name,Plan,Signup Date,Last Active\n";
     const rows = users
@@ -258,10 +282,15 @@ export default function AdminDashboard() {
               Last refreshed: {lastRefresh.toLocaleTimeString("en-IN")} · Auto-refresh every 60s
             </p>
           </div>
-          <Button variant="outline" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <Lock className="w-4 h-4 mr-2" /> Logout
+            </Button>
+          </div>
         </div>
       </div>
 
