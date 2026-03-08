@@ -40,8 +40,10 @@ const sectionConfig = {
 };
 
 const PatientDashboard = () => {
+  const { t } = useLanguage();
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
+  const FOOD_LABELS = getFoodLabels(t);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [takenIds, setTakenIds] = useState<Set<string>>(new Set());

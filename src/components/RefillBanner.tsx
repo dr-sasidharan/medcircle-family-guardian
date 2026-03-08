@@ -75,7 +75,7 @@ const RefillBanner = () => {
                 {r.medicine_name}
               </p>
               <p className={`text-xs ${isUrgent ? "text-[#e11d48]/70" : "text-[#b45309]/70"}`}>
-                {r.tablets_remaining} days remaining · Time to refill
+                {r.tablets_remaining} {t("days")} · {t("time_to_refill")}
               </p>
             </div>
             <button
