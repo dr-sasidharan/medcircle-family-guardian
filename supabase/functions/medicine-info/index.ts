@@ -64,8 +64,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { medicine_name, dosage } = await req.json();
+    const { medicine_name, dosage, language } = await req.json();
     const normalizedName = normalizeName(medicine_name || "");
+    const langMap: Record<string, string> = { ta: "Tamil", hi: "Hindi", ml: "Malayalam" };
+    const langInstruction = langMap[language] ? `Respond in ${langMap[language]}.` : "Respond in English.";
 
     // High-confidence local profiles for known medicines
     if (KNOWN_MEDICINES[normalizedName]) {
