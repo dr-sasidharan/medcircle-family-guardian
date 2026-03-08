@@ -89,7 +89,66 @@ const Reminders = () => {
     return () => { supabase.removeChannel(channel); };
   }, [fetchDoses]);
 
-  const markAsTaken = async (doseId: string) => {
+  // Fetch all active medicines for the add reminder dialog
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      const { data } = await supabase
+        .from("medicines")
+        .select("id, name, dosage")
+        .eq("is_active", true);
+      setAllMedicines(data || []);
+    };
+    fetchMedicines();
+  }, []);
+
+  const handleAddReminder = async () => {
+    if (!selectedMedicineId || !selectedTiming) {
+      toast.error("Please select a medicine and timing");
+      return;
+    }
+    setAddingReminder(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const today = new Date().toISOString().split("T")[0];
+
+      // Check if dose already exists
+      const { data: existing } = await supabase
+        .from("doses")
+        .select("id")
+        .eq("medicine_id", selectedMedicineId)
+        .eq("scheduled_date", today)
+        .eq("scheduled_time", selectedTiming)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error("Reminder already exists for this medicine and timing today");
+        setAddingReminder(false);
+        return;
+      }
+
+      await supabase.from("doses").insert({
+        medicine_id: selectedMedicineId,
+        user_id: user.id,
+        scheduled_date: today,
+        scheduled_time: selectedTiming,
+        taken: false,
+        missed: false,
+      });
+
+      toast.success("Reminder added! ⏰");
+      setDialogOpen(false);
+      setSelectedMedicineId("");
+      setSelectedTiming("");
+      fetchDoses();
+    } catch (err) {
+      toast.error("Failed to add reminder");
+    } finally {
+      setAddingReminder(false);
+    }
+  };
+
     setAnimatingId(doseId);
     const { error } = await supabase
       .from("doses")
