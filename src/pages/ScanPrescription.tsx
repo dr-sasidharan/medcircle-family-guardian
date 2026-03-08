@@ -209,14 +209,57 @@ const ScanPrescription = () => {
                   <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-sm font-semibold">
                     {med.dosage}
                   </span>
-                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-sm font-semibold">
-                    {timingLabels[med.timing] || med.timing}
-                  </span>
-                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-sm font-semibold">
-                    {foodLabels[med.foodInstruction] || med.foodInstruction}
-                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{med.purpose}</p>
+
+                {/* Editable Timing */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Timing</label>
+                  <div className="flex gap-2">
+                    {(["morning", "afternoon", "night"] as const).map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => {
+                          setMedicines((prev) =>
+                            prev.map((m, idx) => (idx === i ? { ...m, timing: time } : m))
+                          );
+                        }}
+                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                          med.timing === time
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {time === "morning" ? "☀️" : time === "afternoon" ? "🌤️" : "🌙"} {timingLabels[time] || time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Editable Food Instruction */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food Instruction</label>
+                  <div className="flex gap-2">
+                    {(["before_food", "after_food", "with_food"] as const).map((food) => (
+                      <button
+                        key={food}
+                        onClick={() => {
+                          setMedicines((prev) =>
+                            prev.map((m, idx) => (idx === i ? { ...m, foodInstruction: food } : m))
+                          );
+                        }}
+                        className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                          med.foodInstruction === food
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {foodLabels[food] || food}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   onClick={() => handleSave(i)}
                   disabled={med.saved}
