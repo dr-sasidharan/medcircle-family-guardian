@@ -138,7 +138,8 @@ const translations: Translations = {
   // Refill
   refill_alert: { en: "runs out in", ta: "தீர்ந்து போகும்", hi: "में खत्म हो जाएगी", ml: "തീരും" },
   days: { en: "days", ta: "நாட்கள்", hi: "दिन", ml: "ദിവസങ്ങൾ" },
-  time_to_refill: { en: "Time to refill.", ta: "மீண்டும் நிரப்ப வேண்டிய நேரம்.", hi: "रीफिल करने का समय।", ml: "റീഫിൽ ചെയ്യാൻ സമയമായി." },
+  days_remaining: { en: "days remaining", ta: "நாட்கள் மீதம்", hi: "दिन शेष", ml: "ദിവസങ്ങൾ ശേഷിക്കുന്നു" },
+  time_to_refill: { en: "Time to refill", ta: "மீண்டும் நிரப்ப வேண்டிய நேரம்", hi: "रीफिल करने का समय", ml: "റീഫിൽ ചെയ്യാൻ സമയമായി" },
 
   // Empty state
   no_medicines_yet: { en: "No medicines added yet", ta: "இன்னும் மருந்துகள் சேர்க்கப்படவில்லை", hi: "अभी तक कोई दवा नहीं जोड़ी गई", ml: "ഇതുവരെ മരുന്നുകൾ ചേർത്തിട്ടില്ല" },
