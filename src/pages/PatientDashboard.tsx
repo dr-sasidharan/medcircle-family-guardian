@@ -300,7 +300,7 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/reminders")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Pill size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Medicines</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("medicines")}</span>
           </button>
           <button onClick={() => navigate("/scan")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
