@@ -79,8 +79,8 @@ const ScanTablet = () => {
       const { error } = await supabase.from("medicines").insert({
         name: result.name,
         dosage: result.dosage,
-        timing: "morning",
-        food_instruction: "after_food",
+        timing: selectedTiming,
+        food_instruction: selectedFood,
         purpose: result.purpose_en,
         user_id: user.id,
         is_active: true,
