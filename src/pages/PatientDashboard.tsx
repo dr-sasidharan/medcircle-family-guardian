@@ -467,7 +467,7 @@ const PatientDashboard = () => {
         <div className="px-4 mt-6 space-y-6">
           {/* Section Title + Scan Button */}
           <div className="flex items-center justify-between">
-            <h2 className="font-heading font-extrabold text-lg text-foreground">Today's Medicines</h2>
+            <h2 className="font-heading font-extrabold text-lg text-foreground">{t("todays_medicines")}</h2>
             <button
               onClick={() => navigate("/scan")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
