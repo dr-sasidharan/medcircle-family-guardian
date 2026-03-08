@@ -30,7 +30,10 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
   const [conditions, setConditions] = useState<string[]>(profile.chronic_conditions || []);
   const [newCondition, setNewCondition] = useState("");
   const [emergencyContact, setEmergencyContact] = useState(profile.emergency_contact || "");
+  const [photoUrl, setPhotoUrl] = useState(profile.photo_url || "");
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -40,10 +43,44 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
       setAllergies(profile.allergies || []);
       setConditions(profile.chronic_conditions || []);
       setEmergencyContact(profile.emergency_contact || "");
+      setPhotoUrl(profile.photo_url || "");
       setNewAllergy("");
       setNewCondition("");
     }
   }, [open, profile]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${profile.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("profile-photos")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error("Failed to upload photo");
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("profile-photos").getPublicUrl(filePath);
+    // Add cache-busting param
+    setPhotoUrl(`${data.publicUrl}?t=${Date.now()}`);
+    setUploading(false);
+    toast.success("Photo uploaded!");
+  };
 
   const addAllergy = () => {
     const val = newAllergy.trim();
