@@ -25,6 +25,7 @@ interface PatientProfile {
   chronic_conditions: string[] | null;
   emergency_contact: string | null;
   emergency_token: string;
+  photo_url: string | null;
 }
 
 const Profile = () => {
