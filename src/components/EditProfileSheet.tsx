@@ -119,6 +119,7 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
         allergies: allergies.length > 0 ? allergies : null,
         chronic_conditions: conditions.length > 0 ? conditions : null,
         emergency_contact: emergencyContact.trim() || null,
+        photo_url: photoUrl || null,
       })
       .eq("id", profile.id);
 
