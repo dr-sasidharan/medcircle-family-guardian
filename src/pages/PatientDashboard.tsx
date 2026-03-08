@@ -504,6 +504,14 @@ const PatientDashboard = () => {
       {/* Daily Insights */}
       <DailyInsights />
 
+      {/* WhatsApp Preview */}
+      <div className="px-4 mt-6">
+        <h2 className="text-base font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="text-xl">💬</span> WhatsApp Reminders Preview
+        </h2>
+        <WhatsAppPreview />
+      </div>
+
       {/* Action Buttons */}
       <div className="px-4 mt-6 space-y-3">
         <button onClick={() => navigate("/scan")}
