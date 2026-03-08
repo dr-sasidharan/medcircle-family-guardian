@@ -26,6 +26,7 @@ interface PatientProfile {
   emergency_contact: string | null;
   emergency_token: string;
   photo_url: string | null;
+  medcircle_code: string | null;
 }
 
 const Profile = () => {
@@ -143,6 +144,14 @@ const Profile = () => {
                 <p className="text-white/60 text-sm">
                   Age {profile.age} · Blood Group {profile.blood_group}
                 </p>
+                {profile.medcircle_code && (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="bg-white/20 text-white/90 px-2.5 py-1 rounded-lg text-xs font-mono font-bold tracking-widest">
+                      🆔 {profile.medcircle_code}
+                    </span>
+                    <span className="text-white/40 text-[10px]">Share with caretaker</span>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {(profile.chronic_conditions || []).map((c, i) => (
                     <span key={i} className="bg-white/15 text-white/90 px-2 py-0.5 rounded-md text-[10px] font-semibold">{c}</span>

@@ -10,6 +10,7 @@ import VoiceCommandButton from "@/components/VoiceCommandButton";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import PatientDashboard from "./pages/PatientDashboard";
 import AddMedicine from "./pages/AddMedicine";
 import CaretakerDashboard from "./pages/CaretakerDashboard";
@@ -48,6 +49,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Welcome />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/onboarding" element={<P><Onboarding /></P>} />
                   <Route path="/patient" element={<P><PatientDashboard /></P>} />
                   <Route path="/add-medicine" element={<P><AddMedicine /></P>} />
                   <Route path="/caretaker" element={<P><CaretakerDashboard /></P>} />

@@ -23,3 +23,18 @@ verify_jwt = false
 
 [functions.create-stripe-checkout]
 verify_jwt = false
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp]
+verify_jwt = false
+
+[functions.emergency-profile]
+verify_jwt = false
+
+[functions.symptom-checker]
+verify_jwt = false
+
+[functions.setup-demo]
+verify_jwt = false

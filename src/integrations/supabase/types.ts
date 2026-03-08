@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      caretaker_links: {
+        Row: {
+          caretaker_user_id: string
+          created_at: string
+          id: string
+          patient_profile_id: string
+        }
+        Insert: {
+          caretaker_user_id: string
+          created_at?: string
+          id?: string
+          patient_profile_id: string
+        }
+        Update: {
+          caretaker_user_id?: string
+          created_at?: string
+          id?: string
+          patient_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caretaker_links_patient_profile_id_fkey"
+            columns: ["patient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "patient_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caretakers: {
         Row: {
           created_at: string
@@ -235,7 +264,9 @@ export type Database = {
           emergency_token: string
           id: string
           last_active_at: string | null
+          medcircle_code: string | null
           name: string
+          onboarding_complete: boolean
           photo_url: string | null
           plan: string
           updated_at: string
@@ -252,7 +283,9 @@ export type Database = {
           emergency_token?: string
           id?: string
           last_active_at?: string | null
+          medcircle_code?: string | null
           name?: string
+          onboarding_complete?: boolean
           photo_url?: string | null
           plan?: string
           updated_at?: string
@@ -269,7 +302,9 @@ export type Database = {
           emergency_token?: string
           id?: string
           last_active_at?: string | null
+          medcircle_code?: string | null
           name?: string
+          onboarding_complete?: boolean
           photo_url?: string | null
           plan?: string
           updated_at?: string
@@ -317,6 +352,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      phone_otps: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          otp: string
+          phone: string
+          verified: boolean
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp: string
+          phone: string
+          verified?: boolean
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp?: string
+          phone?: string
+          verified?: boolean
+        }
+        Relationships: []
       }
       symptom_checks: {
         Row: {
@@ -373,6 +435,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_linked_patient_ids: { Args: never; Returns: string[] }
       get_my_profile_id: { Args: never; Returns: string }
       is_my_medicine: { Args: { _medicine_id: string }; Returns: boolean }
     }
