@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, AlertTriangle, Pill, Clock, Apple, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 interface MedicineData {
   id: string;
@@ -41,6 +41,13 @@ const MedicineDetail = () => {
   useEffect(() => {
     const fetchMedicine = async () => {
       if (!id) return;
+
+      // Reset state so previous medicine data never flashes on route switch
+      setLoading(true);
+      setInfo(null);
+      setMedicine(null);
+      setInfoLoading(false);
+
       const { data, error } = await supabase
         .from("medicines")
         .select("id, name, dosage, timing, food_instruction, purpose")
@@ -56,7 +63,6 @@ const MedicineDetail = () => {
       setMedicine(data as MedicineData);
       setLoading(false);
 
-      // Fetch AI-generated info
       setInfoLoading(true);
       try {
         const { data: fnData, error: fnError } = await supabase.functions.invoke("medicine-info", {
