@@ -145,6 +145,28 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
           <button onClick={onClose} className="text-muted-foreground p-1"><X size={20} /></button>
         </div>
 
+        {/* Profile Photo */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            {photoUrl ? (
+              <img src={photoUrl} alt="Profile" className="w-20 h-20 rounded-2xl object-cover border-2 border-border" />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-heading font-bold text-primary">
+                {name.charAt(0) || "?"}
+              </div>
+            )}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md"
+            >
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+            </button>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+          <p className="text-xs text-muted-foreground">Tap camera icon to change photo</p>
+        </div>
+
         {/* Name */}
         <div>
           <label className="text-sm font-semibold text-foreground mb-1 block">Name *</label>
