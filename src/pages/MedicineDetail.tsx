@@ -174,7 +174,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.purpose.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.purpose.color }}>
-                  {t("purpose")}
+                  Purpose
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed text-[15px]">{info.purpose}</p>
@@ -193,7 +193,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.how_to_take.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.how_to_take.color }}>
-                  {t("how_to_take")}
+                  How to Take
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed text-[15px]">{info.how_to_take}</p>
@@ -212,7 +212,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.side_effects.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.side_effects.color }}>
-                  {t("side_effects")}
+                  Side Effects
                 </h3>
               </div>
               <ul className="space-y-2">
@@ -238,7 +238,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.foods_to_avoid.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.foods_to_avoid.color }}>
-                  {t("foods_to_avoid")}
+                  Foods to Avoid
                 </h3>
               </div>
               <ul className="space-y-2">
@@ -265,7 +265,7 @@ const MedicineDetail = () => {
                   <AlertTriangle size={16} className="text-[#e11d48]" />
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-[#9f1239]">
-                  {t("drug_interaction")}
+                  Drug Interaction
                 </h3>
               </div>
               <p className="text-[#9f1239] leading-relaxed text-[15px]">{info.drug_interactions}</p>
