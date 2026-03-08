@@ -469,12 +469,21 @@ const PatientDashboard = () => {
                           </div>
                         </div>
 
-                        {/* Status badge */}
-                        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {/* Status badges */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           {isTaken ? (
-                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                              <Check size={14} /> Taken
-                            </div>
+                            <>
+                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
+                                <Check size={14} /> Taken
+                              </div>
+                              <button
+                                onClick={() => handleUndoTaken(med.id)}
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                title="Undo"
+                              >
+                                <Undo2 size={16} />
+                              </button>
+                            </>
                           ) : isMissed ? (
                             <button
                               onClick={() => handleMarkTaken(med.id)}
@@ -483,12 +492,21 @@ const PatientDashboard = () => {
                               Take Now
                             </button>
                           ) : (
-                            <button
-                              onClick={() => handleMarkTaken(med.id)}
-                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
-                            >
-                              Mark Taken
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleMarkTaken(med.id)}
+                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
+                              >
+                                Mark Taken
+                              </button>
+                              <button
+                                onClick={() => handleMarkMissed(med.id)}
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                title="Skip / Missed"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
