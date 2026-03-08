@@ -301,7 +301,7 @@ const PatientDashboard = () => {
                           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
                           animationDelay: `${idx * 80}ms`,
                         }}
-                        onClick={() => navigate("/medicine-detail")}
+                        onClick={() => navigate(`/medicine-detail/${med.id}`)}
                       >
                         {/* Icon box */}
                         <div
