@@ -408,8 +408,8 @@ const PatientDashboard = () => {
               <div className="w-9 h-9 rounded-xl bg-[#fda4af]/30 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle size={18} className="text-[#e11d48]" />
               </div>
-              <span className="text-[#9f1239] font-heading font-bold text-sm">
-                Missed: {d.medicine_name} ({d.scheduled_time})
+               <span className="text-[#9f1239] font-heading font-bold text-sm">
+                 {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
               </span>
             </div>
           ))}
