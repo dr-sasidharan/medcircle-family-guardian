@@ -64,12 +64,52 @@ const PatientDashboard = () => {
       if (profiles?.length) setPatientName(profiles[0].name);
 
       const { data } = await supabase.from("medicines").select("id, name, dosage, timing, food_instruction").eq("is_active", true);
-      setMedicines((data || []) as Medicine[]);
+      const medsList = (data || []) as Medicine[];
+      setMedicines(medsList);
 
       const today = new Date().toISOString().split("T")[0];
       const { data: takenDoses } = await supabase.from("doses").select("medicine_id").eq("scheduled_date", today).eq("taken", true);
       setTakenIds(new Set((takenDoses || []).map((d: any) => d.medicine_id)));
 
+      // Auto-mark missed doses for past timings
+      const now = new Date();
+      const currentHour = now.getHours();
+      const TIMING_HOURS: Record<string, number> = { morning: 8, afternoon: 14, night: 21 };
+      const GRACE_MINUTES = 30;
+
+      for (const med of medsList) {
+        const targetHour = TIMING_HOURS[med.timing];
+        if (targetHour === undefined) continue;
+        const totalNow = currentHour * 60 + now.getMinutes();
+        const targetMin = targetHour * 60 + GRACE_MINUTES;
+        if (totalNow < targetMin) continue;
+
+        // Check if dose exists
+        const { data: existing } = await supabase
+          .from("doses")
+          .select("id, taken, missed")
+          .eq("medicine_id", med.id)
+          .eq("scheduled_date", today)
+          .maybeSingle();
+
+        if (existing?.taken || existing?.missed) continue;
+
+        // Auto-mark as missed
+        if (existing) {
+          await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
+        } else {
+          await supabase.from("doses").insert({
+            medicine_id: med.id,
+            user_id: user.id,
+            scheduled_date: today,
+            scheduled_time: med.timing,
+            taken: false,
+            missed: true,
+          });
+        }
+      }
+
+      // Re-fetch missed doses after auto-marking
       const { data: missed } = await supabase
         .from("doses")
         .select("id, scheduled_time, medicines(name)")
@@ -84,16 +124,9 @@ const PatientDashboard = () => {
       }));
       setMissedDoses(missedList);
 
-      // Send SMS alert to caretakers for each missed dose
+      // Trigger server-side missed dose checker (sends caretaker SMS alerts)
       if (missedList.length > 0) {
-        for (const md of missedList) {
-          supabase.functions.invoke("caretaker-alert", {
-            body: {
-              type: "missed_dose",
-              details: { medicine_name: md.medicine_name, timing: md.scheduled_time },
-            },
-          }).catch(() => {}); // fire-and-forget
-        }
+        supabase.functions.invoke("missed-dose-checker").catch(() => {});
       }
 
       setLoading(false);
