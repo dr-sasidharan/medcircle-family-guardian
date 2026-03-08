@@ -1,15 +1,9 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Shield, Lock, CreditCard, CheckCircle2, X, Sparkles } from "lucide-react";
+import { ArrowLeft, Shield, Lock, CreditCard, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 const plans = [
   {
@@ -64,7 +58,7 @@ const plans = [
 ];
 
 const trustBadges = [
-  { icon: Shield, label: "Secure UPI Payment" },
+  { icon: Shield, label: "Secure Payment" },
   { icon: Lock, label: "256-bit Encrypted" },
   { icon: CreditCard, label: "Cancel Anytime" },
   { icon: CheckCircle2, label: "100% Safe" },
@@ -74,23 +68,41 @@ const Paywall = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
 
-  const reason = (location.state as any)?.reason || "upgrade";
-  const patientProfileId = (location.state as any)?.patientProfileId;
+  const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
+  const patientProfileId =
+    (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
 
-  const loadRazorpay = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) { resolve(true); return; }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
+  // Handle Stripe redirect success
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const plan = searchParams.get("plan");
+    const profileId = searchParams.get("patient_profile_id");
+
+    if (success === "true" && plan && profileId) {
+      // Update patient plan in DB
+      (async () => {
+        await supabase
+          .from("patient_profiles")
+          .update({ plan })
+          .eq("id", profileId);
+
+        await supabase.from("payments").insert({
+          patient_profile_id: profileId,
+          amount: plan === "pro" ? 49 : plan === "family" ? 29 : 19,
+          plan,
+          status: "success",
+        });
+
+        setActivatedPlan(plan === "pro" ? "Family Pro" : "Family");
+        setShowSuccess(true);
+      })();
+    }
+  }, [searchParams]);
 
   const handlePayment = async (plan: typeof plans[0]) => {
     if (!patientProfileId) {
@@ -100,63 +112,19 @@ const Paywall = () => {
 
     setLoading(plan.key);
 
-    const loaded = await loadRazorpay();
-    if (!loaded) {
-      toast.error("Payment gateway failed to load");
-      setLoading(null);
-      return;
-    }
-
     try {
-      const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { amount: plan.price, plan: plan.plan_value, patient_profile_id: patientProfileId },
+      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
+        body: { plan_key: plan.key, patient_profile_id: patientProfileId },
       });
 
-      if (error || !data?.order_id) {
-        throw new Error("Failed to create order");
+      if (error || !data?.url) {
+        throw new Error("Failed to create checkout session");
       }
 
-      const options = {
-        key: data.key_id,
-        amount: plan.price * 100,
-        currency: "INR",
-        name: "MedCircle",
-        description: `${plan.label} - MedCircle`,
-        order_id: data.order_id,
-        handler: async (response: any) => {
-          try {
-            const { error: verifyError } = await supabase.functions.invoke("verify-payment", {
-              body: {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                plan: plan.plan_value,
-                amount: plan.price,
-                patient_profile_id: patientProfileId,
-              },
-            });
-
-            if (verifyError) throw verifyError;
-
-            setActivatedPlan(plan.label);
-            setShowSuccess(true);
-          } catch {
-            toast.error("Payment verification failed");
-          }
-        },
-        prefill: { contact: "" },
-        theme: { color: "#0d9488" },
-        method: { upi: true, card: true, netbanking: true, wallet: true },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", () => {
-        toast.error("Payment failed. Please try again.");
-        setLoading(null);
-      });
-      rzp.open();
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch {
-      toast.error("Something went wrong");
-    } finally {
+      toast.error("Something went wrong. Please try again.");
       setLoading(null);
     }
   };
@@ -250,7 +218,7 @@ const Paywall = () => {
                   : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >
-              {loading === plan.key ? "Processing..." : plan.buttonText}
+              {loading === plan.key ? "Redirecting to payment..." : plan.buttonText}
             </button>
           </div>
         ))}
