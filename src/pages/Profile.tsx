@@ -117,16 +117,25 @@ const Profile = () => {
           {/* Patient card inside header */}
           {profile && (
             <div className="glass-card rounded-2xl p-4 mt-2 flex items-center gap-4">
-              <div
-                className="w-14 h-14 flex items-center justify-center text-xl font-heading font-bold text-white flex-shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #f59e0b, #f97316)",
-                  borderRadius: "14px",
-                  boxShadow: "0 0 16px rgba(245, 158, 11, 0.4)",
-                }}
-              >
-                {profile.name.charAt(0)}
-              </div>
+              {profile.photo_url ? (
+                <img
+                  src={profile.photo_url}
+                  alt={profile.name}
+                  className="w-14 h-14 object-cover flex-shrink-0"
+                  style={{ borderRadius: "14px" }}
+                />
+              ) : (
+                <div
+                  className="w-14 h-14 flex items-center justify-center text-xl font-heading font-bold text-white flex-shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, #f59e0b, #f97316)",
+                    borderRadius: "14px",
+                    boxShadow: "0 0 16px rgba(245, 158, 11, 0.4)",
+                  }}
+                >
+                  {profile.name.charAt(0)}
+                </div>
+              )}
               <div className="flex-1">
                 <h2 className="font-heading font-extrabold text-xl">{profile.name}</h2>
                 <p className="text-white/60 text-sm">
