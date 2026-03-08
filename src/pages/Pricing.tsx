@@ -1,7 +1,18 @@
-import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const PLAN_NAMES: Record<string, string> = {
+  free: "Free",
+  family_plan: "Family Plan",
+  family_pro: "Family Pro",
+  one_time: "One-Time Setup",
+};
+
+const PERIOD_NAMES: Record<string, string> = {
+  per_month: "month",
+  once: "once",
+};
 
 const plans = [
   {
@@ -35,7 +46,6 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
@@ -45,7 +55,7 @@ const Pricing = () => {
         <button onClick={() => navigate(-1)} className="text-foreground p-1">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t("pricing")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Pricing</h1>
         <LanguageToggle />
       </div>
 
@@ -59,11 +69,11 @@ const Pricing = () => {
                 : "border-border bg-card"
             }`}
           >
-            <h2 className="text-xl font-extrabold text-foreground">{t(plan.key)}</h2>
+            <h2 className="text-xl font-extrabold text-foreground">{PLAN_NAMES[plan.key] || plan.key}</h2>
             <div className="flex items-baseline gap-1 mt-2">
               <span className="text-3xl font-extrabold text-primary">{plan.price}</span>
               {plan.periodKey && (
-                <span className="text-muted-foreground text-sm">/{t(plan.periodKey)}</span>
+                <span className="text-muted-foreground text-sm">/{PERIOD_NAMES[plan.periodKey] || plan.periodKey}</span>
               )}
             </div>
             <ul className="mt-4 space-y-2.5">
@@ -81,7 +91,7 @@ const Pricing = () => {
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {t("get_started")}
+              Get Started
             </button>
           </div>
         ))}

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { X, Droplets, AlertTriangle, Pill, Phone } from "lucide-react";
 
 interface EmergencyData {
@@ -13,7 +12,6 @@ interface EmergencyData {
 }
 
 const EmergencyInfoButton = () => {
-  const { t } = useLanguage();
   const [show, setShow] = useState(false);
   const [data, setData] = useState<EmergencyData | null>(null);
   const [medicines, setMedicines] = useState<{ name: string; dosage: string }[]>([]);
@@ -38,7 +36,7 @@ const EmergencyInfoButton = () => {
       <button
         onClick={() => setShow(true)}
         className="fixed bottom-24 left-5 w-14 h-14 bg-destructive text-destructive-foreground rounded-full shadow-xl flex items-center justify-center hover:opacity-90 transition-opacity z-40 text-xl font-extrabold"
-        aria-label={t("emergency_info")}
+        aria-label="Emergency Info"
       >
         🚨
       </button>
@@ -54,7 +52,7 @@ const EmergencyInfoButton = () => {
 
             {/* Show to doctor instruction */}
             <div className="bg-destructive/10 border-2 border-destructive/40 rounded-2xl p-4 text-center mb-6">
-              <p className="text-destructive font-bold text-base">{t("show_to_doctor")}</p>
+              <p className="text-destructive font-bold text-base">Show this to the doctor in an emergency</p>
             </div>
 
             {/* Patient Name */}
@@ -65,7 +63,7 @@ const EmergencyInfoButton = () => {
             <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-8 text-center mb-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Droplets size={24} className="text-destructive" />
-                <span className="text-sm font-bold text-muted-foreground">{t("blood_group")}</span>
+                <span className="text-sm font-bold text-muted-foreground">Blood Group</span>
               </div>
               <p className="text-6xl font-extrabold text-destructive">{data.blood_group || "?"}</p>
             </div>
@@ -75,7 +73,7 @@ const EmergencyInfoButton = () => {
               <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 mb-4">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle size={20} className="text-destructive" />
-                  <h2 className="text-lg font-bold text-destructive">{t("allergies")}</h2>
+                  <h2 className="text-lg font-bold text-destructive">Allergies</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {data.allergies.map((a, i) => (
@@ -91,7 +89,7 @@ const EmergencyInfoButton = () => {
             <div className="bg-card border border-border rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <Pill size={20} className="text-primary" />
-                <h2 className="text-lg font-bold text-foreground">{t("current_medicines")}</h2>
+                <h2 className="text-lg font-bold text-foreground">Current Medicines</h2>
               </div>
               <div className="space-y-2">
                 {medicines.map((m, i) => (
@@ -111,7 +109,7 @@ const EmergencyInfoButton = () => {
               <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Phone size={20} className="text-primary" />
-                  <h2 className="text-lg font-bold text-foreground">{t("emergency_contact")}</h2>
+                  <h2 className="text-lg font-bold text-foreground">Emergency Contact</h2>
                 </div>
                 <a href={`tel:${data.emergency_contact}`} className="text-2xl font-extrabold text-primary underline">
                   {data.emergency_contact}
