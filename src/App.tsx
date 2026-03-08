@@ -11,6 +11,7 @@ import AddMedicine from "./pages/AddMedicine";
 import CaretakerDashboard from "./pages/CaretakerDashboard";
 import MedicineDetail from "./pages/MedicineDetail";
 import Pricing from "./pages/Pricing";
+import Paywall from "./pages/Paywall";
 import ScanPrescription from "./pages/ScanPrescription";
 import ScanTablet from "./pages/ScanTablet";
 import Reminders from "./pages/Reminders";
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/caretaker" element={<CaretakerDashboard />} />
               <Route path="/medicine-detail" element={<MedicineDetail />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/paywall" element={<Paywall />} />
               <Route path="/scan" element={<ScanPrescription />} />
               <Route path="/scan-tablet" element={<ScanTablet />} />
               <Route path="/reminders" element={<Reminders />} />

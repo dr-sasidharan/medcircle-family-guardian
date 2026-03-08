@@ -30,6 +30,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [patientPlan, setPatientPlan] = useState("free");
   const [newName, setNewName] = useState("");
   const [newRelation, setNewRelation] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -39,6 +40,7 @@ const Profile = () => {
     const { data: profiles } = await supabase.from("patient_profiles").select("*").limit(1);
     if (profiles && profiles.length > 0) {
       setProfile(profiles[0] as any);
+      setPatientPlan((profiles[0] as any).plan || "free");
       const { data: ct } = await supabase
         .from("caretakers")
         .select("*")
@@ -133,7 +135,13 @@ const Profile = () => {
             <h2 className="text-lg font-bold text-foreground">{t("my_care_circle")}</h2>
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              if (patientPlan === "free") {
+                navigate("/paywall", { state: { reason: "caretaker", patientProfileId: profile?.id } });
+              } else {
+                setShowAdd(true);
+              }
+            }}
             className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
           >
             <Plus size={16} /> {t("add")}
