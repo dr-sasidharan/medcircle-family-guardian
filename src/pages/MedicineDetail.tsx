@@ -212,7 +212,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.side_effects.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.side_effects.color }}>
-                  {t("side_effects")}
+                  Side Effects
                 </h3>
               </div>
               <ul className="space-y-2">
