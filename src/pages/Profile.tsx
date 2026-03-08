@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Crown } from "lucide-react";
+import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Crown, Pencil } from "lucide-react";
 import EmergencyQRSection from "@/components/EmergencyQRSection";
+import EditProfileSheet from "@/components/EditProfileSheet";
 import { toast } from "sonner";
 
 interface Caretaker {
@@ -31,6 +32,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [patientPlan, setPatientPlan] = useState("free");
   const [newName, setNewName] = useState("");
   const [newRelation, setNewRelation] = useState("");
@@ -124,7 +126,7 @@ const Profile = () => {
               >
                 {profile.name.charAt(0)}
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="font-heading font-extrabold text-xl">{profile.name}</h2>
                 <p className="text-white/60 text-sm">
                   Age {profile.age} · Blood Group {profile.blood_group}
@@ -135,6 +137,12 @@ const Profile = () => {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => setShowEdit(true)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 flex-shrink-0"
+              >
+                <Pencil size={16} />
+              </button>
             </div>
           )}
         </div>
@@ -322,6 +330,16 @@ const Profile = () => {
           </div>
         </button>
       </div>
+
+      {/* Edit Profile Sheet */}
+      {profile && (
+        <EditProfileSheet
+          open={showEdit}
+          onClose={() => setShowEdit(false)}
+          profile={profile}
+          onSaved={fetchData}
+        />
+      )}
 
       <BottomNav />
     </div>
