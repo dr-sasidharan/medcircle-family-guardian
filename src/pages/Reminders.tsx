@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, Pill, AlertTriangle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+
+const FOOD_LABELS: Record<string, string> = {
+  before_food: "Before Food",
+  after_food: "After Food",
+  with_food: "With Food",
+};
 
 interface DoseWithMedicine {
   id: string;
@@ -34,7 +39,6 @@ const sectionConfig = {
 };
 
 const Reminders = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const [doses, setDoses] = useState<DoseWithMedicine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +152,7 @@ const Reminders = () => {
                 } as React.CSSProperties}
               />
             </div>
-            <p className="text-white/50 text-xs mt-2">{t("medicines_taken")} today</p>
+            <p className="text-white/50 text-xs mt-2">Medicines Taken today</p>
           </div>
         </div>
       </div>
@@ -244,7 +248,7 @@ const Reminders = () => {
                                 color: dose.medicine.food_instruction === "before_food" ? "#0d9488" : dose.medicine.food_instruction === "after_food" ? "#b45309" : "#1e40af",
                               }}
                             >
-                              {t(dose.medicine.food_instruction) || dose.medicine.food_instruction}
+                              {FOOD_LABELS[dose.medicine.food_instruction] || dose.medicine.food_instruction}
                             </span>
                           </div>
                         </div>
@@ -253,7 +257,7 @@ const Reminders = () => {
                         <div className="flex-shrink-0">
                           {dose.taken ? (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                              <Check size={14} /> {t("taken")}
+                              <Check size={14} /> Taken
                             </div>
                           ) : isAnimating ? (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1 animate-scale-in">
@@ -271,7 +275,7 @@ const Reminders = () => {
                               onClick={() => markAsTaken(dose.id)}
                               className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/5"
                             >
-                              {t("mark_taken")}
+                              Mark Taken
                             </button>
                           )}
                         </div>

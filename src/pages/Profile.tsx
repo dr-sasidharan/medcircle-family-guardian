@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ interface PatientProfile {
 }
 
 const Profile = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
@@ -100,7 +98,7 @@ const Profile = () => {
               <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
                 <ArrowLeft size={18} />
               </button>
-              <h1 className="text-xl font-heading font-bold">{t("profile")}</h1>
+              <h1 className="text-xl font-heading font-bold">Profile</h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => navigate("/settings")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
@@ -126,7 +124,7 @@ const Profile = () => {
               <div>
                 <h2 className="font-heading font-extrabold text-xl">{profile.name}</h2>
                 <p className="text-white/60 text-sm">
-                  Age {profile.age} · {t("blood_group")} {profile.blood_group}
+                  Age {profile.age} · Blood Group {profile.blood_group}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {(profile.chronic_conditions || []).map((c, i) => (
@@ -146,7 +144,7 @@ const Profile = () => {
             className="rounded-2xl p-4 border animate-slide-in-left"
             style={{ background: "linear-gradient(135deg, #fff1f2, #ffe4e6)", borderColor: "#fda4af" }}
           >
-            <h3 className="text-sm font-heading font-bold text-[#9f1239] mb-2">⚠️ {t("allergies")}</h3>
+            <h3 className="text-sm font-heading font-bold text-[#9f1239] mb-2">⚠️ Allergies</h3>
             <div className="flex flex-wrap gap-2">
               {profile.allergies.map((a, i) => (
                 <span key={i} className="bg-[#fda4af]/20 text-[#e11d48] px-3 py-1 rounded-lg text-sm font-semibold">{a}</span>
@@ -164,7 +162,7 @@ const Profile = () => {
               <div className="w-7 h-7 bg-[#8b5cf6] rounded-full flex items-center justify-center">
                 <Users size={14} className="text-white" />
               </div>
-              <span className="font-heading font-bold text-sm text-[#4c1d95]">{t("my_care_circle")}</span>
+              <span className="font-heading font-bold text-sm text-[#4c1d95]">My Care Circle</span>
             </div>
             <div className="flex-1 h-[2px] bg-[#c4b5fd] rounded-full" />
           </div>
@@ -179,7 +177,7 @@ const Profile = () => {
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-heading font-bold text-white glow-teal"
             style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
           >
-            <Plus size={14} /> {t("add")}
+            <Plus size={14} /> Add
           </button>
         </div>
 
@@ -224,7 +222,7 @@ const Profile = () => {
             </div>
           ))}
           {caretakers.length === 0 && (
-            <p className="text-center text-muted-foreground py-8 text-sm">{t("no_caretakers")}</p>
+            <p className="text-center text-muted-foreground py-8 text-sm">No caretakers added yet</p>
           )}
         </div>
       </div>
@@ -234,29 +232,29 @@ const Profile = () => {
         <div className="fixed inset-0 bg-ink/50 z-50 flex items-end">
           <div className="bg-card w-full rounded-t-3xl p-6 space-y-4 animate-slide-up max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-heading font-bold text-foreground">{t("add_caretaker")}</h2>
+              <h2 className="text-lg font-heading font-bold text-foreground">Add Caretaker</h2>
               <button onClick={() => setShowAdd(false)} className="text-muted-foreground p-1"><X size={20} /></button>
             </div>
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">{t("name")} *</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Name *</label>
               <input value={newName} onChange={(e) => setNewName(e.target.value)}
                 className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. Priya" />
             </div>
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">{t("relationship")} *</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Relationship *</label>
               <input value={newRelation} onChange={(e) => setNewRelation(e.target.value)}
                 className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. Daughter" />
             </div>
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">{t("phone")} *</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Phone *</label>
               <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} type="tel"
                 className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="+91 98765 43210" />
             </div>
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">{t("email")}</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Email</label>
               <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} type="email"
                 className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="priya@email.com" />
@@ -265,7 +263,7 @@ const Profile = () => {
               className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity glow-teal"
               style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
             >
-              {t("add_caretaker")}
+              Add Caretaker
             </button>
           </div>
         </div>
@@ -281,8 +279,8 @@ const Profile = () => {
             <FileText size={20} className="text-primary" />
           </div>
           <div>
-            <h3 className="font-heading font-bold text-[15px] text-ink">{t("doctor_visit_summary")}</h3>
-            <p className="text-xs text-muted-foreground">{t("doctor_summary_desc")}</p>
+            <h3 className="font-heading font-bold text-[15px] text-ink">Doctor Visit Summary</h3>
+            <p className="text-xs text-muted-foreground">AI-generated summary for your doctor</p>
           </div>
         </button>
         <button onClick={() => navigate("/drug-interaction")}
@@ -293,8 +291,8 @@ const Profile = () => {
             <FlaskConical size={20} className="text-[#f59e0b]" />
           </div>
           <div>
-            <h3 className="font-heading font-bold text-[15px] text-ink">{t("drug_interaction_checker")}</h3>
-            <p className="text-xs text-muted-foreground">{t("drug_checker_desc")}</p>
+            <h3 className="font-heading font-bold text-[15px] text-ink">Drug Interaction Checker</h3>
+            <p className="text-xs text-muted-foreground">Check if your medicines interact</p>
           </div>
         </button>
         <button onClick={() => navigate("/pricing")}
@@ -305,8 +303,8 @@ const Profile = () => {
             <Crown size={20} className="text-[#8b5cf6]" />
           </div>
           <div>
-            <h3 className="font-heading font-bold text-[15px] text-ink">{t("upgrade_plan")}</h3>
-            <p className="text-xs text-muted-foreground">{t("upgrade_desc")}</p>
+            <h3 className="font-heading font-bold text-[15px] text-ink">Upgrade Plan</h3>
+            <p className="text-xs text-muted-foreground">Unlock all features</p>
           </div>
         </button>
       </div>
