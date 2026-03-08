@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
-import { Sun, CloudSun, Moon, Check, Plus } from "lucide-react";
+import { Sun, CloudSun, Moon, Check, Plus, ScanLine } from "lucide-react";
 
 interface Medicine {
   id: number;
@@ -122,6 +122,17 @@ const PatientDashboard = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Scan Prescription Button */}
+      <div className="px-4 mt-6">
+        <button
+          onClick={() => navigate("/scan")}
+          className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary rounded-2xl py-4 text-base font-bold text-primary hover:bg-secondary transition-colors"
+        >
+          <ScanLine size={22} />
+          Scan Prescription
+        </button>
       </div>
 
       {/* FAB */}
