@@ -46,6 +46,11 @@ const Reminders = () => {
   const [doses, setDoses] = useState<DoseWithMedicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [animatingId, setAnimatingId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [allMedicines, setAllMedicines] = useState<{ id: string; name: string; dosage: string }[]>([]);
+  const [selectedMedicineId, setSelectedMedicineId] = useState("");
+  const [selectedTiming, setSelectedTiming] = useState("");
+  const [addingReminder, setAddingReminder] = useState(false);
 
   const fetchDoses = useCallback(async () => {
     const today = new Date().toISOString().split("T")[0];
