@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Shield, Lock, CreditCard, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, Copy, IndianRupee } from "lucide-react";
 import { toast } from "sonner";
+
+const UPI_ID = "saseedharan2004-1@oksbi";
 
 const plans = [
   {
@@ -18,8 +20,7 @@ const plans = [
       "First month Family Plan included",
     ],
     highlighted: false,
-    buttonStyle: "outline" as const,
-    buttonText: "Try It Once",
+    buttonText: "Pay ₹49",
   },
   {
     key: "family",
@@ -34,8 +35,7 @@ const plans = [
       "1 caretaker",
     ],
     highlighted: false,
-    buttonStyle: "primary" as const,
-    buttonText: "Get Started",
+    buttonText: "Pay ₹42",
   },
   {
     key: "pro",
@@ -52,15 +52,14 @@ const plans = [
       "3 caretakers",
     ],
     highlighted: true,
-    buttonStyle: "premium" as const,
-    buttonText: "Get Started",
+    buttonText: "Pay ₹49",
   },
 ];
 
 const trustBadges = [
-  { icon: Shield, label: "Secure Payment" },
-  { icon: Lock, label: "256-bit Encrypted" },
-  { icon: CreditCard, label: "Cancel Anytime" },
+  { icon: Shield, label: "Secure UPI Payment" },
+  { icon: Lock, label: "End-to-End Encrypted" },
+  { icon: IndianRupee, label: "Instant Activation" },
   { icon: CheckCircle2, label: "100% Safe" },
 ];
 
@@ -69,7 +68,9 @@ const Paywall = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
+  const [transactionId, setTransactionId] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
 
@@ -77,55 +78,51 @@ const Paywall = () => {
   const patientProfileId =
     (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
 
-  // Handle Stripe redirect success
-  useEffect(() => {
-    const success = searchParams.get("success");
-    const plan = searchParams.get("plan");
-    const profileId = searchParams.get("patient_profile_id");
+  const copyUpiId = () => {
+    navigator.clipboard.writeText(UPI_ID);
+    toast.success("UPI ID copied!");
+  };
 
-    if (success === "true" && plan && profileId) {
-      // Update patient plan in DB
-      (async () => {
-        await supabase
-          .from("patient_profiles")
-          .update({ plan })
-          .eq("id", profileId);
+  const openUpiApp = (plan: typeof plans[0]) => {
+    const upiUrl = `upi://pay?pa=${UPI_ID}&pn=MedCircle&am=${plan.price}&cu=INR&tn=MedCircle_${plan.key}_plan`;
+    window.location.href = upiUrl;
+  };
 
-        await supabase.from("payments").insert({
-          patient_profile_id: profileId,
-          amount: plan === "pro" ? 49 : plan === "family" ? 29 : 19,
-          plan,
-          status: "success",
-        });
-
-        setActivatedPlan(plan === "pro" ? "Family Pro" : "Family");
-        setShowSuccess(true);
-      })();
+  const handleConfirmPayment = async () => {
+    if (!selectedPlan || !transactionId.trim()) {
+      toast.error("Please enter your UPI transaction ID");
+      return;
     }
-  }, [searchParams]);
-
-  const handlePayment = async (plan: typeof plans[0]) => {
     if (!patientProfileId) {
       toast.error("Patient profile not found");
       return;
     }
 
-    setLoading(plan.key);
+    setConfirming(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
-        body: { plan_key: plan.key, patient_profile_id: patientProfileId },
+      // Save payment record
+      await supabase.from("payments").insert({
+        patient_profile_id: patientProfileId,
+        amount: selectedPlan.price,
+        plan: selectedPlan.plan_value,
+        razorpay_payment_id: transactionId.trim(),
+        razorpay_order_id: `upi_${Date.now()}`,
+        status: "pending_verification",
       });
 
-      if (error || !data?.url) {
-        throw new Error("Failed to create checkout session");
-      }
+      // Update patient plan immediately (manual verification can revoke later)
+      await supabase
+        .from("patient_profiles")
+        .update({ plan: selectedPlan.plan_value })
+        .eq("id", patientProfileId);
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      setActivatedPlan(selectedPlan.plan_value === "pro" ? "Family Pro" : "Family");
+      setShowSuccess(true);
     } catch {
       toast.error("Something went wrong. Please try again.");
-      setLoading(null);
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -140,13 +137,88 @@ const Paywall = () => {
             Welcome to MedCircle {activatedPlan}! 🎉
           </h1>
           <p className="text-muted-foreground mb-8">
-            Your parent is now protected. All premium features are unlocked.
+            Your payment is being verified. All premium features are now unlocked.
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
             className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
             Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // UPI payment sheet for selected plan
+  if (selectedPlan) {
+    return (
+      <div className="min-h-screen bg-background pb-12 page-transition">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <button onClick={() => setSelectedPlan(null)} className="text-foreground p-1">
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Pay via UPI</h1>
+          <div className="w-6" />
+        </div>
+
+        <div className="p-5 max-w-lg mx-auto space-y-6">
+          {/* Amount */}
+          <div className="bg-accent rounded-2xl p-5 text-center">
+            <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
+            <p className="text-4xl font-extrabold text-primary">₹{selectedPlan.price}</p>
+            <p className="text-sm text-muted-foreground mt-1">{selectedPlan.label}</p>
+          </div>
+
+          {/* UPI ID */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <p className="text-sm font-semibold text-foreground mb-3">Send payment to this UPI ID:</p>
+            <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
+              <span className="text-base font-bold text-foreground flex-1 break-all">{UPI_ID}</span>
+              <button onClick={copyUpiId} className="text-primary hover:opacity-70 transition-opacity">
+                <Copy size={20} />
+              </button>
+            </div>
+            <button
+              onClick={() => openUpiApp(selectedPlan)}
+              className="w-full mt-4 bg-[#5f259f] text-white rounded-xl py-3.5 text-base font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
+              <IndianRupee size={18} />
+              Open UPI App to Pay
+            </button>
+          </div>
+
+          {/* Steps */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <p className="text-sm font-semibold text-foreground mb-3">Steps:</p>
+            <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+              <li>Copy the UPI ID above or tap "Open UPI App"</li>
+              <li>Pay <span className="font-bold text-foreground">₹{selectedPlan.price}</span> from any UPI app (GPay, PhonePe, Paytm, etc.)</li>
+              <li>Enter your UPI Transaction ID below</li>
+              <li>Tap "I've Paid" to activate your plan</li>
+            </ol>
+          </div>
+
+          {/* Transaction ID Input */}
+          <div>
+            <label className="text-sm font-semibold text-foreground mb-1.5 block">
+              UPI Transaction ID / Reference Number
+            </label>
+            <input
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="e.g. 412345678901"
+            />
+          </div>
+
+          {/* Confirm */}
+          <button
+            onClick={handleConfirmPayment}
+            disabled={confirming || !transactionId.trim()}
+            className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {confirming ? "Verifying..." : "I've Paid — Activate Plan"}
           </button>
         </div>
       </div>
@@ -208,17 +280,14 @@ const Paywall = () => {
               ))}
             </ul>
             <button
-              onClick={() => handlePayment(plan)}
-              disabled={loading !== null}
-              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all disabled:opacity-50 ${
-                plan.buttonStyle === "outline"
-                  ? "border-2 border-primary text-primary bg-transparent hover:bg-primary/5"
-                  : plan.buttonStyle === "premium"
+              onClick={() => setSelectedPlan(plan)}
+              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all ${
+                plan.highlighted
                   ? "bg-primary text-primary-foreground shadow-lg hover:opacity-90 text-lg py-4"
                   : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >
-              {loading === plan.key ? "Redirecting to payment..." : plan.buttonText}
+              {plan.buttonText}
             </button>
           </div>
         ))}
