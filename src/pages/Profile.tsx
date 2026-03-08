@@ -69,22 +69,55 @@ const Profile = () => {
   }, [fetchData]);
 
   const addCaretaker = async () => {
+    if (isAddingCaretaker) return;
+
     if (!newName.trim() || !newRelation.trim() || !newPhone.trim() || !profile) {
       toast.error("Please fill name, relationship, and phone");
       return;
     }
-    const { error } = await supabase.from("caretakers").insert({
-      patient_profile_id: profile.id,
-      name: newName.trim(),
-      relationship: newRelation.trim(),
-      phone: newPhone.trim(),
-      email: newEmail.trim() || null,
-    });
-    if (error) { toast.error("Failed to add caretaker"); return; }
-    toast.success(`${newName} added as caretaker!`);
-    setNewName(""); setNewRelation(""); setNewPhone(""); setNewEmail("");
-    setShowAdd(false);
-    fetchData();
+
+    const digitsOnlyPhone = newPhone.replace(/\D/g, "");
+    if (digitsOnlyPhone.length < 10) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
+    const trimmedEmail = newEmail.trim();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsAddingCaretaker(true);
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        toast.error("Please sign in again");
+        return;
+      }
+
+      const { error } = await supabase.from("caretakers").insert({
+        patient_profile_id: profile.id,
+        name: newName.trim(),
+        relationship: newRelation.trim(),
+        phone: newPhone.trim(),
+        email: trimmedEmail || null,
+      });
+
+      if (error) throw error;
+
+      toast.success(`${newName.trim()} added as caretaker!`);
+      setNewName("");
+      setNewRelation("");
+      setNewPhone("");
+      setNewEmail("");
+      setShowAdd(false);
+      await fetchData();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to add caretaker");
+    } finally {
+      setIsAddingCaretaker(false);
+    }
   };
 
   const removeCaretaker = async (id: string) => {
