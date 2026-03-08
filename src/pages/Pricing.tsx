@@ -113,13 +113,14 @@ const Pricing = () => {
               ))}
             </ul>
             <button
+              onClick={() => handleGetStarted(plan.key)}
               className={`w-full mt-5 py-3.5 rounded-xl text-base font-bold transition-opacity hover:opacity-90 ${
                 plan.highlighted
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              Get Started
+              {plan.key === "free" ? "Continue Free" : "Get Started"}
             </button>
           </div>
         ))}
