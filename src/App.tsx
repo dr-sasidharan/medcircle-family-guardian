@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ElderlyModeProvider } from "@/contexts/ElderlyModeContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
+import Auth from "./pages/Auth";
 import PatientDashboard from "./pages/PatientDashboard";
 import AddMedicine from "./pages/AddMedicine";
 import CaretakerDashboard from "./pages/CaretakerDashboard";
@@ -24,6 +26,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const P = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>{children}</ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -34,20 +40,21 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Welcome />} />
-              <Route path="/patient" element={<PatientDashboard />} />
-              <Route path="/add-medicine" element={<AddMedicine />} />
-              <Route path="/caretaker" element={<CaretakerDashboard />} />
-              <Route path="/medicine-detail" element={<MedicineDetail />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/paywall" element={<Paywall />} />
-              <Route path="/scan" element={<ScanPrescription />} />
-              <Route path="/scan-tablet" element={<ScanTablet />} />
-              <Route path="/reminders" element={<Reminders />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/drug-interaction" element={<DrugInteraction />} />
-              <Route path="/doctor-summary" element={<DoctorSummary />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/patient" element={<P><PatientDashboard /></P>} />
+              <Route path="/add-medicine" element={<P><AddMedicine /></P>} />
+              <Route path="/caretaker" element={<P><CaretakerDashboard /></P>} />
+              <Route path="/medicine-detail" element={<P><MedicineDetail /></P>} />
+              <Route path="/pricing" element={<P><Pricing /></P>} />
+              <Route path="/paywall" element={<P><Paywall /></P>} />
+              <Route path="/scan" element={<P><ScanPrescription /></P>} />
+              <Route path="/scan-tablet" element={<P><ScanTablet /></P>} />
+              <Route path="/reminders" element={<P><Reminders /></P>} />
+              <Route path="/profile" element={<P><Profile /></P>} />
+              <Route path="/drug-interaction" element={<P><DrugInteraction /></P>} />
+              <Route path="/doctor-summary" element={<P><DoctorSummary /></P>} />
+              <Route path="/settings" element={<P><Settings /></P>} />
+              <Route path="/admin" element={<P><AdminDashboard /></P>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
