@@ -585,6 +585,30 @@ export default function Auth() {
           </div>
         )}
 
+        {/* Demo Button */}
+        {isLogin && mode === "email" && (
+          <div className="mt-4">
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-3 text-muted-foreground">or try it out</span>
+              </div>
+            </div>
+            <button
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              className="w-full flex items-center justify-center gap-2 bg-[#f59e0b]/10 border-2 border-[#f59e0b]/30 text-[#b45309] rounded-2xl py-3.5 text-base font-heading font-bold hover:bg-[#f59e0b]/20 transition-colors"
+            >
+              {demoLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "🎮"} Try Demo Account
+            </button>
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Explore with pre-loaded medicines & health data
+            </p>
+          </div>
+        )}
+
         {/* Toggle login/signup */}
         {mode !== "caretaker" && (
           <p className="text-center text-sm text-muted-foreground mt-6">

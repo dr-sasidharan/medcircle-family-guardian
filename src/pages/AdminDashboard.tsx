@@ -303,20 +303,26 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <div className="bg-background border-b border-border sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div
+        className="border-b border-border sticky top-0 z-10"
+        style={{ background: "linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #0c3532 100%)" }}
+      >
+        <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">MedCircle Admin</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-bold text-white">MedCircle Admin</h1>
+            <p className="text-sm text-white/60">
               Last refreshed: {lastRefresh.toLocaleTimeString("en-IN")} · Auto-refresh every 60s
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={fetchData} disabled={loading}>
+            <Button variant="secondary" onClick={fetchData} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="secondary" onClick={exportCSV}>
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
+            <Button variant="secondary" onClick={handleLogout}>
               <Lock className="w-4 h-4 mr-2" /> Logout
             </Button>
           </div>
