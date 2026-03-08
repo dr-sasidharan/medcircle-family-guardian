@@ -27,6 +27,7 @@ import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import EmergencyCard from "./pages/EmergencyCard";
 import SymptomChecker from "./pages/SymptomChecker";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 
