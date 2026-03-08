@@ -57,6 +57,7 @@ const Paywall = () => {
   const [confirming, setConfirming] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
+  const [transactionId, setTransactionId] = useState("");
 
   const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
   const patientProfileId =
@@ -87,32 +88,31 @@ const Paywall = () => {
       return;
     }
 
+    const txnId = transactionId.trim();
+    if (!txnId || txnId.length < 6) {
+      toast.error("Please enter a valid UPI Transaction ID (at least 6 characters)");
+      return;
+    }
+
     setConfirming(true);
     try {
-      // Record payment as success and activate plan instantly
+      // Record payment with transaction ID — pending admin verification
       const { error: payErr } = await supabase.from("payments").insert({
         patient_profile_id: patientProfileId,
         amount: selectedPlan.price,
         plan: selectedPlan.plan_value,
-        status: "success",
-      });
+        status: "pending_verification",
+        razorpay_payment_id: txnId, // storing UPI txn ID here
+      } as any);
 
       if (payErr) throw payErr;
 
-      // Activate the plan immediately
-      const { error: planErr } = await supabase
-        .from("patient_profiles")
-        .update({ plan: selectedPlan.plan_value })
-        .eq("id", patientProfileId);
-
-      if (planErr) throw planErr;
-
       setActivatedPlan(selectedPlan.label);
       setShowSuccess(true);
-      toast.success("Plan activated! 🎉");
+      toast.success("Payment submitted for verification!");
     } catch (err: any) {
       console.error("Payment confirm error:", err);
-      toast.error("Failed to activate plan. Please try again.");
+      toast.error("Failed to submit payment. Please try again.");
     } finally {
       setConfirming(false);
     }
@@ -126,10 +126,13 @@ const Paywall = () => {
             <CheckCircle2 size={40} className="text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground mb-2">
-            Welcome to MedCircle {activatedPlan}! 🎉
+            Payment Submitted! 🎉
           </h1>
-          <p className="text-muted-foreground mb-8">
-            Your plan is now active. All premium features are unlocked!
+          <p className="text-muted-foreground mb-2">
+            Your payment for <span className="font-bold text-foreground">{activatedPlan}</span> is being verified.
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            Your plan will be activated once we verify your UPI transaction. This usually takes just a few minutes.
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
@@ -188,24 +191,39 @@ const Paywall = () => {
             Open UPI App to Pay
           </button>
 
+          {/* Transaction ID input */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">UPI Transaction ID / UTR Number</label>
+            <input
+              type="text"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              placeholder="e.g. 412345678901 or UPI ref number"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Find this in your UPI app → payment history → transaction details
+            </p>
+          </div>
+
           {/* Confirm payment button */}
           <button
             onClick={handleConfirmPayment}
-            disabled={confirming}
+            disabled={confirming || transactionId.trim().length < 6}
             className="w-full bg-foreground text-background rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {confirming ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 size={18} className="animate-spin" />
-                Submitting...
+                Verifying...
               </span>
             ) : (
-              "✅ I Have Paid"
+              "✅ I Have Paid — Verify & Activate"
             )}
           </button>
 
           <p className="text-xs text-muted-foreground text-center">
-            After paying via UPI, tap "I Have Paid". Our team will verify and activate your plan within minutes.
+            Enter your UPI Transaction ID after payment. We'll verify it and activate your plan.
           </p>
         </div>
       </div>
