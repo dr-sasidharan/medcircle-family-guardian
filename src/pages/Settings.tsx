@@ -3,7 +3,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeft, Eye, Sun, Moon } from "lucide-react";
+import { ArrowLeft, Eye, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Settings = () => {
   const { t } = useLanguage();
@@ -59,9 +61,27 @@ const Settings = () => {
 
         {/* Language Section */}
         <div className="bg-card border border-border rounded-2xl p-5">
-          <h2 className="text-base font-bold text-foreground mb-3">Language / மொழி / भाषा</h2>
+          <h2 className="text-base font-bold text-foreground mb-3">Language / மொழி / भாஷை</h2>
           <LanguageToggle />
         </div>
+
+        {/* Logout */}
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            toast.success("Logged out");
+            navigate("/auth");
+          }}
+          className="w-full bg-destructive/10 border border-destructive/20 rounded-2xl p-5 flex items-center gap-3 hover:bg-destructive/20 transition-colors"
+        >
+          <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+            <LogOut size={24} className="text-destructive" />
+          </div>
+          <div className="text-left">
+            <h2 className="text-base font-bold text-destructive">{t("logout") || "Logout"}</h2>
+            <p className="text-sm text-muted-foreground">Sign out of your account</p>
+          </div>
+        </button>
       </div>
 
       <BottomNav />
