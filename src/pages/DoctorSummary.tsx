@@ -127,7 +127,7 @@ const DoctorSummary = () => {
             </button>
           </div>
         )}
-        <p className="text-xs text-muted-foreground text-center mt-6 italic">{t("ai_disclaimer")}</p>
+        <p className="text-xs text-muted-foreground text-center mt-6 italic">AI-generated content is for awareness only. Always consult your doctor.</p>
       </div>
 
       <BottomNav />
