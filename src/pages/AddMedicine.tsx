@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Upload, ScanLine } from "lucide-react";
 
 const AddMedicine = () => {
   const { t } = useLanguage();
@@ -24,6 +24,21 @@ const AddMedicine = () => {
       </div>
 
       <div className="p-5 space-y-5 max-w-lg mx-auto">
+        {/* Scan Tablet Strip Button */}
+        <button
+          onClick={() => navigate("/scan-tablet")}
+          className="w-full flex items-center justify-center gap-3 bg-secondary border-2 border-primary/30 rounded-2xl py-4 text-base font-bold text-primary hover:bg-accent transition-colors"
+        >
+          <ScanLine size={22} />
+          Scan Tablet Strip
+        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-sm text-muted-foreground font-medium">or enter manually</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
         {/* Name */}
         <div>
           <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("medicine_name")}</label>
