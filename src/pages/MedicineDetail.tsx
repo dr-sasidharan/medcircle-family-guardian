@@ -174,7 +174,7 @@ const MedicineDetail = () => {
                   {SECTION_ICONS.purpose.icon}
                 </div>
                 <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.purpose.color }}>
-                  {t("purpose")}
+                  Purpose
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed text-[15px]">{info.purpose}</p>
