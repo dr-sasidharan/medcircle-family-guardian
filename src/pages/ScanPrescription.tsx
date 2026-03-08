@@ -56,7 +56,12 @@ const ScanPrescription = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      setMedicines((data.medicines || []).map((m: ScannedMedicine) => ({ ...m, saved: false })));
+      setMedicines((data.medicines || []).map((m: ScannedMedicine) => ({
+        ...m,
+        timing: (m.timing || "morning").toLowerCase().replace(/\s/g, ""),
+        foodInstruction: (m.foodInstruction || "after_food").toLowerCase().replace(/\s/g, ""),
+        saved: false,
+      })));
       setInteractions(data.interactions || []);
       setHasResults(true);
     } catch (err: any) {
