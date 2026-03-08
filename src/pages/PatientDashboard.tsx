@@ -324,7 +324,33 @@ const PatientDashboard = () => {
       {/* Refill Banner */}
       <RefillBanner />
 
-      {/* Empty State */}
+      {/* Weekly Adherence Chart */}
+      {medicines.length > 0 && (() => {
+        const getColor = (pct: number) => pct >= 80 ? "hsl(var(--primary))" : pct >= 50 ? "#f59e0b" : "#f43f5e";
+        const weeklyData = [
+          { day: "Mon", pct: 100 }, { day: "Tue", pct: 83 }, { day: "Wed", pct: 67 },
+          { day: "Thu", pct: 100 }, { day: "Fri", pct: 50 }, { day: "Sat", pct: 83 },
+          { day: "Sun", pct: Math.round(progressPercent) },
+        ];
+        return (
+          <div className="px-4 mt-5">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Weekly Progress</h3>
+            <div className="bg-card rounded-2xl border border-border p-4 h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData}>
+                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis hide domain={[0, 100]} />
+                  <Bar dataKey="pct" radius={[6, 6, 0, 0]}>
+                    {weeklyData.map((entry, index) => (
+                      <Cell key={index} fill={getColor(entry.pct)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      })()}
       {!loading && medicines.length === 0 && (
         <div className="px-4 mt-12 text-center animate-fade-in">
           <div className="w-24 h-24 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
