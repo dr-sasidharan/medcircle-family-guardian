@@ -94,6 +94,23 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  /* Global smooth transitions */
+  button,
+  a,
+  [role="button"],
+  input,
+  textarea,
+  select,
+  .card,
+  [class*="card"] {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.97);
+  }
 }
 
 @layer utilities {
