@@ -184,6 +184,7 @@ export type Database = {
           phone: string | null
           photo_url: string | null
           specialty: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -194,6 +195,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           specialty: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -204,6 +206,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           specialty?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -618,6 +621,7 @@ export type Database = {
     }
     Functions: {
       get_linked_patient_ids: { Args: never; Returns: string[] }
+      get_my_doctor_id: { Args: never; Returns: string }
       get_my_profile_id: { Args: never; Returns: string }
       is_my_medicine: { Args: { _medicine_id: string }; Returns: boolean }
     }
