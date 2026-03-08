@@ -423,10 +423,7 @@ export default function AdminDashboard() {
         {/* User List */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg">Users</CardTitle>
-            <Button variant="outline" size="sm" onClick={exportCSV}>
-              <Download className="w-4 h-4 mr-1" /> Export CSV
-            </Button>
+            <CardTitle className="text-lg">Users ({users.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg border border-border overflow-auto">
