@@ -47,6 +47,7 @@ const PatientDashboard = () => {
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
   const FOOD_LABELS = getFoodLabels(t);
+  useNotificationReminders();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [takenIds, setTakenIds] = useState<Set<string>>(new Set());
