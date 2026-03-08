@@ -9,7 +9,7 @@ import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
 import WhatsAppPreview from "@/components/WhatsAppPreview";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope } from "lucide-react";
+import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope, Undo2, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 import { useNotificationReminders } from "@/hooks/useNotificationReminders";
@@ -127,6 +127,44 @@ const PatientDashboard = () => {
       toast.success("Undo successful");
     } catch {
       toast.error("Failed to undo");
+    }
+  };
+
+  const handleMarkMissed = async (medicineId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const today = new Date().toISOString().split("T")[0];
+      const med = medicines.find((m) => m.id === medicineId);
+      const scheduledTime = med?.timing === "morning" ? "08:00" : med?.timing === "afternoon" ? "14:00" : "21:00";
+
+      const { data: existing } = await supabase
+        .from("doses")
+        .select("id")
+        .eq("medicine_id", medicineId)
+        .eq("scheduled_date", today)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from("doses").update({ taken: false, missed: true, taken_at: null }).eq("id", existing.id);
+      } else {
+        await supabase.from("doses").insert({
+          medicine_id: medicineId,
+          user_id: user.id,
+          scheduled_date: today,
+          scheduled_time: scheduledTime,
+          taken: false,
+          missed: true,
+        });
+      }
+
+      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      toast(`${med?.name} marked as skipped`, {
+        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
+        duration: 5000,
+      });
+    } catch {
+      toast.error("Failed to mark as missed");
     }
   };
 
@@ -469,12 +507,21 @@ const PatientDashboard = () => {
                           </div>
                         </div>
 
-                        {/* Status badge */}
-                        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {/* Status badges */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           {isTaken ? (
-                            <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                              <Check size={14} /> Taken
-                            </div>
+                            <>
+                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
+                                <Check size={14} /> Taken
+                              </div>
+                              <button
+                                onClick={() => handleUndoTaken(med.id)}
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                title="Undo"
+                              >
+                                <Undo2 size={16} />
+                              </button>
+                            </>
                           ) : isMissed ? (
                             <button
                               onClick={() => handleMarkTaken(med.id)}
@@ -483,12 +530,21 @@ const PatientDashboard = () => {
                               Take Now
                             </button>
                           ) : (
-                            <button
-                              onClick={() => handleMarkTaken(med.id)}
-                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
-                            >
-                              Mark Taken
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleMarkTaken(med.id)}
+                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
+                              >
+                                Mark Taken
+                              </button>
+                              <button
+                                onClick={() => handleMarkMissed(med.id)}
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                title="Skip / Missed"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
