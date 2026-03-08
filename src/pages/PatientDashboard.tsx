@@ -277,6 +277,17 @@ const PatientDashboard = () => {
       {/* Medicine Sections */}
       {medicines.length > 0 && (
         <div className="px-4 mt-6 space-y-6">
+          {/* Section Title + Scan Button */}
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading font-extrabold text-lg text-foreground">Today's Medicines</h2>
+            <button
+              onClick={() => navigate("/scan")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+            >
+              <ScanLine size={16} className="text-primary" />
+              <span className="text-xs font-heading font-bold text-primary">Scan</span>
+            </button>
+          </div>
           {sections.map((section) => {
             const config = sectionConfig[section.key as keyof typeof sectionConfig];
             const sectionMeds = medicines.filter((m) => m.timing === section.key);
