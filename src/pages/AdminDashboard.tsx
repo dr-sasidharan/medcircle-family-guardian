@@ -42,7 +42,9 @@ interface PaymentRow {
   id: string;
   amount: number;
   plan: string;
+  status: string;
   razorpay_payment_id: string | null;
+  razorpay_order_id: string | null;
   created_at: string;
   patient_profile_id: string;
   patient_name?: string;
