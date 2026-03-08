@@ -331,6 +331,16 @@ const Profile = () => {
         </button>
       </div>
 
+      {/* Edit Profile Sheet */}
+      {profile && (
+        <EditProfileSheet
+          open={showEdit}
+          onClose={() => setShowEdit(false)}
+          profile={profile}
+          onSaved={fetchData}
+        />
+      )}
+
       <BottomNav />
     </div>
   );
