@@ -1,18 +1,45 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { LayoutDashboard, Pill, ScanLine, Lightbulb, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { LayoutDashboard, Pill, Bell, ScanLine, User } from "lucide-react";
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const [missedCount, setMissedCount] = useState(0);
+
+  useEffect(() => {
+    const fetchMissed = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { count } = await supabase
+        .from("doses")
+        .select("*", { count: "exact", head: true })
+        .eq("scheduled_date", today)
+        .eq("taken", false)
+        .eq("missed", true);
+      setMissedCount(count || 0);
+    };
+
+    fetchMissed();
+
+    const channel = supabase
+      .channel("nav-doses")
+      .on("postgres_changes", { event: "*", schema: "public", table: "doses" }, () => {
+        fetchMissed();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const items = [
-    { path: "/patient", icon: LayoutDashboard, label: t("dashboard") },
-    { path: "/add-medicine", icon: Pill, label: t("medicines") },
-    { path: "/scan", icon: ScanLine, label: t("scan") },
-    { path: "/insights", icon: Lightbulb, label: t("insights") },
-    { path: "/profile", icon: User, label: t("profile") },
+    { path: "/patient", icon: LayoutDashboard, label: t("dashboard"), badge: 0 },
+    { path: "/add-medicine", icon: Pill, label: t("medicines"), badge: 0 },
+    { path: "/reminders", icon: Bell, label: "Reminders", badge: missedCount },
+    { path: "/scan", icon: ScanLine, label: t("scan"), badge: 0 },
+    { path: "/profile", icon: User, label: t("profile"), badge: 0 },
   ];
 
   return (
@@ -24,13 +51,20 @@ const BottomNav = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
                 isActive
                   ? "text-primary bg-secondary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+              <div className="relative">
+                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2 w-4.5 h-4.5 min-w-[18px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
               <span className="text-[11px] font-medium">{item.label}</span>
             </button>
           );
