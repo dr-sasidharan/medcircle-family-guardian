@@ -473,7 +473,7 @@ const PatientDashboard = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
             >
               <ScanLine size={16} className="text-primary" />
-              <span className="text-xs font-heading font-bold text-primary">Scan</span>
+              <span className="text-xs font-heading font-bold text-primary">{t("scan")}</span>
             </button>
           </div>
           {sections.map((section) => {
