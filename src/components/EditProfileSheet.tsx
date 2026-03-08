@@ -20,6 +20,7 @@ interface EditProfileSheetProps {
 }
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const COMMON_CONDITIONS = ["Type 2 Diabetes", "Hypertension", "Asthma", "Heart Disease", "Thyroid", "Arthritis", "COPD", "Kidney Disease"];
 
 const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetProps) => {
   const [name, setName] = useState(profile.name);
