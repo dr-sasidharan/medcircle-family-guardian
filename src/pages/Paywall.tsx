@@ -84,8 +84,22 @@ const Paywall = () => {
   };
 
   const openUpiApp = (plan: typeof plans[0]) => {
-    const upiUrl = `upi://pay?pa=${UPI_ID}&pn=MedCircle&am=${plan.price}&cu=INR&tn=MedCircle_${plan.key}_plan`;
-    window.location.href = upiUrl;
+    const upiParams = `pa=${UPI_ID}&pn=MedCircle&am=${plan.price}&cu=INR&tn=MedCircle_${plan.key}_plan`;
+    const upiUrl = `upi://pay?${upiParams}`;
+    
+    // Try opening UPI deep link in a new window (works better outside iframes)
+    const newWindow = window.open(upiUrl, "_blank");
+    
+    // If popup blocked or deep link fails, try direct navigation after a short delay
+    setTimeout(() => {
+      if (!newWindow || newWindow.closed) {
+        // Fallback: try intent URL for Android
+        const intentUrl = `intent://pay?${upiParams}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        window.location.href = intentUrl;
+      }
+    }, 500);
+
+    toast.info("If UPI app didn't open, copy the UPI ID and pay manually from any UPI app.");
   };
 
   const handleConfirmPayment = async () => {
