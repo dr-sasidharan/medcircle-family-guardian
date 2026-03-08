@@ -40,6 +40,7 @@ const Profile = () => {
     const { data: profiles } = await supabase.from("patient_profiles").select("*").limit(1);
     if (profiles && profiles.length > 0) {
       setProfile(profiles[0] as any);
+      setPatientPlan((profiles[0] as any).plan || "free");
       const { data: ct } = await supabase
         .from("caretakers")
         .select("*")
