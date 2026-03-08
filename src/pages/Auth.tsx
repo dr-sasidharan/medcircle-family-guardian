@@ -208,8 +208,8 @@ export default function Auth() {
         if (signInError) throw signInError;
         session = signInData.session;
       } else {
-        if (!signUpData.session) {
-          toast.success("Check your email to verify, then log in and enter the code.");
+      if (!signUpData.session) {
+          toast.success("Account created! Please log in to continue.");
           setLoading(false);
           return;
         }
