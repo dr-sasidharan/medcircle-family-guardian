@@ -253,7 +253,7 @@ const Reminders = () => {
               </Dialog>
               <LanguageToggle />
             </div>
-
+          </div>
           {/* Progress glass card */}
           <div className="glass-card rounded-2xl p-4 mt-2">
             <div className="flex justify-between items-baseline mb-2">
