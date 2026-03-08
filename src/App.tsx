@@ -30,6 +30,7 @@ import SymptomChecker from "./pages/SymptomChecker";
 import ResetPassword from "./pages/ResetPassword";
 import NotificationLog from "./pages/NotificationLog";
 import HospitalBooking from "./pages/HospitalBooking";
+import DoctorPortal from "./pages/DoctorPortal";
 import NotFound from "./pages/NotFound";
 import AnimatedPage from "./components/AnimatedPage";
 
@@ -71,6 +72,7 @@ const App = () => (
                   <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
                   <Route path="/notifications" element={<P><NotificationLog /></P>} />
                   <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
+                  <Route path="/doctor-portal" element={<P><DoctorPortal /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
