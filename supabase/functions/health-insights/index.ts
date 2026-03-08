@@ -9,9 +9,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { medicines, age, name } = await req.json();
+    const { medicines, age, name, language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const langInstruction = language === "ta" ? "Respond in Tamil." : language === "hi" ? "Respond in Hindi." : "Respond in English.";
 
     const medicineList = medicines.map((m: any) => `${m.name} ${m.dosage} (${m.timing}, ${m.food_instruction})`).join(", ");
 
