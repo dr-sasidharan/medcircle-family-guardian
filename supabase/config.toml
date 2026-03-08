@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.create-razorpay-order]
 verify_jwt = false
+
+[functions.missed-dose-checker]
+verify_jwt = false
