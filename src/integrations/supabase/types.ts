@@ -14,7 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      doses: {
+        Row: {
+          created_at: string
+          id: string
+          medicine_id: string
+          missed: boolean
+          scheduled_date: string
+          scheduled_time: string
+          taken: boolean
+          taken_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medicine_id: string
+          missed?: boolean
+          scheduled_date?: string
+          scheduled_time: string
+          taken?: boolean
+          taken_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medicine_id?: string
+          missed?: boolean
+          scheduled_date?: string
+          scheduled_time?: string
+          taken?: boolean
+          taken_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doses_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicines: {
+        Row: {
+          created_at: string
+          dosage: string
+          food_instruction: string
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string | null
+          purpose: string | null
+          timing: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dosage: string
+          food_instruction?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          photo_url?: string | null
+          purpose?: string | null
+          timing: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dosage?: string
+          food_instruction?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo_url?: string | null
+          purpose?: string | null
+          timing?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
