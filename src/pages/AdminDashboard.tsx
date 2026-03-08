@@ -61,6 +61,8 @@ export default function AdminDashboard() {
   });
   const [users, setUsers] = useState<UserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [userGrowth, setUserGrowth] = useState<{ date: string; users: number }[]>([]);
   const [revenueChart, setRevenueChart] = useState<{ date: string; revenue: number }[]>([]);
   const [planDist, setPlanDist] = useState<{ name: string; value: number; color: string }[]>([]);
