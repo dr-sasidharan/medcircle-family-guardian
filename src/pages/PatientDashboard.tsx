@@ -609,7 +609,7 @@ const PatientDashboard = () => {
         </button>
         <button onClick={() => navigate("/drug-interaction")}
           className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-heading font-bold text-foreground hover:bg-secondary transition-colors">
-          <FlaskConical size={22} className="text-warning" /> Drug Interaction Checker
+          <FlaskConical size={22} className="text-warning" /> {t("drug_interaction_checker")}
         </button>
       </div>
 
