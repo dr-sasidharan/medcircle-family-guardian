@@ -114,7 +114,7 @@ const DoctorSummary = () => {
             <div className="flex gap-3">
               <button onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-3.5 text-sm font-bold hover:opacity-90 transition-opacity">
-                <Share2 size={18} />{t("share")}
+                <Share2 size={18} />Share
               </button>
               <button onClick={handlePrint}
                 className="flex-1 flex items-center justify-center gap-2 bg-secondary text-secondary-foreground rounded-2xl py-3.5 text-sm font-bold hover:bg-accent transition-colors">
