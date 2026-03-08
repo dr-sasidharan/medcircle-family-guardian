@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Plus, Phone, Mail, Heart, X } from "lucide-react";
+import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 interface Caretaker {
@@ -214,6 +214,26 @@ const Profile = () => {
 
       {/* Quick Links */}
       <div className="px-4 mt-8 space-y-3">
+        <button onClick={() => navigate("/doctor-summary")}
+          className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:bg-secondary transition-colors flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <FileText size={20} className="text-primary" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Pre-Doctor Visit Summary</h3>
+            <p className="text-sm text-muted-foreground">AI-generated summary for your next appointment</p>
+          </div>
+        </button>
+        <button onClick={() => navigate("/drug-interaction")}
+          className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:bg-secondary transition-colors flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+            <FlaskConical size={20} className="text-warning" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Drug Interaction Checker</h3>
+            <p className="text-sm text-muted-foreground">Check if your medicines are safe together</p>
+          </div>
+        </button>
         <button onClick={() => navigate("/pricing")}
           className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:bg-secondary transition-colors">
           <h3 className="text-base font-bold text-foreground">Upgrade Plan</h3>
