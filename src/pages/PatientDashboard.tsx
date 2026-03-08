@@ -391,7 +391,7 @@ const PatientDashboard = () => {
                 } as React.CSSProperties}
               />
             </div>
-            <p className="text-white/50 text-xs mt-2">Medicines Taken</p>
+            <p className="text-white/50 text-xs mt-2">{t("medicines_taken_label")}</p>
           </div>
         </div>
       </div>
