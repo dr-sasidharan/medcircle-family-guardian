@@ -26,6 +26,7 @@ interface PatientProfile {
   emergency_contact: string | null;
   emergency_token: string;
   photo_url: string | null;
+  medcircle_code: string | null;
 }
 
 const Profile = () => {
