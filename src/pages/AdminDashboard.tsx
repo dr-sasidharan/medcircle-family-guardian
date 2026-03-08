@@ -232,7 +232,23 @@ export default function AdminDashboard() {
     if (!authenticated) return;
     fetchData();
     const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
+
+    // Realtime subscriptions for instant updates
+    const paymentsChannel = supabase
+      .channel('admin-payments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
+      .subscribe();
+
+    const profilesChannel = supabase
+      .channel('admin-profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'patient_profiles' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(paymentsChannel);
+      supabase.removeChannel(profilesChannel);
+    };
   }, [authenticated, fetchData]);
 
   // Session timeout after 15 minutes of inactivity
