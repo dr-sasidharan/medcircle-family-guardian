@@ -15,7 +15,7 @@ verify_jwt = false
 [functions.doctor-summary]
 verify_jwt = false
 
-[functions.create-razorpay-order]
+[functions.create-cashfree-order]
 verify_jwt = false
 
 [functions.verify-payment]

@@ -12,20 +12,23 @@ serve(async (req) => {
   }
 
   try {
-    const { razorpay_payment_id, razorpay_order_id, plan, amount, patient_profile_id } = await req.json();
+    const { order_id, plan, amount, patient_profile_id } = await req.json();
 
-    const keyId = Deno.env.get("RAZORPAY_KEY_ID")!;
-    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET")!;
-    const auth = btoa(`${keyId}:${keySecret}`);
+    const appId = Deno.env.get("CASHFREE_APP_ID")!;
+    const secretKey = Deno.env.get("CASHFREE_SECRET_KEY")!;
 
-    // Verify payment with Razorpay
-    const paymentRes = await fetch(`https://api.razorpay.com/v1/payments/${razorpay_payment_id}`, {
-      headers: { Authorization: `Basic ${auth}` },
+    // Verify order with Cashfree
+    const orderRes = await fetch(`https://api.cashfree.com/pg/orders/${order_id}`, {
+      headers: {
+        "x-api-version": "2023-08-01",
+        "x-client-id": appId,
+        "x-client-secret": secretKey,
+      },
     });
-    const payment = await paymentRes.json();
+    const order = await orderRes.json();
 
-    if (!paymentRes.ok || payment.status !== "captured") {
-      throw new Error("Payment not verified");
+    if (!orderRes.ok || order.order_status !== "PAID") {
+      throw new Error(`Payment not verified. Status: ${order.order_status || "unknown"}`);
     }
 
     const supabase = createClient(
@@ -38,8 +41,8 @@ serve(async (req) => {
       patient_profile_id,
       amount,
       plan,
-      razorpay_payment_id,
-      razorpay_order_id,
+      razorpay_payment_id: order_id,
+      razorpay_order_id: order.cf_order_id?.toString() || order_id,
       status: "success",
     });
 
