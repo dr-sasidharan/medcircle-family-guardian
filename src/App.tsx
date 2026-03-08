@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ElderlyModeProvider } from "@/contexts/ElderlyModeContext";
+import { VoiceCommandProvider } from "@/contexts/VoiceCommandContext";
+import VoiceCommandButton from "@/components/VoiceCommandButton";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
