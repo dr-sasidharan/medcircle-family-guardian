@@ -338,10 +338,18 @@ export default function AdminDashboard() {
   const metricCards = [
     { label: "Total Users", value: metrics.totalUsers, icon: Users, fmt: (v: number) => v.toString() },
     { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
+    { label: "Active (7d)", value: metrics.activeUsers7d, icon: Activity, fmt: (v: number) => v.toString() },
     { label: "Paying Users", value: metrics.payingUsers, icon: CreditCard, fmt: (v: number) => v.toString() },
     { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
-    { label: "One-Time Revenue", value: metrics.oneTimeTotal, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
     { label: "Revenue Today", value: metrics.revenueToday, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
+  ];
+
+  const advancedMetricCards = [
+    { label: "Retention Rate", value: metrics.retentionRate, icon: UserCheck, fmt: (v: number) => `${v}%`, color: "text-green-600" },
+    { label: "Churn Rate", value: metrics.churnRate, icon: UserMinus, fmt: (v: number) => `${v}%`, color: "text-destructive" },
+    { label: "Conversion Rate", value: metrics.conversionRate, icon: ArrowUpRight, fmt: (v: number) => `${v}%`, color: "text-primary" },
+    { label: "ARPU", value: metrics.arpu, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-primary" },
+    { label: "One-Time Revenue", value: metrics.oneTimeTotal, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-foreground" },
   ];
 
   const planBadgeColor = (plan: string) => {
