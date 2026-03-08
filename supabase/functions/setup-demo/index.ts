@@ -135,6 +135,54 @@ Deno.serve(async (req) => {
           },
         ]);
       }
+
+      // Add hospital visits if none exist
+      const { data: existingVisits } = await supabase
+        .from("hospital_visits")
+        .select("id")
+        .eq("patient_profile_id", profile.id);
+
+      if (!existingVisits?.length) {
+        await supabase.from("hospital_visits").insert([
+          {
+            patient_profile_id: profile.id,
+            doctor_name: "Dr. Meena Iyer",
+            hospital_name: "Apollo Hospital, Chennai",
+            visit_date: new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0],
+            diagnosis: "Routine diabetes checkup — HbA1c 7.2%",
+            notes: "Increase Metformin to 500mg twice daily. Follow up in 3 months.",
+          },
+          {
+            patient_profile_id: profile.id,
+            doctor_name: "Dr. Suresh Nair",
+            hospital_name: "MIOT Hospital, Chennai",
+            visit_date: new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0],
+            diagnosis: "Hypertension review — BP 140/90",
+            notes: "Added Amlodipine 5mg. Monitor BP daily.",
+          },
+        ]);
+      }
+
+      // Add symptom checks if none exist
+      const { data: existingSymptoms } = await supabase
+        .from("symptom_checks")
+        .select("id")
+        .eq("patient_profile_id", profile.id);
+
+      if (!existingSymptoms?.length) {
+        await supabase.from("symptom_checks").insert([
+          {
+            patient_profile_id: profile.id,
+            symptom: "Mild dizziness after standing up quickly",
+            urgency: "LOW",
+            urgency_color: "yellow",
+            is_side_effect: true,
+            likely_medicine: "Amlodipine",
+            summary: "Likely postural hypotension from blood pressure medication.",
+            what_to_do: ["Stand up slowly", "Stay hydrated", "Monitor BP twice daily"],
+          },
+        ]);
+      }
     }
 
     return new Response(
