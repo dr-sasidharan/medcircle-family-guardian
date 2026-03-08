@@ -13,8 +13,18 @@ serve(async (req) => {
   try {
     const { amount, plan, patient_profile_id } = await req.json();
 
-    const keyId = Deno.env.get("RAZORPAY_KEY_ID")!;
-    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET")!;
+    const keyId = Deno.env.get("RAZORPAY_KEY_ID");
+    const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
+
+    if (!keyId || !keySecret) {
+      console.error("Missing Razorpay credentials. KEY_ID exists:", !!keyId, "KEY_SECRET exists:", !!keySecret);
+      return new Response(JSON.stringify({ error: "Payment gateway not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Creating Razorpay order:", { amount, plan, keyIdPrefix: keyId.substring(0, 8) });
 
     const auth = btoa(`${keyId}:${keySecret}`);
 
@@ -25,7 +35,7 @@ serve(async (req) => {
         Authorization: `Basic ${auth}`,
       },
       body: JSON.stringify({
-        amount: amount * 100, // Razorpay expects paise
+        amount: amount * 100,
         currency: "INR",
         receipt: `medcircle_${plan}_${Date.now()}`,
         notes: { plan, patient_profile_id },
@@ -33,9 +43,10 @@ serve(async (req) => {
     });
 
     const order = await orderRes.json();
+    console.log("Razorpay response status:", orderRes.status, "body:", JSON.stringify(order));
 
     if (!orderRes.ok) {
-      throw new Error(order.error?.description || "Failed to create order");
+      throw new Error(order.error?.description || "Authentication failed — check your Razorpay API keys");
     }
 
     return new Response(JSON.stringify({ order_id: order.id, key_id: keyId }), {
