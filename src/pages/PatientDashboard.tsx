@@ -9,6 +9,7 @@ import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Medicine {
   id: string;
