@@ -69,8 +69,8 @@ serve(async (req) => {
     const langMap: Record<string, string> = { ta: "Tamil", hi: "Hindi", ml: "Malayalam" };
     const langInstruction = langMap[language] ? `Respond in ${langMap[language]}.` : "Respond in English.";
 
-    // High-confidence local profiles for known medicines
-    if (KNOWN_MEDICINES[normalizedName]) {
+    // High-confidence local profiles for known medicines (English only)
+    if (KNOWN_MEDICINES[normalizedName] && (!language || language === "en")) {
       return new Response(JSON.stringify(KNOWN_MEDICINES[normalizedName]), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
