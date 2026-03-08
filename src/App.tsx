@@ -11,6 +11,7 @@ import CaretakerDashboard from "./pages/CaretakerDashboard";
 import MedicineDetail from "./pages/MedicineDetail";
 import Pricing from "./pages/Pricing";
 import ScanPrescription from "./pages/ScanPrescription";
+import ScanTablet from "./pages/ScanTablet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/medicine-detail" element={<MedicineDetail />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/scan" element={<ScanPrescription />} />
+            <Route path="/scan-tablet" element={<ScanTablet />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
