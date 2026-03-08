@@ -191,24 +191,39 @@ const Paywall = () => {
             Open UPI App to Pay
           </button>
 
+          {/* Transaction ID input */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">UPI Transaction ID / UTR Number</label>
+            <input
+              type="text"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              placeholder="e.g. 412345678901 or UPI ref number"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Find this in your UPI app → payment history → transaction details
+            </p>
+          </div>
+
           {/* Confirm payment button */}
           <button
             onClick={handleConfirmPayment}
-            disabled={confirming}
+            disabled={confirming || transactionId.trim().length < 6}
             className="w-full bg-foreground text-background rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {confirming ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 size={18} className="animate-spin" />
-                Submitting...
+                Verifying...
               </span>
             ) : (
-              "✅ I Have Paid"
+              "✅ I Have Paid — Verify & Activate"
             )}
           </button>
 
           <p className="text-xs text-muted-foreground text-center">
-            After paying via UPI, tap "I Have Paid". Our team will verify and activate your plan within minutes.
+            Enter your UPI Transaction ID after payment. We'll verify it and activate your plan.
           </p>
         </div>
       </div>
