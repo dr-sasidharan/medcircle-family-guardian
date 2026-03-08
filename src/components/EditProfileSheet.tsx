@@ -20,6 +20,7 @@ interface EditProfileSheetProps {
 }
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const COMMON_CONDITIONS = ["Type 2 Diabetes", "Hypertension", "Asthma", "Heart Disease", "Thyroid", "Arthritis", "COPD", "Kidney Disease"];
 
 const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetProps) => {
   const [name, setName] = useState(profile.name);
@@ -138,8 +139,8 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
   const inputClass = "w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
 
   return (
-    <div className="fixed inset-0 bg-ink/50 z-50 flex items-end">
-      <div className="bg-card w-full rounded-t-3xl p-6 space-y-4 animate-slide-up max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-ink/50 z-[60] flex items-end">
+      <div className="bg-card w-full rounded-t-3xl p-6 pb-8 space-y-4 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-heading font-bold text-foreground">Edit Profile</h2>
           <button onClick={onClose} className="text-muted-foreground p-1"><X size={20} /></button>
@@ -238,8 +239,20 @@ const EditProfileSheet = ({ open, onClose, profile, onSaved }: EditProfileSheetP
             {conditions.map((c, i) => (
               <span key={i} className="bg-accent text-accent-foreground px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5">
                 {c}
-                <button onClick={() => setConditions(conditions.filter((_, j) => j !== i))}><Trash2 size={12} /></button>
+                <button onClick={() => setConditions(conditions.filter((_, j) => j !== i))} className="p-0.5 hover:text-destructive"><Trash2 size={12} /></button>
               </span>
+            ))}
+          </div>
+          {/* Quick-add common conditions */}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {COMMON_CONDITIONS.filter(c => !conditions.includes(c)).slice(0, 6).map((c) => (
+              <button
+                key={c}
+                onClick={() => setConditions([...conditions, c])}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border transition-colors"
+              >
+                + {c}
+              </button>
             ))}
           </div>
           <div className="flex gap-2">
