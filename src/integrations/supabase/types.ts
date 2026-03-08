@@ -448,6 +448,7 @@ export type Database = {
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
           status: string
+          upi_transaction_id: string | null
         }
         Insert: {
           amount: number
@@ -458,6 +459,7 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           status?: string
+          upi_transaction_id?: string | null
         }
         Update: {
           amount?: number
@@ -468,6 +470,7 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           status?: string
+          upi_transaction_id?: string | null
         }
         Relationships: [
           {
