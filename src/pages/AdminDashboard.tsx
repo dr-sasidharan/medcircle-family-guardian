@@ -13,7 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Users, CreditCard, TrendingUp, IndianRupee, Download, RefreshCw,
   Shield, Lock, BarChart3, PieChart as PieChartIcon, CheckCircle2, XCircle, Clock,
+  UserCheck, UserMinus, ArrowUpRight, Activity, Percent,
 } from "lucide-react";
+import {
+  AreaChart, Area,
+} from "recharts";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Tooltip,
@@ -28,6 +32,11 @@ interface Metrics {
   mrr: number;
   oneTimeTotal: number;
   revenueToday: number;
+  retentionRate: number;
+  churnRate: number;
+  conversionRate: number;
+  arpu: number;
+  activeUsers7d: number;
 }
 
 interface UserRow {
@@ -58,7 +67,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
     totalUsers: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
+    retentionRate: 0, churnRate: 0, conversionRate: 0, arpu: 0, activeUsers7d: 0,
   });
+  const [dauChart, setDauChart] = useState<{ date: string; dau: number }[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PaymentRow[]>([]);
@@ -132,7 +143,51 @@ export default function AdminDashboard() {
         .filter((p) => p.created_at >= todayStart)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday });
+      // Advanced metrics
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const activeUsers7d = allUsers.filter(
+        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
+      ).length;
+
+      // Retention: users active in last 7 days who signed up more than 7 days ago
+      const usersOlderThan7d = allUsers.filter((u) => new Date(u.created_at) < sevenDaysAgo);
+      const retainedUsers = usersOlderThan7d.filter(
+        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
+      ).length;
+      const retentionRate = usersOlderThan7d.length > 0
+        ? Math.round((retainedUsers / usersOlderThan7d.length) * 100)
+        : 0;
+
+      // Churn: users older than 7d who haven't been active in 7 days
+      const churnRate = usersOlderThan7d.length > 0
+        ? Math.round(((usersOlderThan7d.length - retainedUsers) / usersOlderThan7d.length) * 100)
+        : 0;
+
+      // Conversion: free to paid
+      const conversionRate = totalUsers > 0
+        ? Math.round((payingUsers / totalUsers) * 100)
+        : 0;
+
+      // ARPU
+      const totalRevenue = paymentsList.filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0);
+      const arpu = payingUsers > 0 ? Math.round(totalRevenue / payingUsers) : 0;
+
+      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
+
+      // DAU chart (last 14 days)
+      const dauData = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+        const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+        const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
+        const dau = allUsers.filter(
+          (u) => u.last_active_at && u.last_active_at >= dayStart && u.last_active_at < dayEnd
+        ).length;
+        dauData.push({ date: dateStr, dau });
+      }
+      setDauChart(dauData);
 
       // User growth chart (last 7 days)
       const growthData = [];
@@ -283,10 +338,18 @@ export default function AdminDashboard() {
   const metricCards = [
     { label: "Total Users", value: metrics.totalUsers, icon: Users, fmt: (v: number) => v.toString() },
     { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
+    { label: "Active (7d)", value: metrics.activeUsers7d, icon: Activity, fmt: (v: number) => v.toString() },
     { label: "Paying Users", value: metrics.payingUsers, icon: CreditCard, fmt: (v: number) => v.toString() },
     { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
-    { label: "One-Time Revenue", value: metrics.oneTimeTotal, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
     { label: "Revenue Today", value: metrics.revenueToday, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
+  ];
+
+  const advancedMetricCards = [
+    { label: "Retention Rate", value: metrics.retentionRate, icon: UserCheck, fmt: (v: number) => `${v}%`, color: "text-green-600" },
+    { label: "Churn Rate", value: metrics.churnRate, icon: UserMinus, fmt: (v: number) => `${v}%`, color: "text-destructive" },
+    { label: "Conversion Rate", value: metrics.conversionRate, icon: ArrowUpRight, fmt: (v: number) => `${v}%`, color: "text-primary" },
+    { label: "ARPU", value: metrics.arpu, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-primary" },
+    { label: "One-Time Revenue", value: metrics.oneTimeTotal, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-foreground" },
   ];
 
   const planBadgeColor = (plan: string) => {
@@ -346,6 +409,49 @@ export default function AdminDashboard() {
             </Card>
           ))}
         </div>
+
+        {/* Advanced Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {advancedMetricCards.map((m) => (
+            <Card key={m.label} className="relative overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <m.icon className={`w-4 h-4 ${m.color}`} />
+                  </div>
+                </div>
+                <p className={`text-3xl font-bold tracking-tight ${m.color}`}>{m.fmt(m.value)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* DAU Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" /> Daily Active Users (14 days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={{ ...chartConfig, dau: { label: "DAU", color: "hsl(var(--primary))" } }} className="h-[250px] w-full">
+              <AreaChart data={dauChart}>
+                <defs>
+                  <linearGradient id="dauGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area type="monotone" dataKey="dau" stroke="hsl(var(--primary))" fill="url(#dauGradient)" strokeWidth={2} />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
         {/* Charts */}
         <div className="grid md:grid-cols-3 gap-6">
