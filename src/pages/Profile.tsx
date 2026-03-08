@@ -41,6 +41,7 @@ const Profile = () => {
   const [newRelation, setNewRelation] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [isAddingCaretaker, setIsAddingCaretaker] = useState(false);
 
   const fetchData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
