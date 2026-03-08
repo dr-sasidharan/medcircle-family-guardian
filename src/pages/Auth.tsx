@@ -9,9 +9,9 @@ type AuthMode = "email" | "phone" | "login" | "caretaker";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const initialMode = (searchParams.get("mode") as AuthMode) || "login";
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [isLogin, setIsLogin] = useState(initialMode === "login");
+  const initialMode = (searchParams.get("mode") as AuthMode) || "email";
+  const [mode, setMode] = useState<AuthMode>(initialMode === "login" ? "email" : initialMode);
+  const [isLogin, setIsLogin] = useState(initialMode === "login" || !searchParams.get("mode"));
 
   // Email fields
   const [email, setEmail] = useState("");
