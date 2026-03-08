@@ -262,8 +262,8 @@ const Profile = () => {
 
       {/* Inline Upgrade Prompt */}
       {showUpgradePrompt && (
-        <div className="fixed inset-0 bg-ink/50 z-50 flex items-end">
-          <div className="bg-card w-full rounded-t-3xl p-6 space-y-4 animate-slide-up">
+        <div className="fixed inset-0 bg-ink/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card w-full max-w-md rounded-3xl p-6 space-y-4 animate-fade-in shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-heading font-bold text-foreground">Upgrade Required</h2>
               <button onClick={() => setShowUpgradePrompt(false)} className="text-muted-foreground p-1"><X size={20} /></button>
@@ -315,8 +315,8 @@ const Profile = () => {
 
       {/* Add Caretaker Form */}
       {showAdd && (
-        <div className="fixed inset-0 bg-ink/50 z-50 flex items-end">
-          <div className="bg-card w-full rounded-t-3xl p-6 space-y-4 animate-slide-up max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-ink/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card w-full max-w-md rounded-3xl p-6 space-y-4 animate-fade-in shadow-xl max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-heading font-bold text-foreground">Add Caretaker</h2>
               <button onClick={() => setShowAdd(false)} className="text-muted-foreground p-1"><X size={20} /></button>
