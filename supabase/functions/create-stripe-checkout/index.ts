@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const PRICE_MAP: Record<string, { price_id: string; mode: "payment" | "subscription"; plan_value: string }> = {
-  one_time: { price_id: "price_1T8dfg2OpOsnuUgRmyBoVKgt", mode: "payment", plan_value: "family" },
+  one_time: { price_id: "price_1T8diy2OpOsnuUgRppirqwFV", mode: "payment", plan_value: "family" },
   family: { price_id: "price_1T8dgE2OpOsnuUgR1FJPeRkR", mode: "subscription", plan_value: "family" },
   pro: { price_id: "price_1T8dgk2OpOsnuUgR6GlD1cpY", mode: "subscription", plan_value: "pro" },
 };

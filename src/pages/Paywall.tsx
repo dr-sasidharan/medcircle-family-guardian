@@ -8,7 +8,7 @@ import { toast } from "sonner";
 const plans = [
   {
     key: "one_time",
-    price: 19,
+    price: 49,
     label: "One-Time Setup",
     period: "once",
     plan_value: "family",
