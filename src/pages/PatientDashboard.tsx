@@ -37,11 +37,11 @@ const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
   with_food: t("with_food"),
 });
 
-const sectionConfig = {
-  morning: { emoji: "☀️", label: "Morning", gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
-  afternoon: { emoji: "🌤️", label: "Afternoon", gradient: "from-[#dbeafe] to-[#eff6ff]", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
-  night: { emoji: "🌙", label: "Night", gradient: "from-[#ede9fe] to-[#f5f3ff]", pillBg: "bg-[#ede9fe]", iconBg: "bg-[#8b5cf6]", text: "text-[#4c1d95]", line: "bg-[#c4b5fd]" },
-};
+const sectionConfig = (t: (key: string) => string) => ({
+  morning: { emoji: "☀️", label: t("morning"), gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
+  afternoon: { emoji: "🌤️", label: t("afternoon"), gradient: "from-[#dbeafe] to-[#eff6ff]", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
+  night: { emoji: "🌙", label: t("night"), gradient: "from-[#ede9fe] to-[#f5f3ff]", pillBg: "bg-[#ede9fe]", iconBg: "bg-[#8b5cf6]", text: "text-[#4c1d95]", line: "bg-[#c4b5fd]" },
+});
 
 const PatientDashboard = () => {
   const { t } = useLanguage();
@@ -266,8 +266,8 @@ const PatientDashboard = () => {
         >
           <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full bg-white/5 animate-float" />
           <div className="relative z-10">
-            <h1 className="font-heading text-2xl font-extrabold">Good Morning</h1>
-            <p className="text-white/70 mt-1">{takenCount} of {totalCount} Medicines Taken</p>
+            <h1 className="font-heading text-2xl font-extrabold">{t("good_morning")}</h1>
+                <p className="text-white/70 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken_label")}</p>
             <div className="w-full h-4 bg-white/20 rounded-full overflow-hidden mt-3">
               <div
                 className="h-full rounded-full animate-progress-fill"
@@ -286,8 +286,8 @@ const PatientDashboard = () => {
             {missedDoses.map((d) => (
               <div key={d.id} className="bg-[#fff1f2] border-2 border-[#fda4af] rounded-2xl p-4 flex items-center gap-3 pulse-alert">
                 <AlertTriangle className="text-coral flex-shrink-0" size={24} />
-                <span className="text-[#9f1239] font-heading font-extrabold text-base">
-                  Missed: {d.medicine_name} ({d.scheduled_time})
+                 <span className="text-[#9f1239] font-heading font-extrabold text-base">
+                   {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
                 </span>
               </div>
             ))}
@@ -300,27 +300,27 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/reminders")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Pill size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Medicines</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("medicines")}</span>
           </button>
           <button onClick={() => navigate("/scan")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <ScanLine size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Scan</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("scan")}</span>
           </button>
           <button onClick={() => navigate("/drug-interaction")}
             className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <FlaskConical size={40} className="text-warning" />
-            <span className="text-lg font-heading font-bold text-foreground">Drug Interaction</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("drug_interaction_checker")}</span>
           </button>
           <button onClick={() => navigate("/hospital-booking")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Stethoscope size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Book Checkup</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("book_checkup")}</span>
           </button>
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Settings size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Profile</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("profile")}</span>
           </button>
         </div>
 
@@ -391,7 +391,7 @@ const PatientDashboard = () => {
                 } as React.CSSProperties}
               />
             </div>
-            <p className="text-white/50 text-xs mt-2">Medicines Taken</p>
+            <p className="text-white/50 text-xs mt-2">{t("medicines_taken_label")}</p>
           </div>
         </div>
       </div>
@@ -408,8 +408,8 @@ const PatientDashboard = () => {
               <div className="w-9 h-9 rounded-xl bg-[#fda4af]/30 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle size={18} className="text-[#e11d48]" />
               </div>
-              <span className="text-[#9f1239] font-heading font-bold text-sm">
-                Missed: {d.medicine_name} ({d.scheduled_time})
+               <span className="text-[#9f1239] font-heading font-bold text-sm">
+                 {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
               </span>
             </div>
           ))}
@@ -429,7 +429,7 @@ const PatientDashboard = () => {
         ];
         return (
           <div className="px-4 mt-5">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Weekly Progress</h3>
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">{t("weekly_progress")}</h3>
             <div className="bg-card rounded-2xl border border-border p-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
@@ -451,13 +451,13 @@ const PatientDashboard = () => {
           <div className="w-24 h-24 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
             <Pill size={48} className="text-primary" />
           </div>
-          <h2 className="text-xl font-heading font-bold text-foreground">No Medicines Yet</h2>
-          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">Add your first medicine to start tracking</p>
+          <h2 className="text-xl font-heading font-bold text-foreground">{t("no_medicines_title")}</h2>
+          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine_tracking")}</p>
           <button onClick={() => navigate("/add-medicine")}
             className="mt-6 text-white px-8 py-4 rounded-2xl text-base font-heading font-bold shadow-lg hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
           >
-            + Add Medicine
+            {t("add_medicine_btn")}
           </button>
         </div>
       )}
@@ -467,17 +467,18 @@ const PatientDashboard = () => {
         <div className="px-4 mt-6 space-y-6">
           {/* Section Title + Scan Button */}
           <div className="flex items-center justify-between">
-            <h2 className="font-heading font-extrabold text-lg text-foreground">Today's Medicines</h2>
+            <h2 className="font-heading font-extrabold text-lg text-foreground">{t("todays_medicines")}</h2>
             <button
               onClick={() => navigate("/scan")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
             >
               <ScanLine size={16} className="text-primary" />
-              <span className="text-xs font-heading font-bold text-primary">Scan</span>
+              <span className="text-xs font-heading font-bold text-primary">{t("scan")}</span>
             </button>
           </div>
           {sections.map((section) => {
-            const config = sectionConfig[section.key as keyof typeof sectionConfig];
+            const configs = sectionConfig(t);
+            const config = configs[section.key as keyof typeof configs];
             const sectionMeds = medicines.filter((m) => m.timing === section.key);
             if (sectionMeds.length === 0) return null;
             return (
@@ -545,7 +546,7 @@ const PatientDashboard = () => {
                           {isTaken ? (
                             <>
                               <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                                <Check size={14} /> Taken
+                                <Check size={14} /> {t("taken_label")}
                               </div>
                               <button
                                 onClick={() => handleUndoTaken(med.id)}
@@ -560,7 +561,7 @@ const PatientDashboard = () => {
                               onClick={() => handleMarkTaken(med.id)}
                               className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral hover:opacity-90 transition-opacity"
                             >
-                              Take Now
+                              {t("take_now")}
                             </button>
                           ) : (
                             <>
@@ -568,7 +569,7 @@ const PatientDashboard = () => {
                                 onClick={() => handleMarkTaken(med.id)}
                                 className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
                               >
-                                Mark Taken
+                                {t("mark_taken_btn")}
                               </button>
                               <button
                                 onClick={() => handleMarkMissed(med.id)}
@@ -600,15 +601,15 @@ const PatientDashboard = () => {
           className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary rounded-2xl py-4 text-base font-heading font-bold text-primary hover:bg-secondary transition-colors"
           style={{ boxShadow: "0 2px 12px rgba(13,148,136,0.1)" }}
         >
-          <ScanLine size={22} /> Scan Prescription
+          <ScanLine size={22} /> {t("scan_prescription")}
         </button>
         <button onClick={() => navigate("/scan-tablet?mode=identify")}
           className="w-full flex items-center justify-center gap-3 bg-secondary rounded-2xl py-4 text-base font-heading font-bold text-secondary-foreground hover:bg-accent transition-colors">
-          <HelpCircle size={22} /> What Is This Tablet?
+          <HelpCircle size={22} /> {t("what_is_tablet")}
         </button>
         <button onClick={() => navigate("/drug-interaction")}
           className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-heading font-bold text-foreground hover:bg-secondary transition-colors">
-          <FlaskConical size={22} className="text-warning" /> Drug Interaction Checker
+          <FlaskConical size={22} className="text-warning" /> {t("drug_interaction_checker")}
         </button>
       </div>
 
