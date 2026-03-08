@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface EditProfileSheetProps {
@@ -14,6 +14,7 @@ interface EditProfileSheetProps {
     allergies: string[] | null;
     chronic_conditions: string[] | null;
     emergency_contact: string | null;
+    photo_url: string | null;
   };
   onSaved: () => void;
 }
