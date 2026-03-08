@@ -88,32 +88,31 @@ const Paywall = () => {
       return;
     }
 
+    const txnId = transactionId.trim();
+    if (!txnId || txnId.length < 6) {
+      toast.error("Please enter a valid UPI Transaction ID (at least 6 characters)");
+      return;
+    }
+
     setConfirming(true);
     try {
-      // Record payment as success and activate plan instantly
+      // Record payment with transaction ID — pending admin verification
       const { error: payErr } = await supabase.from("payments").insert({
         patient_profile_id: patientProfileId,
         amount: selectedPlan.price,
         plan: selectedPlan.plan_value,
-        status: "success",
-      });
+        status: "pending_verification",
+        razorpay_payment_id: txnId, // storing UPI txn ID here
+      } as any);
 
       if (payErr) throw payErr;
 
-      // Activate the plan immediately
-      const { error: planErr } = await supabase
-        .from("patient_profiles")
-        .update({ plan: selectedPlan.plan_value })
-        .eq("id", patientProfileId);
-
-      if (planErr) throw planErr;
-
       setActivatedPlan(selectedPlan.label);
       setShowSuccess(true);
-      toast.success("Plan activated! 🎉");
+      toast.success("Payment submitted for verification!");
     } catch (err: any) {
       console.error("Payment confirm error:", err);
-      toast.error("Failed to activate plan. Please try again.");
+      toast.error("Failed to submit payment. Please try again.");
     } finally {
       setConfirming(false);
     }
