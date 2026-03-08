@@ -142,7 +142,7 @@ const MedicineDetail = () => {
                     color: "white",
                   }}
                 >
-                  {t(medicine.food_instruction) || medicine.food_instruction}
+                  {medicine.food_instruction === "before_food" ? "Before Food" : medicine.food_instruction === "after_food" ? "After Food" : "With Food"}
                 </span>
               </div>
             </div>
