@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, Pill, Bell, ScanLine, User } from "lucide-react";
+import { Pill, Clock, Users, User, Plus } from "lucide-react";
 
 const BottomNav = () => {
   const navigate = useNavigate();
@@ -35,37 +35,66 @@ const BottomNav = () => {
   }, []);
 
   const items = [
-    { path: "/patient", icon: LayoutDashboard, label: t("dashboard"), badge: 0 },
-    { path: "/add-medicine", icon: Pill, label: t("medicines"), badge: 0 },
-    { path: "/reminders", icon: Bell, label: "Reminders", badge: missedCount },
-    { path: "/scan", icon: ScanLine, label: t("scan"), badge: 0 },
-    { path: "/profile", icon: User, label: t("profile"), badge: 0 },
+    { path: "/patient", icon: Pill, label: t("medicines") },
+    { path: "/reminders", icon: Clock, label: "History" },
+    { path: "__add__", icon: Plus, label: "" },
+    { path: "/caretaker", icon: Users, label: "Family" },
+    { path: "/profile", icon: User, label: t("profile") },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
-      <div className="flex justify-around items-center py-2 px-2 max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-primary/10 z-50">
+      <div className="flex justify-around items-end py-2 px-2 max-w-lg mx-auto">
         {items.map((item) => {
+          if (item.path === "__add__") {
+            return (
+              <button
+                key="add"
+                onClick={() => navigate("/add-medicine")}
+                className="relative -mt-6 flex flex-col items-center"
+              >
+                <div
+                  className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center glow-teal"
+                  style={{
+                    background: "linear-gradient(135deg, #0d9488, #0f766e)",
+                  }}
+                >
+                  <Plus size={26} className="text-white" strokeWidth={2.5} />
+                </div>
+              </button>
+            );
+          }
+
           const isActive = location.pathname === item.path;
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-                isActive
-                  ? "text-primary bg-secondary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1.5"
             >
-              <div className="relative">
-                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                {item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 w-4.5 h-4.5 min-w-[18px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {item.badge}
+              <div
+                className={`relative p-2 rounded-xl transition-all ${
+                  isActive ? "bg-primary/10" : ""
+                }`}
+              >
+                <item.icon
+                  size={20}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={isActive ? "text-primary" : "text-muted-foreground"}
+                />
+                {item.path === "/reminders" && missedCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-coral text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {missedCount}
                   </span>
                 )}
               </div>
-              <span className="text-[11px] font-medium">{item.label}</span>
+              <span
+                className={`font-heading text-[10px] font-bold ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {item.label}
+              </span>
             </button>
           );
         })}
