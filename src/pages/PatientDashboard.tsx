@@ -561,7 +561,7 @@ const PatientDashboard = () => {
                               onClick={() => handleMarkTaken(med.id)}
                               className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral hover:opacity-90 transition-opacity"
                             >
-                              Take Now
+                              {t("take_now")}
                             </button>
                           ) : (
                             <>
