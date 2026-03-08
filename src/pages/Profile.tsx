@@ -349,11 +349,18 @@ const Profile = () => {
 
       {/* Add Caretaker Form */}
       {showAdd && (
-        <div className="fixed inset-0 bg-ink/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-md rounded-3xl p-6 space-y-4 animate-fade-in shadow-xl max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-ink/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addCaretaker();
+            }}
+            className="bg-card rounded-3xl p-6 space-y-4 animate-fade-in shadow-xl max-h-[90vh] overflow-y-auto border border-border w-full"
+            style={{ maxWidth: "520px" }}
+          >
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-heading font-bold text-foreground">Add Caretaker</h2>
-              <button onClick={() => setShowAdd(false)} className="text-muted-foreground p-1"><X size={20} /></button>
+              <button type="button" onClick={() => setShowAdd(false)} className="text-muted-foreground p-1"><X size={20} /></button>
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground mb-1 block">Name *</label>
@@ -379,13 +386,15 @@ const Profile = () => {
                 className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="priya@email.com" />
             </div>
-            <button onClick={addCaretaker}
-              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity glow-teal"
+            <button
+              type="submit"
+              disabled={isAddingCaretaker}
+              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity glow-teal disabled:opacity-60"
               style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
             >
-              Add Caretaker
+              {isAddingCaretaker ? "Adding..." : "Add Caretaker"}
             </button>
-          </div>
+          </form>
         </div>
       )}
 
