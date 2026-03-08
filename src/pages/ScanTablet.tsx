@@ -59,6 +59,13 @@ const ScanTablet = () => {
       if (data.error) throw new Error(data.error);
 
       setResult(data);
+      // Auto-set timing and food instruction from AI if available
+      const validTimings = ["morning", "afternoon", "night"];
+      const validFood = ["before_food", "after_food", "with_food"];
+      const aiTiming = (data.timing || "").toLowerCase();
+      const aiFood = (data.foodInstruction || "").toLowerCase();
+      if (validTimings.includes(aiTiming)) setSelectedTiming(aiTiming);
+      if (validFood.includes(aiFood)) setSelectedFood(aiFood);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to identify tablet");
