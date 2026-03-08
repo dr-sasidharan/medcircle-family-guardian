@@ -46,22 +46,6 @@ const trustBadges = [
   { icon: CheckCircle2, label: "100% Safe" },
 ];
 
-const CASHFREE_JS_URL = "https://sdk.cashfree.com/js/v3/cashfree.js";
-
-const loadCashfreeSDK = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if ((window as any).Cashfree) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = CASHFREE_JS_URL;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Cashfree SDK"));
-    document.head.appendChild(script);
-  });
-};
-
 const Paywall = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -70,86 +54,56 @@ const Paywall = () => {
   const [processing, setProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
-  const [verifying, setVerifying] = useState(false);
 
   const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
   const patientProfileId =
     (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
 
-  // Check for return from Cashfree payment
+  // Handle Stripe redirect back
   useEffect(() => {
-    const orderId = searchParams.get("order_id");
+    const success = searchParams.get("success");
     const plan = searchParams.get("plan");
     const ppId = searchParams.get("patient_profile_id");
 
-    if (orderId && plan && ppId) {
-      verifyPayment(orderId, plan, ppId);
+    if (success === "true" && plan && ppId) {
+      // Update profile plan
+      const activatePlan = async () => {
+        await supabase
+          .from("patient_profiles")
+          .update({ plan })
+          .eq("id", ppId);
+
+        setActivatedPlan(plan === "pro" ? "Family Pro" : "Family");
+        setShowSuccess(true);
+      };
+      activatePlan();
     }
   }, []);
 
-  const verifyPayment = async (orderId: string, plan: string, ppId: string) => {
-    setVerifying(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-payment", {
-        body: {
-          order_id: orderId,
-          plan,
-          amount: plans.find((p) => p.plan_value === plan)?.price || 0,
-          patient_profile_id: ppId,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.success) {
-        setActivatedPlan(plan === "pro" ? "Family Pro" : "Family");
-        setShowSuccess(true);
-      } else {
-        toast.error("Payment verification failed. Please contact support.");
-      }
-    } catch {
-      toast.error("Could not verify payment. Please contact support.");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
   const handlePayment = async (plan: typeof plans[0]) => {
     if (!patientProfileId) {
-      toast.error("Patient profile not found");
+      toast.error("Patient profile not found. Please try again.");
       return;
     }
 
     setProcessing(true);
     try {
-      // Load Cashfree SDK
-      await loadCashfreeSDK();
-
-      // Create order via edge function
-      const { data, error } = await supabase.functions.invoke("create-cashfree-order", {
+      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
         body: {
-          amount: plan.price,
-          plan: plan.plan_value,
+          plan_key: plan.key,
           patient_profile_id: patientProfileId,
         },
       });
 
       if (error || data?.error) {
-        throw new Error(data?.error || error?.message || "Failed to create order");
+        throw new Error(data?.error || error?.message || "Failed to create checkout");
       }
 
-      const { payment_session_id } = data;
-
-      // Initialize Cashfree checkout
-      const cashfree = (window as any).Cashfree({ mode: "production" });
-
-      const result = await cashfree.checkout({
-        paymentSessionId: payment_session_id,
-        redirectTarget: "_self",
-      });
-
-      // If we reach here, it means redirect didn't happen (popup mode)
-      if (result?.error) {
-        toast.error(result.error.message || "Payment failed");
+      // Redirect to Stripe Checkout
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
       }
     } catch (err: any) {
       console.error("Payment error:", err);
@@ -159,24 +113,12 @@ const Paywall = () => {
     }
   };
 
-  if (verifying) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="text-center">
-          <Loader2 size={40} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg font-semibold text-foreground">Verifying your payment...</p>
-          <p className="text-sm text-muted-foreground mt-2">Please wait, this will only take a moment.</p>
-        </div>
-      </div>
-    );
-  }
-
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6 page-transition">
         <div className="text-center max-w-sm animate-fade-in">
-          <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 size={40} className="text-success" />
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} className="text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground mb-2">
             Welcome to MedCircle {activatedPlan}! 🎉
