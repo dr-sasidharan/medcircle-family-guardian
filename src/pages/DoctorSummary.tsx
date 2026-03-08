@@ -94,8 +94,8 @@ const DoctorSummary = () => {
               <FileText size={36} className="text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">{t("prepare_visit")}</h2>
-              <p className="text-muted-foreground text-sm mt-2">{t("prepare_visit_desc")}</p>
+              <h2 className="text-xl font-bold text-foreground">Prepare for Your Visit</h2>
+              <p className="text-muted-foreground text-sm mt-2">AI will generate a concise summary of your medicines, adherence, and suggested questions for your doctor.</p>
             </div>
             <button onClick={generateSummary} disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-4 text-base font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50">
