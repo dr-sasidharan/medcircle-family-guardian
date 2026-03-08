@@ -266,8 +266,8 @@ const PatientDashboard = () => {
         >
           <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full bg-white/5 animate-float" />
           <div className="relative z-10">
-            <h1 className="font-heading text-2xl font-extrabold">Good Morning</h1>
-            <p className="text-white/70 mt-1">{takenCount} of {totalCount} Medicines Taken</p>
+            <h1 className="font-heading text-2xl font-extrabold">{t("good_morning")}</h1>
+                <p className="text-white/70 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken_label")}</p>
             <div className="w-full h-4 bg-white/20 rounded-full overflow-hidden mt-3">
               <div
                 className="h-full rounded-full animate-progress-fill"
