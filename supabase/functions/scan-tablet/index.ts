@@ -24,6 +24,7 @@ serve(async (req) => {
 Explain what this medicine is used for in 1 simple sentence.
 Is it expired? Provide explanation in both English and Tamil.
 Also include storage instructions.
+Based on your medical knowledge, determine the best timing (morning/afternoon/night) and whether this medicine should be taken before_food, after_food, or with_food.
 
 Return ONLY valid JSON in this exact format:
 {
@@ -37,7 +38,9 @@ Return ONLY valid JSON in this exact format:
   "expiry_explanation_en": "Expiry status explanation in English",
   "expiry_explanation_ta": "Same explanation in Tamil",
   "storage": "Storage instructions in simple English",
-  "category": "e.g. Painkiller, Antibiotic, Blood Pressure, Diabetes, etc."
+  "category": "e.g. Painkiller, Antibiotic, Blood Pressure, Diabetes, etc.",
+  "timing": "morning" or "afternoon" or "night",
+  "foodInstruction": "before_food" or "after_food" or "with_food"
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
