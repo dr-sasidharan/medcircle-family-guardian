@@ -57,6 +57,7 @@ const Paywall = () => {
   const [confirming, setConfirming] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
+  const [transactionId, setTransactionId] = useState("");
 
   const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
   const patientProfileId =
