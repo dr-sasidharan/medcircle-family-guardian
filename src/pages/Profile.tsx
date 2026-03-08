@@ -22,6 +22,8 @@ interface PatientProfile {
   blood_group: string | null;
   allergies: string[] | null;
   chronic_conditions: string[] | null;
+  emergency_contact: string | null;
+  emergency_token: string;
 }
 
 const Profile = () => {
