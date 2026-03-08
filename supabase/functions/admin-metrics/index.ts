@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { password } = await req.json();
+    const { password, action, paymentId, paymentPlan, patientProfileId } = await req.json();
     if (password !== ADMIN_PASSWORD) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -26,6 +26,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Handle payment approve/reject action
+    if (action === "approve" || action === "reject") {
+      const newStatus = action === "approve" ? "success" : "failed";
+      await supabaseAdmin.from("payments").update({ status: newStatus }).eq("id", paymentId);
+      
+      if (action === "approve") {
+        await supabaseAdmin.from("patient_profiles").update({ plan: paymentPlan }).eq("id", patientProfileId);
+      } else {
+        await supabaseAdmin.from("patient_profiles").update({ plan: "free" }).eq("id", patientProfileId);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Default: fetch all data
     const [profilesRes, paymentsRes] = await Promise.all([
       supabaseAdmin
         .from("patient_profiles")
