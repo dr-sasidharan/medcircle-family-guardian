@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Pencil, Check, X, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface MedicineData {
   id: string;
@@ -37,12 +38,16 @@ const MedicineDetail = () => {
   const [info, setInfo] = useState<MedicineInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [infoLoading, setInfoLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDosage, setEditDosage] = useState("");
+  const [editTiming, setEditTiming] = useState("");
+  const [editFood, setEditFood] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchMedicine = async () => {
       if (!id) return;
-
-      // Reset state so previous medicine data never flashes on route switch
       setLoading(true);
       setInfo(null);
       setMedicine(null);
@@ -80,6 +85,55 @@ const MedicineDetail = () => {
     fetchMedicine();
   }, [id]);
 
+  const startEditing = () => {
+    if (!medicine) return;
+    setEditName(medicine.name);
+    setEditDosage(medicine.dosage);
+    setEditTiming(medicine.timing);
+    setEditFood(medicine.food_instruction);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => setEditing(false);
+
+  const saveEdits = async () => {
+    if (!medicine) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("medicines")
+        .update({
+          name: editName,
+          dosage: editDosage,
+          timing: editTiming,
+          food_instruction: editFood,
+        })
+        .eq("id", medicine.id);
+
+      if (error) throw error;
+
+      setMedicine({ ...medicine, name: editName, dosage: editDosage, timing: editTiming, food_instruction: editFood });
+      setEditing(false);
+      toast.success("Medicine updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteMedicine = async () => {
+    if (!medicine || !confirm("Are you sure you want to delete this medicine?")) return;
+    try {
+      const { error } = await supabase.from("medicines").update({ is_active: false }).eq("id", medicine.id);
+      if (error) throw error;
+      toast.success("Medicine removed");
+      navigate("/patient");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+    }
+  };
+
   const timingLabel = medicine?.timing === "morning" ? t("morning") : medicine?.timing === "afternoon" ? t("afternoon") : t("night");
   const timingColor = medicine?.timing === "morning" ? "#f59e0b" : medicine?.timing === "afternoon" ? "#3b82f6" : "#8b5cf6";
 
@@ -110,11 +164,23 @@ const MedicineDetail = () => {
         <div className="absolute top-[-40px] right-[-40px] w-[140px] h-[140px] rounded-full bg-white/5 animate-float" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-5">
-            <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-              <ArrowLeft size={18} />
-            </button>
-            <h1 className="text-lg font-heading font-bold">Medicines</h1>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                <ArrowLeft size={18} />
+              </button>
+              <h1 className="text-lg font-heading font-bold">Medicine</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {!editing && (
+                <button onClick={startEditing} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                  <Pencil size={16} />
+                </button>
+              )}
+              <button onClick={deleteMedicine} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Medicine name card */}
@@ -150,6 +216,92 @@ const MedicineDetail = () => {
         </div>
       </div>
 
+      {/* Edit Panel */}
+      {editing && (
+        <div className="px-4 mt-4">
+          <div className="bg-card rounded-2xl border border-border p-5 space-y-4 animate-slide-up">
+            <h3 className="font-heading font-bold text-base text-foreground">Edit Medicine</h3>
+
+            {/* Name */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Name</label>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground font-semibold"
+              />
+            </div>
+
+            {/* Dosage */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Dosage</label>
+              <input
+                value={editDosage}
+                onChange={(e) => setEditDosage(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground font-semibold"
+              />
+            </div>
+
+            {/* Timing */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Timing</label>
+              <div className="flex gap-2">
+                {(["morning", "afternoon", "night"] as const).map((time) => (
+                  <button
+                    key={time}
+                    onClick={() => setEditTiming(time)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      editTiming === time
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {time === "morning" ? "☀️" : time === "afternoon" ? "🌤️" : "🌙"} {time.charAt(0).toUpperCase() + time.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Food Instruction */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food Instruction</label>
+              <div className="flex gap-2">
+                {(["before_food", "after_food", "with_food"] as const).map((food) => (
+                  <button
+                    key={food}
+                    onClick={() => setEditFood(food)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      editFood === food
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {food === "before_food" ? "Before" : food === "after_food" ? "After" : "With"} Food
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={cancelEditing}
+                className="flex-1 py-3 rounded-xl text-sm font-bold bg-secondary text-secondary-foreground hover:bg-accent transition-colors flex items-center justify-center gap-2"
+              >
+                <X size={16} /> Cancel
+              </button>
+              <button
+                onClick={saveEdits}
+                disabled={saving}
+                className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <Check size={16} /> {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="px-4 mt-5 space-y-4 max-w-lg mx-auto">
         {infoLoading && (
@@ -167,15 +319,10 @@ const MedicineDetail = () => {
               style={{ borderLeft: `4px solid ${SECTION_ICONS.purpose.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: SECTION_ICONS.purpose.bg }}
-                >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.purpose.bg }}>
                   {SECTION_ICONS.purpose.icon}
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.purpose.color }}>
-                  Purpose
-                </h3>
+                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.purpose.color }}>Purpose</h3>
               </div>
               <p className="text-foreground leading-relaxed text-[15px]">{info.purpose}</p>
             </section>
@@ -186,15 +333,10 @@ const MedicineDetail = () => {
               style={{ borderLeft: `4px solid ${SECTION_ICONS.how_to_take.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "80ms" }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: SECTION_ICONS.how_to_take.bg }}
-                >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.how_to_take.bg }}>
                   {SECTION_ICONS.how_to_take.icon}
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.how_to_take.color }}>
-                  How to Take
-                </h3>
+                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.how_to_take.color }}>How to Take</h3>
               </div>
               <p className="text-foreground leading-relaxed text-[15px]">{info.how_to_take}</p>
             </section>
@@ -205,15 +347,10 @@ const MedicineDetail = () => {
               style={{ borderLeft: `4px solid ${SECTION_ICONS.side_effects.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "160ms" }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: SECTION_ICONS.side_effects.bg }}
-                >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.side_effects.bg }}>
                   {SECTION_ICONS.side_effects.icon}
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.side_effects.color }}>
-                  Side Effects
-                </h3>
+                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.side_effects.color }}>Side Effects</h3>
               </div>
               <ul className="space-y-2">
                 {info.side_effects.map((s, i) => (
@@ -231,15 +368,10 @@ const MedicineDetail = () => {
               style={{ borderLeft: `4px solid ${SECTION_ICONS.foods_to_avoid.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "240ms" }}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: SECTION_ICONS.foods_to_avoid.bg }}
-                >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.foods_to_avoid.bg }}>
                   {SECTION_ICONS.foods_to_avoid.icon}
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.foods_to_avoid.color }}>
-                  Foods to Avoid
-                </h3>
+                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.foods_to_avoid.color }}>Foods to Avoid</h3>
               </div>
               <ul className="space-y-2">
                 {info.foods_to_avoid.map((f, i) => (
@@ -254,19 +386,13 @@ const MedicineDetail = () => {
             {/* Drug Interactions Warning */}
             <section
               className="rounded-[18px] p-5 border-2 animate-slide-up"
-              style={{
-                background: "linear-gradient(135deg, #fff1f2, #ffe4e6)",
-                borderColor: "#fda4af",
-                animationDelay: "320ms",
-              }}
+              style={{ background: "linear-gradient(135deg, #fff1f2, #ffe4e6)", borderColor: "#fda4af", animationDelay: "320ms" }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-[#fda4af]/30 flex items-center justify-center">
                   <AlertTriangle size={16} className="text-[#e11d48]" />
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-[#9f1239]">
-                  Drug Interaction
-                </h3>
+                <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-[#9f1239]">Drug Interaction</h3>
               </div>
               <p className="text-[#9f1239] leading-relaxed text-[15px]">{info.drug_interactions}</p>
             </section>
@@ -276,10 +402,7 @@ const MedicineDetail = () => {
         {!infoLoading && !info && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Could not load medicine information.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-3 text-primary font-heading font-bold text-sm"
-            >
+            <button onClick={() => window.location.reload()} className="mt-3 text-primary font-heading font-bold text-sm">
               Try again
             </button>
           </div>
