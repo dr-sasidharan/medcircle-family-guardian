@@ -84,7 +84,7 @@ const DoctorSummary = () => {
     <div className="min-h-screen bg-background pb-24 page-transition">
       <div className="flex items-center gap-3 p-4 border-b border-border">
         <button onClick={() => navigate(-1)} className="text-foreground p-1"><ArrowLeft size={22} /></button>
-        <h1 className="text-lg font-bold text-foreground">{t("doctor_visit_summary")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Doctor Visit Summary</h1>
       </div>
 
       <div className="px-4 mt-6">
