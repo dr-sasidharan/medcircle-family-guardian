@@ -305,7 +305,7 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/scan")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <ScanLine size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">Scan</span>
+             <span className="text-lg font-heading font-bold text-foreground">{t("scan")}</span>
           </button>
           <button onClick={() => navigate("/drug-interaction")}
             className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
