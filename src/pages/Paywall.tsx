@@ -1,12 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, Copy, IndianRupee } from "lucide-react";
+import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, IndianRupee, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
-
-const UPI_ID = "saseedharan2004-1@oksbi";
 
 const plans = [
   {
@@ -43,74 +40,136 @@ const plans = [
 ];
 
 const trustBadges = [
-  { icon: Shield, label: "Secure UPI Payment" },
+  { icon: Shield, label: "Secure Payment" },
   { icon: Lock, label: "End-to-End Encrypted" },
   { icon: IndianRupee, label: "Instant Activation" },
   { icon: CheckCircle2, label: "100% Safe" },
 ];
+
+const CASHFREE_JS_URL = "https://sdk.cashfree.com/js/v3/cashfree.js";
+
+const loadCashfreeSDK = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).Cashfree) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = CASHFREE_JS_URL;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Cashfree SDK"));
+    document.head.appendChild(script);
+  });
+};
 
 const Paywall = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
-  const [transactionId, setTransactionId] = useState("");
-  const [confirming, setConfirming] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activatedPlan, setActivatedPlan] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
   const patientProfileId =
     (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
 
-  const getUpiUrl = (plan: typeof plans[0]) =>
-    `upi://pay?pa=${UPI_ID}&pn=MedCircle&am=${plan.price}&cu=INR&tn=MedCircle_${plan.key}_plan`;
+  // Check for return from Cashfree payment
+  useEffect(() => {
+    const orderId = searchParams.get("order_id");
+    const plan = searchParams.get("plan");
+    const ppId = searchParams.get("patient_profile_id");
 
-  const copyUpiId = () => {
-    navigator.clipboard.writeText(UPI_ID);
-    toast.success("UPI ID copied!");
-  };
-
-  const openUpiApp = (plan: typeof plans[0]) => {
-    window.location.href = getUpiUrl(plan);
-    toast.info("If UPI app didn't open, scan the QR code or copy the UPI ID above.");
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!selectedPlan || !transactionId.trim()) {
-      toast.error("Please enter your UPI transaction ID");
-      return;
+    if (orderId && plan && ppId) {
+      verifyPayment(orderId, plan, ppId);
     }
+  }, []);
+
+  const verifyPayment = async (orderId: string, plan: string, ppId: string) => {
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-payment", {
+        body: {
+          order_id: orderId,
+          plan,
+          amount: plans.find((p) => p.plan_value === plan)?.price || 0,
+          patient_profile_id: ppId,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.success) {
+        setActivatedPlan(plan === "pro" ? "Family Pro" : "Family");
+        setShowSuccess(true);
+      } else {
+        toast.error("Payment verification failed. Please contact support.");
+      }
+    } catch {
+      toast.error("Could not verify payment. Please contact support.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handlePayment = async (plan: typeof plans[0]) => {
     if (!patientProfileId) {
       toast.error("Patient profile not found");
       return;
     }
 
-    setConfirming(true);
+    setProcessing(true);
     try {
-      await supabase.from("payments").insert({
-        patient_profile_id: patientProfileId,
-        amount: selectedPlan.price,
-        plan: selectedPlan.plan_value,
-        razorpay_payment_id: transactionId.trim(),
-        razorpay_order_id: `upi_${Date.now()}`,
-        status: "pending_verification",
+      // Load Cashfree SDK
+      await loadCashfreeSDK();
+
+      // Create order via edge function
+      const { data, error } = await supabase.functions.invoke("create-cashfree-order", {
+        body: {
+          amount: plan.price,
+          plan: plan.plan_value,
+          patient_profile_id: patientProfileId,
+        },
       });
 
-      await supabase
-        .from("patient_profiles")
-        .update({ plan: selectedPlan.plan_value })
-        .eq("id", patientProfileId);
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Failed to create order");
+      }
 
-      setActivatedPlan(selectedPlan.plan_value === "pro" ? "Family Pro" : "Family");
-      setShowSuccess(true);
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+      const { payment_session_id } = data;
+
+      // Initialize Cashfree checkout
+      const cashfree = (window as any).Cashfree({ mode: "production" });
+
+      const result = await cashfree.checkout({
+        paymentSessionId: payment_session_id,
+        redirectTarget: "_self",
+      });
+
+      // If we reach here, it means redirect didn't happen (popup mode)
+      if (result?.error) {
+        toast.error(result.error.message || "Payment failed");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error(err.message || "Something went wrong. Please try again.");
     } finally {
-      setConfirming(false);
+      setProcessing(false);
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center">
+          <Loader2 size={40} className="animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground">Verifying your payment...</p>
+          <p className="text-sm text-muted-foreground mt-2">Please wait, this will only take a moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showSuccess) {
     return (
@@ -123,87 +182,13 @@ const Paywall = () => {
             Welcome to MedCircle {activatedPlan}! 🎉
           </h1>
           <p className="text-muted-foreground mb-8">
-            Your payment is being verified. All premium features are now unlocked.
+            Your payment is confirmed. All premium features are now unlocked.
           </p>
           <button
             onClick={() => navigate("/patient", { replace: true })}
             className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
             Go to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (selectedPlan) {
-    return (
-      <div className="min-h-screen bg-background pb-12 page-transition">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <button onClick={() => setSelectedPlan(null)} className="text-foreground p-1">
-            <ArrowLeft size={24} />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Pay via UPI</h1>
-          <div className="w-6" />
-        </div>
-
-        <div className="p-5 max-w-lg mx-auto space-y-6">
-          {/* Amount */}
-          <div className="bg-accent rounded-2xl p-5 text-center">
-            <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
-            <p className="text-4xl font-extrabold text-primary">₹{selectedPlan.price}</p>
-            <p className="text-sm text-muted-foreground mt-1">{selectedPlan.label}</p>
-          </div>
-
-          {/* UPI QR Code */}
-          <div className="bg-card border border-border rounded-2xl p-5 flex flex-col items-center">
-            <p className="text-sm font-semibold text-foreground mb-4">Scan to pay with any UPI app</p>
-            <div className="bg-white p-4 rounded-xl">
-              <QRCodeSVG
-                value={getUpiUrl(selectedPlan)}
-                size={200}
-                level="H"
-                includeMargin={false}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">GPay · PhonePe · Paytm · Any UPI app</p>
-          </div>
-
-          {/* UPI ID */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <p className="text-sm font-semibold text-foreground mb-3">Or send payment to this UPI ID:</p>
-            <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
-              <span className="text-base font-bold text-foreground flex-1 break-all">{UPI_ID}</span>
-              <button onClick={copyUpiId} className="text-primary hover:opacity-70 transition-opacity">
-                <Copy size={20} />
-              </button>
-            </div>
-            <button
-              onClick={() => openUpiApp(selectedPlan)}
-              className="w-full mt-4 bg-[#5f259f] text-white rounded-xl py-3.5 text-base font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-            >
-              <IndianRupee size={18} />
-              Open UPI App to Pay
-            </button>
-          </div>
-
-          {/* Transaction ID Input */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <p className="text-sm font-semibold text-foreground mb-3">After paying, enter your transaction ID:</p>
-            <input
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="e.g. 412345678901"
-            />
-          </div>
-
-          <button
-            onClick={handleConfirmPayment}
-            disabled={confirming || !transactionId.trim()}
-            className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {confirming ? "Verifying..." : "I've Paid — Activate Plan"}
           </button>
         </div>
       </div>
@@ -260,14 +245,22 @@ const Paywall = () => {
               ))}
             </ul>
             <button
-              onClick={() => setSelectedPlan(plan)}
-              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all ${
+              onClick={() => handlePayment(plan)}
+              disabled={processing}
+              className={`w-full mt-4 py-3.5 rounded-xl text-base font-bold transition-all disabled:opacity-50 ${
                 plan.highlighted
                   ? "bg-primary text-primary-foreground shadow-lg hover:opacity-90 text-lg py-4"
                   : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >
-              {plan.buttonText}
+              {processing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 size={18} className="animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                plan.buttonText
+              )}
             </button>
           </div>
         ))}
