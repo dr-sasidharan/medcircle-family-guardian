@@ -91,7 +91,7 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You are a pharmacist assistant. Only provide medicine-specific information for the exact medicine name provided. Avoid generic copy and avoid mixing with other drugs. Always return structured data via tool calls.",
+              `You are a pharmacist assistant. Only provide medicine-specific information for the exact medicine name provided. Avoid generic copy and avoid mixing with other drugs. Always return structured data via tool calls. ${langInstruction}`,
           },
           {
             role: "user",

@@ -11,7 +11,8 @@ serve(async (req) => {
   try {
     const { name, age, medicines, missedDoses, allergies, language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const langInstruction = language === "ta" ? "Write in Tamil." : language === "hi" ? "Write in Hindi." : "Write in English.";
+    const langMap: Record<string, string> = { ta: "Tamil", hi: "Hindi", ml: "Malayalam" };
+    const langInstruction = langMap[language] ? `Write in ${langMap[language]}.` : "Write in English.";
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const medList = medicines.map((m: any) => `${m.name} ${m.dosage} (${m.timing})`).join(", ");

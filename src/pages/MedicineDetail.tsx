@@ -66,7 +66,7 @@ const MedicineDetail = () => {
       setInfoLoading(true);
       try {
         const { data: fnData, error: fnError } = await supabase.functions.invoke("medicine-info", {
-          body: { medicine_name: data.name, dosage: data.dosage },
+          body: { medicine_name: data.name, dosage: data.dosage, language },
         });
         if (!fnError && fnData) {
           setInfo(fnData as MedicineInfo);
