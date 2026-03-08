@@ -284,6 +284,9 @@ const PatientDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => navigate("/notifications")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+                <Bell size={18} />
+              </button>
               <button onClick={() => navigate("/settings")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
                 <Settings size={18} />
               </button>
