@@ -13,7 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Users, CreditCard, TrendingUp, IndianRupee, Download, RefreshCw,
   Shield, Lock, BarChart3, PieChart as PieChartIcon, CheckCircle2, XCircle, Clock,
+  UserCheck, UserMinus, ArrowUpRight, Activity, Percent,
 } from "lucide-react";
+import {
+  AreaChart, Area,
+} from "recharts";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Tooltip,
