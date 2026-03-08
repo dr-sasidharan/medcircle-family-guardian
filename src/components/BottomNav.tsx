@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, Clock, Users, User, Plus } from "lucide-react";
+import { Pill, Clock, Users, User, Plus, Stethoscope } from "lucide-react";
 
 const BottomNav = () => {
   const navigate = useNavigate();
