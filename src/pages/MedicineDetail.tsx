@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, AlertTriangle, Pill, Clock, Apple, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 interface MedicineData {
   id: string;
