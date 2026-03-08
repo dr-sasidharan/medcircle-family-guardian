@@ -107,7 +107,7 @@ const DoctorSummary = () => {
             <div className="bg-card border border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <FileText size={20} className="text-primary" />
-                <h2 className="text-base font-bold text-foreground">{t("your_summary")}</h2>
+                <h2 className="text-base font-bold text-foreground">Your Summary</h2>
               </div>
               <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">{summary}</div>
             </div>
