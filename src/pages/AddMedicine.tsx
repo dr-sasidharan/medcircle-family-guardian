@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Upload, ScanLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AddMedicine = () => {
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
@@ -61,7 +59,7 @@ const AddMedicine = () => {
         <button onClick={() => navigate(-1)} className="text-foreground p-1">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t("add_medicine")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Add Medicine</h1>
         <LanguageToggle />
       </div>
 
@@ -72,18 +70,18 @@ const AddMedicine = () => {
           className="w-full flex items-center justify-center gap-3 bg-secondary border-2 border-primary/30 rounded-2xl py-4 text-base font-bold text-primary hover:bg-accent transition-colors"
         >
           <ScanLine size={22} />
-          {t("scan_tablet_strip")}
+          Scan Tablet Strip
         </button>
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-sm text-muted-foreground font-medium">{t("or_enter_manually")}</span>
+          <span className="text-sm text-muted-foreground font-medium">or enter manually</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
         {/* Name */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("medicine_name")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Medicine Name</label>
           <input value={name} onChange={(e) => setName(e.target.value)}
             className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="e.g. Metformin" />
@@ -91,7 +89,7 @@ const AddMedicine = () => {
 
         {/* Dosage */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("dosage")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Dosage</label>
           <input value={dosage} onChange={(e) => setDosage(e.target.value)}
             className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="e.g. 500mg" />
@@ -99,39 +97,39 @@ const AddMedicine = () => {
 
         {/* Timing */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("timing")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Timing</label>
           <select value={timing} onChange={(e) => setTiming(e.target.value)}
             className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-            <option value="morning">{t("morning")}</option>
-            <option value="afternoon">{t("afternoon")}</option>
-            <option value="night">{t("night")}</option>
+            <option value="morning">Morning</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="night">Night</option>
           </select>
         </div>
 
         {/* Food */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("food_instruction")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Food Instruction</label>
           <select value={food} onChange={(e) => setFood(e.target.value)}
             className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-            <option value="before_food">{t("before_food")}</option>
-            <option value="after_food">{t("after_food")}</option>
-            <option value="with_food">{t("with_food")}</option>
+            <option value="before_food">Before Food</option>
+            <option value="after_food">After Food</option>
+            <option value="with_food">With Food</option>
           </select>
         </div>
 
         {/* Upload */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">{t("upload_photo")}</label>
+          <label className="text-sm font-semibold text-foreground mb-1.5 block">Upload Photo</label>
           <div className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer">
             <Upload size={32} />
-            <p className="text-sm">{t("tap_to_upload")}</p>
+            <p className="text-sm">Tap to upload</p>
           </div>
         </div>
 
         {/* Save */}
         <button onClick={handleSave}
           className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity mt-4">
-          {t("save")}
+          Save
         </button>
       </div>
     </div>

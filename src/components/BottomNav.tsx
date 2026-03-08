@@ -1,5 +1,4 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Pill, Clock, Users, User, Plus } from "lucide-react";
@@ -7,7 +6,6 @@ import { Pill, Clock, Users, User, Plus } from "lucide-react";
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
   const [missedCount, setMissedCount] = useState(0);
 
   useEffect(() => {
@@ -35,11 +33,11 @@ const BottomNav = () => {
   }, []);
 
   const items = [
-    { path: "/patient", icon: Pill, label: t("medicines") },
+    { path: "/patient", icon: Pill, label: "Medicines" },
     { path: "/reminders", icon: Clock, label: "History" },
     { path: "__add__", icon: Plus, label: "" },
     { path: "/caretaker", icon: Users, label: "Family" },
-    { path: "/profile", icon: User, label: t("profile") },
+    { path: "/profile", icon: User, label: "Profile" },
   ];
 
   return (

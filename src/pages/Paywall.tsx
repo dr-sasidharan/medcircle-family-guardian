@@ -232,7 +232,7 @@ const Paywall = () => {
         <button onClick={() => navigate(-1)} className="text-foreground p-1">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t("pricing")}</h1>
+        <h1 className="text-lg font-bold text-foreground">Pricing</h1>
         <div className="w-6" />
       </div>
 

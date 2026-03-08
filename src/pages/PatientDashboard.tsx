@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
@@ -27,6 +26,12 @@ interface MissedDose {
 const MEDICINE_ICONS = ["💊", "🩹", "💉", "🧬", "🫀", "🧪"];
 const ICON_COLORS = ["#0d9488", "#f59e0b", "#8b5cf6", "#3b82f6", "#f43f5e", "#10b981"];
 
+const FOOD_LABELS: Record<string, string> = {
+  before_food: "Before Food",
+  after_food: "After Food",
+  with_food: "With Food",
+};
+
 const sectionConfig = {
   morning: { emoji: "☀️", label: "Morning", gradient: "from-[#fef3c7] to-[#fffbeb]", pillBg: "bg-[#fef3c7]", iconBg: "bg-[#f59e0b]", text: "text-[#92400e]", line: "bg-[#fcd34d]" },
   afternoon: { emoji: "🌤️", label: "Afternoon", gradient: "from-[#dbeafe] to-[#eff6ff]", pillBg: "bg-[#dbeafe]", iconBg: "bg-[#3b82f6]", text: "text-[#1e3a5f]", line: "bg-[#93c5fd]" },
@@ -34,7 +39,6 @@ const sectionConfig = {
 };
 
 const PatientDashboard = () => {
-  const { t } = useLanguage();
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
@@ -102,8 +106,8 @@ const PatientDashboard = () => {
         >
           <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full bg-white/5 animate-float" />
           <div className="relative z-10">
-            <h1 className="font-heading text-2xl font-extrabold">{t("good_morning")}</h1>
-            <p className="text-white/70 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken")}</p>
+            <h1 className="font-heading text-2xl font-extrabold">Good Morning</h1>
+            <p className="text-white/70 mt-1">{takenCount} of {totalCount} Medicines Taken</p>
             <div className="w-full h-4 bg-white/20 rounded-full overflow-hidden mt-3">
               <div
                 className="h-full rounded-full animate-progress-fill"
@@ -123,7 +127,7 @@ const PatientDashboard = () => {
               <div key={d.id} className="bg-[#fff1f2] border-2 border-[#fda4af] rounded-2xl p-4 flex items-center gap-3 pulse-alert">
                 <AlertTriangle className="text-coral flex-shrink-0" size={24} />
                 <span className="text-[#9f1239] font-heading font-extrabold text-base">
-                  {t("missed_alert")}: {d.medicine_name} ({d.scheduled_time})
+                  Missed: {d.medicine_name} ({d.scheduled_time})
                 </span>
               </div>
             ))}
@@ -136,22 +140,22 @@ const PatientDashboard = () => {
           <button onClick={() => navigate("/reminders")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Pill size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">{t("medicines")}</span>
+            <span className="text-lg font-heading font-bold text-foreground">Medicines</span>
           </button>
           <button onClick={() => navigate("/scan")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <ScanLine size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">{t("scan")}</span>
+            <span className="text-lg font-heading font-bold text-foreground">Scan</span>
           </button>
           <button onClick={() => navigate("/drug-interaction")}
             className="bg-card border-2 border-warning rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <FlaskConical size={40} className="text-warning" />
-            <span className="text-lg font-heading font-bold text-foreground">{t("drug_interaction_checker")}</span>
+            <span className="text-lg font-heading font-bold text-foreground">Drug Interaction</span>
           </button>
           <button onClick={() => navigate("/profile")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Settings size={40} className="text-primary" />
-            <span className="text-lg font-heading font-bold text-foreground">{t("profile")}</span>
+            <span className="text-lg font-heading font-bold text-foreground">Profile</span>
           </button>
         </div>
 
@@ -219,7 +223,7 @@ const PatientDashboard = () => {
                 } as React.CSSProperties}
               />
             </div>
-            <p className="text-white/50 text-xs mt-2">{t("medicines_taken")}</p>
+            <p className="text-white/50 text-xs mt-2">Medicines Taken</p>
           </div>
         </div>
       </div>
@@ -237,7 +241,7 @@ const PatientDashboard = () => {
                 <AlertTriangle size={18} className="text-[#e11d48]" />
               </div>
               <span className="text-[#9f1239] font-heading font-bold text-sm">
-                {t("missed_alert")}: {d.medicine_name} ({d.scheduled_time})
+                Missed: {d.medicine_name} ({d.scheduled_time})
               </span>
             </div>
           ))}
@@ -253,13 +257,13 @@ const PatientDashboard = () => {
           <div className="w-24 h-24 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
             <Pill size={48} className="text-primary" />
           </div>
-          <h2 className="text-xl font-heading font-bold text-foreground">{t("no_medicines_yet")}</h2>
-          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine")}</p>
+          <h2 className="text-xl font-heading font-bold text-foreground">No Medicines Yet</h2>
+          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">Add your first medicine to start tracking</p>
           <button onClick={() => navigate("/add-medicine")}
             className="mt-6 text-white px-8 py-4 rounded-2xl text-base font-heading font-bold shadow-lg hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
           >
-            + {t("add_medicine")}
+            + Add Medicine
           </button>
         </div>
       )}
@@ -326,7 +330,7 @@ const PatientDashboard = () => {
                                 color: med.food_instruction === "before_food" ? "#0d9488" : "#b45309",
                               }}
                             >
-                              {t(med.food_instruction) || med.food_instruction}
+                              {FOOD_LABELS[med.food_instruction] || med.food_instruction}
                             </span>
                           </div>
                         </div>
@@ -335,7 +339,7 @@ const PatientDashboard = () => {
                         <div className="flex-shrink-0">
                           {isTaken ? (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-emerald glow-emerald flex items-center gap-1">
-                              <Check size={14} /> {t("taken")}
+                              <Check size={14} /> Taken
                             </div>
                           ) : isMissed ? (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral">
@@ -343,7 +347,7 @@ const PatientDashboard = () => {
                             </div>
                           ) : (
                             <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white">
-                              {t("mark_taken")}
+                              Mark Taken
                             </div>
                           )}
                         </div>
@@ -366,15 +370,15 @@ const PatientDashboard = () => {
           className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary rounded-2xl py-4 text-base font-heading font-bold text-primary hover:bg-secondary transition-colors"
           style={{ boxShadow: "0 2px 12px rgba(13,148,136,0.1)" }}
         >
-          <ScanLine size={22} /> {t("scan_prescription")}
+          <ScanLine size={22} /> Scan Prescription
         </button>
         <button onClick={() => navigate("/scan-tablet?mode=identify")}
           className="w-full flex items-center justify-center gap-3 bg-secondary rounded-2xl py-4 text-base font-heading font-bold text-secondary-foreground hover:bg-accent transition-colors">
-          <HelpCircle size={22} /> {t("what_is_tablet")}
+          <HelpCircle size={22} /> What Is This Tablet?
         </button>
         <button onClick={() => navigate("/drug-interaction")}
           className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-heading font-bold text-foreground hover:bg-secondary transition-colors">
-          <FlaskConical size={22} className="text-warning" /> {t("drug_interaction_checker")}
+          <FlaskConical size={22} className="text-warning" /> Drug Interaction Checker
         </button>
       </div>
 
