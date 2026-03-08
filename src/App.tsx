@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/drug-interaction" element={<DrugInteraction />} />
               <Route path="/doctor-summary" element={<DoctorSummary />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
