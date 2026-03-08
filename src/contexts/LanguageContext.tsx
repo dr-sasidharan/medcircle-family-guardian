@@ -189,6 +189,20 @@ const translations: Translations = {
   or_enter_manually: { en: "or enter manually", ta: "அல்லது கைமுறையாக உள்ளிடவும்", hi: "या मैन्युअल रूप से दर्ज करें", ml: "അല്ലെങ്കിൽ സ്വയം ടൈപ്പ് ചെയ്യൂ" },
   scan_tablet_strip: { en: "Scan Tablet Strip", ta: "மாத்திரை பட்டையை ஸ்கேன் செய்", hi: "टैबलेट स्ट्रिप स्कैन करें", ml: "ഗുളിക സ്ട്രിപ്പ് സ്കാൻ ചെയ്യുക" },
   tap_to_upload: { en: "Tap to upload", ta: "பதிவேற்ற தட்டவும்", hi: "अपलोड करने के लिए टैप करें", ml: "അപ്‌ലോഡ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക" },
+
+  // Dashboard UI
+  medicines_taken_label: { en: "Medicines Taken", ta: "எடுத்த மருந்துகள்", hi: "ली गई दवाइयाँ", ml: "കഴിച്ച മരുന്നുകൾ" },
+  weekly_progress: { en: "Weekly Progress", ta: "வாராந்திர முன்னேற்றம்", hi: "साप्ताहिक प्रगति", ml: "പ്രതിവാര പുരോഗതി" },
+  no_medicines_title: { en: "No Medicines Yet", ta: "இன்னும் மருந்துகள் இல்லை", hi: "अभी तक कोई दवा नहीं", ml: "ഇതുവരെ മരുന്നുകളില്ല" },
+  add_first_medicine_tracking: { en: "Add your first medicine to start tracking", ta: "கண்காணிக்க உங்கள் முதல் மருந்தைச் சேர்க்கவும்", hi: "ट्रैकिंग शुरू करने के लिए अपनी पहली दवा जोड़ें", ml: "ട്രാക്കിംഗ് ആരംഭിക്കാൻ ആദ്യ മരുന്ന് ചേർക്കൂ" },
+  add_medicine_btn: { en: "+ Add Medicine", ta: "+ மருந்து சேர்க்க", hi: "+ दवा जोड़ें", ml: "+ മരുന്ന് ചേർക്കുക" },
+  todays_medicines: { en: "Today's Medicines", ta: "இன்றைய மருந்துகள்", hi: "आज की दवाइयाँ", ml: "ഇന്നത്തെ മരുന്നുകൾ" },
+  taken_label: { en: "Taken", ta: "எடுத்தது", hi: "ली गई", ml: "കഴിച്ചു" },
+  take_now: { en: "Take Now", ta: "இப்போது எடு", hi: "अभी लें", ml: "ഇപ്പോൾ കഴിക്കൂ" },
+  mark_taken_btn: { en: "Mark Taken", ta: "எடுத்ததாக குறி", hi: "ली गई चिह्नित करें", ml: "കഴിച്ചതായി അടയാളപ്പെടുത്തുക" },
+  missed_label: { en: "Missed", ta: "தவறிவிட்டது", hi: "छूट गई", ml: "നഷ്ടമായി" },
+  book_checkup: { en: "Book Checkup", ta: "பரிசோதனை முன்பதிவு", hi: "चेकअप बुक करें", ml: "ചെക്കപ്പ് ബുക്ക് ചെയ്യുക" },
+  undo: { en: "Undo", ta: "செயல்தவிர்", hi: "पूर्ववत करें", ml: "പഴയപടിയാക്കുക" },
 };
 
 interface LanguageContextType {

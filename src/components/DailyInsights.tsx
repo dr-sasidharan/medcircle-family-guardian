@@ -24,7 +24,7 @@ const colorMap = {
 };
 
 const DailyInsights = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
 
