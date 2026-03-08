@@ -9,10 +9,10 @@ interface Translations {
 const translations: Translations = {
   // Welcome
   welcome_headline: {
-    en: "Know your parents are safe — from your hostel room",
-    ta: "உங்கள் பெற்றோர் பாதுகாப்பாக இருப்பதை அறியுங்கள்",
-    hi: "जानें कि आपके माता-पिता सुरक्षित हैं — अपने हॉस्टल से",
-    ml: "നിങ്ങളുടെ മാതാപിതാക്കൾ സുരക്ഷിതരാണെന്ന് അറിയൂ — ഹോസ്റ്റലിൽ നിന്ന്",
+    en: "Know your parents are safe — from anywhere",
+    ta: "உங்கள் பெற்றோர் பாதுகாப்பாக இருப்பதை அறியுங்கள் — எங்கிருந்தும்",
+    hi: "जानें कि आपके माता-पिता सुरक्षित हैं — कहीं से भी",
+    ml: "നിങ്ങളുടെ മാതാപിതാക്കൾ സുരക്ഷിതരാണെന്ന് അറിയൂ — എവിടെ നിന്നും",
   },
   welcome_subtext: {
     en: "Set up in 2 minutes. Peace of mind forever.",
