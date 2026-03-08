@@ -130,6 +130,44 @@ const PatientDashboard = () => {
     }
   };
 
+  const handleMarkMissed = async (medicineId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const today = new Date().toISOString().split("T")[0];
+      const med = medicines.find((m) => m.id === medicineId);
+      const scheduledTime = med?.timing === "morning" ? "08:00" : med?.timing === "afternoon" ? "14:00" : "21:00";
+
+      const { data: existing } = await supabase
+        .from("doses")
+        .select("id")
+        .eq("medicine_id", medicineId)
+        .eq("scheduled_date", today)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from("doses").update({ taken: false, missed: true, taken_at: null }).eq("id", existing.id);
+      } else {
+        await supabase.from("doses").insert({
+          medicine_id: medicineId,
+          user_id: user.id,
+          scheduled_date: today,
+          scheduled_time: scheduledTime,
+          taken: false,
+          missed: true,
+        });
+      }
+
+      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      toast(`${med?.name} marked as skipped`, {
+        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
+        duration: 5000,
+      });
+    } catch {
+      toast.error("Failed to mark as missed");
+    }
+  };
+
   const handleMarkTaken = async (medicineId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
