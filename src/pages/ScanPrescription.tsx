@@ -67,11 +67,35 @@ const ScanPrescription = () => {
     }
   };
 
-  const handleSave = (index: number) => {
-    setMedicines((prev) =>
-      prev.map((m, i) => (i === index ? { ...m, saved: true } : m))
-    );
-    toast.success(`${medicines[index].name} added to your medicine list!`);
+  const handleSave = async (index: number) => {
+    const med = medicines[index];
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in first");
+        return;
+      }
+
+      const { error } = await supabase.from("medicines").insert({
+        name: med.name,
+        dosage: med.dosage,
+        timing: med.timing,
+        food_instruction: med.foodInstruction,
+        purpose: med.purpose,
+        user_id: user.id,
+        is_active: true,
+      });
+
+      if (error) throw error;
+
+      setMedicines((prev) =>
+        prev.map((m, i) => (i === index ? { ...m, saved: true } : m))
+      );
+      toast.success(`${med.name} added to your medicine list!`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to save medicine");
+    }
   };
 
   const dangerousInteractions = interactions.filter((i) => i.severity === "dangerous");

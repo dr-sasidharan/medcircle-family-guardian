@@ -65,9 +65,33 @@ const ScanTablet = () => {
     }
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    toast.success(`${result?.name} added to your medicine list!`);
+  const handleSave = async () => {
+    if (!result) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in first");
+        return;
+      }
+
+      const { error } = await supabase.from("medicines").insert({
+        name: result.name,
+        dosage: result.dosage,
+        timing: "morning",
+        food_instruction: "after_food",
+        purpose: result.purpose_en,
+        user_id: user.id,
+        is_active: true,
+      });
+
+      if (error) throw error;
+
+      setSaved(true);
+      toast.success(`${result.name} added to your medicine list!`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to save medicine");
+    }
   };
 
   const pageTitle = isIdentifyMode ? "What Is This Tablet?" : "Scan Tablet Strip";
