@@ -93,6 +93,26 @@ const PatientDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const handleUndoTaken = async (medicineId: string) => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      await supabase
+        .from("doses")
+        .update({ taken: false, taken_at: null })
+        .eq("medicine_id", medicineId)
+        .eq("scheduled_date", today);
+
+      setTakenIds((prev) => {
+        const next = new Set(prev);
+        next.delete(medicineId);
+        return next;
+      });
+      toast.success("Undo successful");
+    } catch {
+      toast.error("Failed to undo");
+    }
+  };
+
   const handleMarkTaken = async (medicineId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
