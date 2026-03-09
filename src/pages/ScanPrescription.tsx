@@ -27,6 +27,7 @@ const ScanPrescription = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [medicines, setMedicines] = useState<ScannedMedicine[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
