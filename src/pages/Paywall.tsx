@@ -6,7 +6,7 @@ import { ArrowLeft, Shield, Lock, CheckCircle2, Sparkles, IndianRupee, Loader2, 
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 
-const UPI_ID = "saseedharan2004-01@oksbi";
+const UPI_ID = "saseedharan2004-2@okaxis";
 const MERCHANT_NAME = "MedCircle";
 
 const plans = [
