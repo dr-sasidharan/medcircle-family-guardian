@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Camera, AlertTriangle, Check, Loader2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Camera, AlertTriangle, Check, Loader2, ShieldAlert, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface ScannedMedicine {
