@@ -178,7 +178,7 @@ const PatientDashboard = () => {
       if (!user) return;
       const today = new Date().toISOString().split("T")[0];
       const med = medicines.find((m) => m.id === medicineId);
-      const scheduledTime = med?.timing === "morning" ? "08:00" : med?.timing === "afternoon" ? "14:00" : "21:00";
+      const scheduledTime = med?.timing || "morning";
 
       const { data: existing } = await supabase
         .from("doses")
@@ -226,7 +226,7 @@ const PatientDashboard = () => {
 
       const today = new Date().toISOString().split("T")[0];
       const med = medicines.find((m) => m.id === medicineId);
-      const scheduledTime = med?.timing === "morning" ? "08:00" : med?.timing === "afternoon" ? "14:00" : "21:00";
+      const scheduledTime = med?.timing || "morning";
 
       // Try to update existing dose first
       const { data: existing } = await supabase
