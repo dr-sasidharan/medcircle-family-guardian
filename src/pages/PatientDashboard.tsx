@@ -78,34 +78,39 @@ const PatientDashboard = () => {
       const GRACE_MINUTES = 30;
 
       for (const med of medsList) {
-        const targetHour = TIMING_HOURS[med.timing];
-        if (targetHour === undefined) continue;
-        const totalNow = currentHour * 60 + now.getMinutes();
-        const targetMin = targetHour * 60 + GRACE_MINUTES;
-        if (totalNow < targetMin) continue;
+        // Support comma-separated timings
+        const timings = med.timing.split(",");
+        for (const timingSlot of timings) {
+          const targetHour = TIMING_HOURS[timingSlot];
+          if (targetHour === undefined) continue;
+          const totalNow = currentHour * 60 + now.getMinutes();
+          const targetMin = targetHour * 60 + GRACE_MINUTES;
+          if (totalNow < targetMin) continue;
 
-        // Check if dose exists
-        const { data: existing } = await supabase
-          .from("doses")
-          .select("id, taken, missed")
-          .eq("medicine_id", med.id)
-          .eq("scheduled_date", today)
-          .maybeSingle();
+          // Check if dose exists for this specific timing slot
+          const { data: existing } = await supabase
+            .from("doses")
+            .select("id, taken, missed")
+            .eq("medicine_id", med.id)
+            .eq("scheduled_date", today)
+            .eq("scheduled_time", timingSlot)
+            .maybeSingle();
 
-        if (existing?.taken || existing?.missed) continue;
+          if (existing?.taken || existing?.missed) continue;
 
-        // Auto-mark as missed
-        if (existing) {
-          await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
-        } else {
-          await supabase.from("doses").insert({
-            medicine_id: med.id,
-            user_id: user.id,
-            scheduled_date: today,
-            scheduled_time: med.timing,
-            taken: false,
-            missed: true,
-          });
+          // Auto-mark as missed
+          if (existing) {
+            await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
+          } else {
+            await supabase.from("doses").insert({
+              medicine_id: med.id,
+              user_id: user.id,
+              scheduled_date: today,
+              scheduled_time: timingSlot,
+              taken: false,
+              missed: true,
+            });
+          }
         }
       }
 
