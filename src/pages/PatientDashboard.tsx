@@ -557,12 +557,17 @@ const PatientDashboard = () => {
                               </button>
                             </>
                           ) : isMissed ? (
-                            <button
-                              onClick={() => handleMarkTaken(med.id)}
-                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral hover:opacity-90 transition-opacity"
-                            >
-                              {t("take_now")}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral flex items-center gap-1">
+                                <X size={14} /> {t("missed_label")}
+                              </div>
+                              <button
+                                onClick={() => handleMarkTaken(med.id)}
+                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-primary border-2 border-primary/30 bg-white hover:bg-primary/10 transition-colors"
+                              >
+                                {t("take_now")}
+                              </button>
+                            </div>
                           ) : (
                             <>
                               <button
