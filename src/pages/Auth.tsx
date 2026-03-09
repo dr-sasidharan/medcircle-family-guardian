@@ -108,7 +108,7 @@ export default function Auth() {
         if (error) throw error;
         toast.success("Logged in successfully!");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -117,7 +117,11 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        toast.success("Check your email for verification link!");
+        if (data?.session) {
+          toast.success("Account created successfully! 🎉");
+        } else {
+          toast.success("Account created! Please check your email to verify.");
+        }
       }
     } catch (error: any) {
       toast.error(error.message);
