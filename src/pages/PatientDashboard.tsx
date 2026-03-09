@@ -124,9 +124,18 @@ const PatientDashboard = () => {
       }));
       setMissedDoses(missedList);
 
-      // Trigger server-side missed dose checker (sends caretaker SMS alerts)
-      if (missedList.length > 0) {
-        supabase.functions.invoke("missed-dose-checker").catch(() => {});
+      // Trigger caretaker alerts for each missed dose
+      for (const missed of missedList) {
+        const med = medsList.find(m => m.name === missed.medicine_name);
+        supabase.functions.invoke("caretaker-alert", {
+          body: {
+            type: "missed_dose",
+            details: {
+              medicine_name: missed.medicine_name,
+              timing: missed.scheduled_time,
+            },
+          },
+        }).catch(() => {});
       }
 
       setLoading(false);
@@ -192,6 +201,15 @@ const PatientDashboard = () => {
       }
 
       setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      
+      // Alert caretakers about missed dose
+      supabase.functions.invoke("caretaker-alert", {
+        body: {
+          type: "missed_dose",
+          details: { medicine_name: med?.name, timing: med?.timing },
+        },
+      }).catch(() => {});
+
       toast(`${med?.name} marked as skipped`, {
         action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
         duration: 5000,
@@ -557,12 +575,17 @@ const PatientDashboard = () => {
                               </button>
                             </>
                           ) : isMissed ? (
-                            <button
-                              onClick={() => handleMarkTaken(med.id)}
-                              className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral hover:opacity-90 transition-opacity"
-                            >
-                              {t("take_now")}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white bg-coral flex items-center gap-1">
+                                <X size={14} /> {t("missed_label")}
+                              </div>
+                              <button
+                                onClick={() => handleMarkTaken(med.id)}
+                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-primary border-2 border-primary/30 bg-white hover:bg-primary/10 transition-colors"
+                              >
+                                {t("take_now")}
+                              </button>
+                            </div>
                           ) : (
                             <>
                               <button
