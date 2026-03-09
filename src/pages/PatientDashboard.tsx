@@ -68,8 +68,8 @@ const PatientDashboard = () => {
       setMedicines(medsList);
 
       const today = new Date().toISOString().split("T")[0];
-      const { data: takenDoses } = await supabase.from("doses").select("medicine_id").eq("scheduled_date", today).eq("taken", true);
-      setTakenIds(new Set((takenDoses || []).map((d: any) => d.medicine_id)));
+      const { data: takenDoses } = await supabase.from("doses").select("medicine_id, scheduled_time").eq("scheduled_date", today).eq("taken", true);
+      setTakenIds(new Set((takenDoses || []).map((d: any) => `${d.medicine_id}:${d.scheduled_time}`)));
 
       // Auto-mark missed doses for past timings
       const now = new Date();
