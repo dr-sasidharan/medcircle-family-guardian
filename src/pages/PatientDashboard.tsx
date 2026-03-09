@@ -68,8 +68,8 @@ const PatientDashboard = () => {
       setMedicines(medsList);
 
       const today = new Date().toISOString().split("T")[0];
-      const { data: takenDoses } = await supabase.from("doses").select("medicine_id").eq("scheduled_date", today).eq("taken", true);
-      setTakenIds(new Set((takenDoses || []).map((d: any) => d.medicine_id)));
+      const { data: takenDoses } = await supabase.from("doses").select("medicine_id, scheduled_time").eq("scheduled_date", today).eq("taken", true);
+      setTakenIds(new Set((takenDoses || []).map((d: any) => `${d.medicine_id}:${d.scheduled_time}`)));
 
       // Auto-mark missed doses for past timings
       const now = new Date();
@@ -78,34 +78,39 @@ const PatientDashboard = () => {
       const GRACE_MINUTES = 30;
 
       for (const med of medsList) {
-        const targetHour = TIMING_HOURS[med.timing];
-        if (targetHour === undefined) continue;
-        const totalNow = currentHour * 60 + now.getMinutes();
-        const targetMin = targetHour * 60 + GRACE_MINUTES;
-        if (totalNow < targetMin) continue;
+        // Support comma-separated timings
+        const timings = med.timing.split(",");
+        for (const timingSlot of timings) {
+          const targetHour = TIMING_HOURS[timingSlot];
+          if (targetHour === undefined) continue;
+          const totalNow = currentHour * 60 + now.getMinutes();
+          const targetMin = targetHour * 60 + GRACE_MINUTES;
+          if (totalNow < targetMin) continue;
 
-        // Check if dose exists
-        const { data: existing } = await supabase
-          .from("doses")
-          .select("id, taken, missed")
-          .eq("medicine_id", med.id)
-          .eq("scheduled_date", today)
-          .maybeSingle();
+          // Check if dose exists for this specific timing slot
+          const { data: existing } = await supabase
+            .from("doses")
+            .select("id, taken, missed")
+            .eq("medicine_id", med.id)
+            .eq("scheduled_date", today)
+            .eq("scheduled_time", timingSlot)
+            .maybeSingle();
 
-        if (existing?.taken || existing?.missed) continue;
+          if (existing?.taken || existing?.missed) continue;
 
-        // Auto-mark as missed
-        if (existing) {
-          await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
-        } else {
-          await supabase.from("doses").insert({
-            medicine_id: med.id,
-            user_id: user.id,
-            scheduled_date: today,
-            scheduled_time: med.timing,
-            taken: false,
-            missed: true,
-          });
+          // Auto-mark as missed
+          if (existing) {
+            await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
+          } else {
+            await supabase.from("doses").insert({
+              medicine_id: med.id,
+              user_id: user.id,
+              scheduled_date: today,
+              scheduled_time: timingSlot,
+              taken: false,
+              missed: true,
+            });
+          }
         }
       }
 
@@ -152,18 +157,19 @@ const PatientDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const handleUndoTaken = async (medicineId: string) => {
+  const handleUndoTaken = async (medicineId: string, timing: string) => {
     try {
       const today = new Date().toISOString().split("T")[0];
       await supabase
         .from("doses")
         .update({ taken: false, taken_at: null })
         .eq("medicine_id", medicineId)
-        .eq("scheduled_date", today);
+        .eq("scheduled_date", today)
+        .eq("scheduled_time", timing);
 
       setTakenIds((prev) => {
         const next = new Set(prev);
-        next.delete(medicineId);
+        next.delete(`${medicineId}:${timing}`);
         return next;
       });
       toast.success("Undo successful");
@@ -172,19 +178,19 @@ const PatientDashboard = () => {
     }
   };
 
-  const handleMarkMissed = async (medicineId: string) => {
+  const handleMarkMissed = async (medicineId: string, timing: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const today = new Date().toISOString().split("T")[0];
       const med = medicines.find((m) => m.id === medicineId);
-      const scheduledTime = med?.timing || "morning";
 
       const { data: existing } = await supabase
         .from("doses")
         .select("id")
         .eq("medicine_id", medicineId)
         .eq("scheduled_date", today)
+        .eq("scheduled_time", timing)
         .maybeSingle();
 
       if (existing) {
@@ -194,24 +200,24 @@ const PatientDashboard = () => {
           medicine_id: medicineId,
           user_id: user.id,
           scheduled_date: today,
-          scheduled_time: scheduledTime,
+          scheduled_time: timing,
           taken: false,
           missed: true,
         });
       }
 
-      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: timing }]);
       
       // Alert caretakers about missed dose
       supabase.functions.invoke("caretaker-alert", {
         body: {
           type: "missed_dose",
-          details: { medicine_name: med?.name, timing: med?.timing },
+          details: { medicine_name: med?.name, timing },
         },
       }).catch(() => {});
 
       toast(`${med?.name} marked as skipped`, {
-        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
+        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId, timing) },
         duration: 5000,
       });
     } catch {
@@ -219,14 +225,13 @@ const PatientDashboard = () => {
     }
   };
 
-  const handleMarkTaken = async (medicineId: string) => {
+  const handleMarkTaken = async (medicineId: string, timing: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const today = new Date().toISOString().split("T")[0];
       const med = medicines.find((m) => m.id === medicineId);
-      const scheduledTime = med?.timing || "morning";
 
       // Try to update existing dose first
       const { data: existing } = await supabase
@@ -234,6 +239,7 @@ const PatientDashboard = () => {
         .select("id")
         .eq("medicine_id", medicineId)
         .eq("scheduled_date", today)
+        .eq("scheduled_time", timing)
         .maybeSingle();
 
       if (existing) {
@@ -243,19 +249,19 @@ const PatientDashboard = () => {
           medicine_id: medicineId,
           user_id: user.id,
           scheduled_date: today,
-          scheduled_time: scheduledTime,
+          scheduled_time: timing,
           taken: true,
           missed: false,
           taken_at: new Date().toISOString(),
         });
       }
 
-      setTakenIds((prev) => new Set([...prev, medicineId]));
-      setMissedDoses((prev) => prev.filter((d) => d.medicine_name !== med?.name));
+      setTakenIds((prev) => new Set([...prev, `${medicineId}:${timing}`]));
+      setMissedDoses((prev) => prev.filter((d) => !(d.medicine_name === med?.name && d.scheduled_time === timing)));
       toast.success(`${med?.name} marked as taken!`, {
         action: {
           label: "Undo",
-          onClick: () => handleUndoTaken(medicineId),
+          onClick: () => handleUndoTaken(medicineId, timing),
         },
         duration: 5000,
       });
@@ -264,8 +270,9 @@ const PatientDashboard = () => {
     }
   };
 
-  const takenCount = medicines.filter((m) => takenIds.has(m.id)).length;
-  const totalCount = medicines.length;
+  // Count total dose slots (each timing counts as one slot)
+  const totalCount = medicines.reduce((sum, m) => sum + m.timing.split(",").length, 0);
+  const takenCount = takenIds.size;
   const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
 
   const sections: { key: string }[] = [
@@ -497,7 +504,7 @@ const PatientDashboard = () => {
           {sections.map((section) => {
             const configs = sectionConfig(t);
             const config = configs[section.key as keyof typeof configs];
-            const sectionMeds = medicines.filter((m) => m.timing === section.key);
+            const sectionMeds = medicines.filter((m) => m.timing.split(",").includes(section.key));
             if (sectionMeds.length === 0) return null;
             return (
               <div key={section.key}>
@@ -514,14 +521,14 @@ const PatientDashboard = () => {
 
                 <div className="space-y-3">
                   {sectionMeds.map((med, idx) => {
-                    const isTaken = takenIds.has(med.id);
-                    const isMissed = missedDoses.some((d) => d.medicine_name === med.name);
+                    const isTaken = takenIds.has(`${med.id}:${section.key}`);
+                    const isMissed = missedDoses.some((d) => d.medicine_name === med.name && d.scheduled_time === section.key);
                     const iconIdx = idx % MEDICINE_ICONS.length;
                     const colorIdx = idx % ICON_COLORS.length;
 
                     return (
                       <div
-                        key={med.id}
+                        key={`${med.id}-${section.key}`}
                         className="bg-card rounded-[18px] p-4 flex items-center gap-3 cursor-pointer animate-slide-up"
                         style={{
                           borderLeft: `4px solid ${isTaken ? "#10b981" : isMissed ? "#f43f5e" : "#f59e0b"}`,
@@ -567,7 +574,7 @@ const PatientDashboard = () => {
                                 <Check size={14} /> {t("taken_label")}
                               </div>
                               <button
-                                onClick={() => handleUndoTaken(med.id)}
+                                onClick={() => handleUndoTaken(med.id, section.key)}
                                 className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 title="Undo"
                               >
@@ -580,7 +587,7 @@ const PatientDashboard = () => {
                                 <X size={14} /> {t("missed_label")}
                               </div>
                               <button
-                                onClick={() => handleMarkTaken(med.id)}
+                                onClick={() => handleMarkTaken(med.id, section.key)}
                                 className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-primary border-2 border-primary/30 bg-white hover:bg-primary/10 transition-colors"
                               >
                                 {t("take_now")}
@@ -589,13 +596,13 @@ const PatientDashboard = () => {
                           ) : (
                             <>
                               <button
-                                onClick={() => handleMarkTaken(med.id)}
+                                onClick={() => handleMarkTaken(med.id, section.key)}
                                 className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
                               >
                                 {t("mark_taken_btn")}
                               </button>
                               <button
-                                onClick={() => handleMarkMissed(med.id)}
+                                onClick={() => handleMarkMissed(med.id, section.key)}
                                 className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 title="Skip / Missed"
                               >

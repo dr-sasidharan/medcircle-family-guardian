@@ -4,13 +4,30 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Upload, ScanLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const TIMING_OPTIONS = [
+  { value: "morning", label: "☀️ Morning", color: "#f59e0b" },
+  { value: "afternoon", label: "🌤️ Afternoon", color: "#3b82f6" },
+  { value: "night", label: "🌙 Night", color: "#8b5cf6" },
+];
 
 const AddMedicine = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [timing, setTiming] = useState("morning");
+  const [selectedTimings, setSelectedTimings] = useState<string[]>(["morning"]);
   const [food, setFood] = useState("after_food");
+
+  const toggleTiming = (value: string) => {
+    setSelectedTimings((prev) => {
+      if (prev.includes(value)) {
+        if (prev.length === 1) return prev; // Must have at least one
+        return prev.filter((t) => t !== value);
+      }
+      return [...prev, value];
+    });
+  };
 
   const checkPlanLimit = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -38,8 +55,19 @@ const AddMedicine = () => {
       return;
     }
 
+    if (selectedTimings.length === 0) {
+      toast.error("Please select at least one timing");
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Please sign in first"); return; }
+
+    // Store timings as comma-separated string
+    const timing = selectedTimings.sort((a, b) => {
+      const order = ["morning", "afternoon", "night"];
+      return order.indexOf(a) - order.indexOf(b);
+    }).join(",");
 
     const { error } = await supabase.from("medicines").insert({
       name: name.trim(),
@@ -101,15 +129,55 @@ const AddMedicine = () => {
             placeholder="e.g. 500mg" />
         </div>
 
-        {/* Timing */}
+        {/* Frequency / Timing Multi-select */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">Timing</label>
-          <select value={timing} onChange={(e) => setTiming(e.target.value)}
-            className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-            <option value="morning">Morning</option>
-            <option value="afternoon">Afternoon</option>
-            <option value="night">Night</option>
-          </select>
+          <label className="text-sm font-semibold text-foreground mb-2 block">
+            Frequency <span className="text-muted-foreground font-normal">(select all that apply)</span>
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {TIMING_OPTIONS.map((opt) => {
+              const isSelected = selectedTimings.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleTiming(opt.value)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all"
+                  style={{
+                    borderColor: isSelected ? opt.color : "var(--border)",
+                    background: isSelected ? `${opt.color}10` : "transparent",
+                    boxShadow: isSelected ? `0 0 12px ${opt.color}20` : "none",
+                  }}
+                >
+                  <span className="text-2xl">{opt.label.split(" ")[0]}</span>
+                  <span
+                    className="text-xs font-bold"
+                    style={{ color: isSelected ? opt.color : "var(--muted-foreground)" }}
+                  >
+                    {opt.label.split(" ")[1]}
+                  </span>
+                  <div
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+                    style={{
+                      borderColor: isSelected ? opt.color : "var(--border)",
+                      background: isSelected ? opt.color : "transparent",
+                    }}
+                  >
+                    {isSelected && (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {selectedTimings.length > 1 && (
+            <p className="text-xs text-primary font-medium mt-2 text-center">
+              💊 {selectedTimings.length}x daily — {selectedTimings.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", ")}
+            </p>
+          )}
         </div>
 
         {/* Food */}
