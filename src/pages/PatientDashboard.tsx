@@ -201,6 +201,15 @@ const PatientDashboard = () => {
       }
 
       setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      
+      // Alert caretakers about missed dose
+      supabase.functions.invoke("caretaker-alert", {
+        body: {
+          type: "missed_dose",
+          details: { medicine_name: med?.name, timing: med?.timing },
+        },
+      }).catch(() => {});
+
       toast(`${med?.name} marked as skipped`, {
         action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
         duration: 5000,
