@@ -157,18 +157,19 @@ const PatientDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const handleUndoTaken = async (medicineId: string) => {
+  const handleUndoTaken = async (medicineId: string, timing: string) => {
     try {
       const today = new Date().toISOString().split("T")[0];
       await supabase
         .from("doses")
         .update({ taken: false, taken_at: null })
         .eq("medicine_id", medicineId)
-        .eq("scheduled_date", today);
+        .eq("scheduled_date", today)
+        .eq("scheduled_time", timing);
 
       setTakenIds((prev) => {
         const next = new Set(prev);
-        next.delete(medicineId);
+        next.delete(`${medicineId}:${timing}`);
         return next;
       });
       toast.success("Undo successful");
