@@ -497,7 +497,7 @@ const PatientDashboard = () => {
           {sections.map((section) => {
             const configs = sectionConfig(t);
             const config = configs[section.key as keyof typeof configs];
-            const sectionMeds = medicines.filter((m) => m.timing === section.key);
+            const sectionMeds = medicines.filter((m) => m.timing.split(",").includes(section.key));
             if (sectionMeds.length === 0) return null;
             return (
               <div key={section.key}>
