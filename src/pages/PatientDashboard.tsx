@@ -124,9 +124,18 @@ const PatientDashboard = () => {
       }));
       setMissedDoses(missedList);
 
-      // Trigger server-side missed dose checker (sends caretaker SMS alerts)
-      if (missedList.length > 0) {
-        supabase.functions.invoke("missed-dose-checker").catch(() => {});
+      // Trigger caretaker alerts for each missed dose
+      for (const missed of missedList) {
+        const med = medsList.find(m => m.name === missed.medicine_name);
+        supabase.functions.invoke("caretaker-alert", {
+          body: {
+            type: "missed_dose",
+            details: {
+              medicine_name: missed.medicine_name,
+              timing: missed.scheduled_time,
+            },
+          },
+        }).catch(() => {});
       }
 
       setLoading(false);
