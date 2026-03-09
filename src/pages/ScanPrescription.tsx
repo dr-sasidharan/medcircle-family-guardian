@@ -138,18 +138,44 @@ const ScanPrescription = () => {
         {/* Upload Area */}
         {!loading && !hasResults && (
           <div className="space-y-4">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-primary/40 rounded-2xl p-10 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary hover:bg-secondary/50 transition-all"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Camera size={32} className="text-primary" />
-              </div>
-              <p className="text-lg font-bold text-foreground">Scan Prescription</p>
-              <p className="text-sm text-muted-foreground text-center">
-                Take a photo or upload an image of your prescription
-              </p>
+            <p className="text-center text-lg font-bold text-foreground">Scan Prescription</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Take a photo or upload an image of your prescription
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => cameraInputRef.current?.click()}
+                className="border-2 border-dashed border-primary/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary hover:bg-secondary/50 transition-all"
+              >
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Camera size={28} className="text-primary" />
+                </div>
+                <span className="text-sm font-bold text-foreground">Take Photo</span>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-primary/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary hover:bg-secondary/50 transition-all"
+              >
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Upload size={28} className="text-primary" />
+                </div>
+                <span className="text-sm font-bold text-foreground">Upload Image</span>
+              </button>
             </div>
+
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUpload(file);
+              }}
+            />
             <input
               ref={fileInputRef}
               type="file"
