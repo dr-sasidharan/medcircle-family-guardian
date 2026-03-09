@@ -35,6 +35,13 @@ export default function Auth() {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
+      // First, ensure the demo account exists by calling the setup-demo edge function
+      const { error: setupError } = await supabase.functions.invoke("setup-demo");
+      if (setupError) {
+        console.error("Setup demo error:", setupError);
+        // Continue anyway — account might already exist
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: "demo@medcircle.app",
         password: "medcircle2026",
