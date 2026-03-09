@@ -178,19 +178,19 @@ const PatientDashboard = () => {
     }
   };
 
-  const handleMarkMissed = async (medicineId: string) => {
+  const handleMarkMissed = async (medicineId: string, timing: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const today = new Date().toISOString().split("T")[0];
       const med = medicines.find((m) => m.id === medicineId);
-      const scheduledTime = med?.timing || "morning";
 
       const { data: existing } = await supabase
         .from("doses")
         .select("id")
         .eq("medicine_id", medicineId)
         .eq("scheduled_date", today)
+        .eq("scheduled_time", timing)
         .maybeSingle();
 
       if (existing) {
@@ -200,24 +200,24 @@ const PatientDashboard = () => {
           medicine_id: medicineId,
           user_id: user.id,
           scheduled_date: today,
-          scheduled_time: scheduledTime,
+          scheduled_time: timing,
           taken: false,
           missed: true,
         });
       }
 
-      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: scheduledTime }]);
+      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: timing }]);
       
       // Alert caretakers about missed dose
       supabase.functions.invoke("caretaker-alert", {
         body: {
           type: "missed_dose",
-          details: { medicine_name: med?.name, timing: med?.timing },
+          details: { medicine_name: med?.name, timing },
         },
       }).catch(() => {});
 
       toast(`${med?.name} marked as skipped`, {
-        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId) },
+        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId, timing) },
         duration: 5000,
       });
     } catch {
