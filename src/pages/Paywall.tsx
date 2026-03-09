@@ -60,8 +60,25 @@ const Paywall = () => {
   const [transactionId, setTransactionId] = useState("");
 
   const reason = (location.state as any)?.reason || searchParams.get("reason") || "upgrade";
-  const patientProfileId =
+  const stateProfileId =
     (location.state as any)?.patientProfileId || searchParams.get("patient_profile_id");
+  const [patientProfileId, setPatientProfileId] = useState<string | null>(stateProfileId || null);
+
+  useEffect(() => {
+    if (patientProfileId) return;
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("patient_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+      if (data) setPatientProfileId(data.id);
+    };
+    fetchProfile();
+  }, [patientProfileId]);
 
   const generateUpiUrl = (amount: number, txnNote: string) => {
     return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(txnNote)}`;
