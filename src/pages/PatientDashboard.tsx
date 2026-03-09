@@ -520,14 +520,14 @@ const PatientDashboard = () => {
 
                 <div className="space-y-3">
                   {sectionMeds.map((med, idx) => {
-                    const isTaken = takenIds.has(med.id);
-                    const isMissed = missedDoses.some((d) => d.medicine_name === med.name);
+                    const isTaken = takenIds.has(`${med.id}:${section.key}`);
+                    const isMissed = missedDoses.some((d) => d.medicine_name === med.name && d.scheduled_time === section.key);
                     const iconIdx = idx % MEDICINE_ICONS.length;
                     const colorIdx = idx % ICON_COLORS.length;
 
                     return (
                       <div
-                        key={med.id}
+                        key={`${med.id}-${section.key}`}
                         className="bg-card rounded-[18px] p-4 flex items-center gap-3 cursor-pointer animate-slide-up"
                         style={{
                           borderLeft: `4px solid ${isTaken ? "#10b981" : isMissed ? "#f43f5e" : "#f59e0b"}`,
@@ -573,7 +573,7 @@ const PatientDashboard = () => {
                                 <Check size={14} /> {t("taken_label")}
                               </div>
                               <button
-                                onClick={() => handleUndoTaken(med.id)}
+                                onClick={() => handleUndoTaken(med.id, section.key)}
                                 className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 title="Undo"
                               >
@@ -586,7 +586,7 @@ const PatientDashboard = () => {
                                 <X size={14} /> {t("missed_label")}
                               </div>
                               <button
-                                onClick={() => handleMarkTaken(med.id)}
+                                onClick={() => handleMarkTaken(med.id, section.key)}
                                 className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-primary border-2 border-primary/30 bg-white hover:bg-primary/10 transition-colors"
                               >
                                 {t("take_now")}
@@ -595,13 +595,13 @@ const PatientDashboard = () => {
                           ) : (
                             <>
                               <button
-                                onClick={() => handleMarkTaken(med.id)}
+                                onClick={() => handleMarkTaken(med.id, section.key)}
                                 className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-amber border-2 border-amber/30 bg-white hover:bg-amber/10 transition-colors"
                               >
                                 {t("mark_taken_btn")}
                               </button>
                               <button
-                                onClick={() => handleMarkMissed(med.id)}
+                                onClick={() => handleMarkMissed(med.id, section.key)}
                                 className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 title="Skip / Missed"
                               >
