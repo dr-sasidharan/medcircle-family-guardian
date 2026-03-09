@@ -270,8 +270,9 @@ const PatientDashboard = () => {
     }
   };
 
-  const takenCount = medicines.filter((m) => takenIds.has(m.id)).length;
-  const totalCount = medicines.length;
+  // Count total dose slots (each timing counts as one slot)
+  const totalCount = medicines.reduce((sum, m) => sum + m.timing.split(",").length, 0);
+  const takenCount = takenIds.size;
   const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
 
   const sections: { key: string }[] = [
