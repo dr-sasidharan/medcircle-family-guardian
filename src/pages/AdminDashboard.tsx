@@ -550,7 +550,23 @@ export default function AdminDashboard() {
                 <TableBody>
                   {users.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${
+                              u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                            title={
+                              u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000
+                                ? "Online"
+                                : "Offline"
+                            }
+                          />
+                          {u.name}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={planBadgeColor(u.plan)}>
                           {u.plan.charAt(0).toUpperCase() + u.plan.slice(1)}
