@@ -19,6 +19,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       }
       setAuthenticated(true);
 
+      // Update last_active_at every time the app is opened
+      supabase.from("patient_profiles").update({ last_active_at: new Date().toISOString() }).eq("user_id", session.user.id).then(() => {});
+
       // Check onboarding status (skip if already on onboarding page)
       if (location.pathname !== "/onboarding") {
         const { data } = await supabase
