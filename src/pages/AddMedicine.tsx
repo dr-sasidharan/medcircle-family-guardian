@@ -78,7 +78,8 @@ const AddMedicine = () => {
     });
 
     if (error) {
-      toast.error("Failed to save medicine");
+      console.error("Medicine save error:", error);
+      toast.error(`Failed to save medicine: ${error.message}`);
       return;
     }
 
