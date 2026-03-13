@@ -63,6 +63,9 @@ const PatientDashboard = () => {
       const { data: profiles } = await supabase.from("patient_profiles").select("name").eq("user_id", user.id).limit(1);
       if (profiles?.length) setPatientName(profiles[0].name);
 
+      // Update last_active_at on every dashboard visit
+      await supabase.from("patient_profiles").update({ last_active_at: new Date().toISOString() }).eq("user_id", user.id);
+
       const { data } = await supabase.from("medicines").select("id, name, dosage, timing, food_instruction").eq("is_active", true).eq("user_id", user.id);
       const medsList = (data || []) as Medicine[];
       setMedicines(medsList);
