@@ -64,9 +64,6 @@ export default function Auth() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        // Update last_active_at on login
-        supabase.from("patient_profiles").update({ last_active_at: new Date().toISOString() }).eq("user_id", session.user.id).then(() => {});
-
         // Check onboarding status
         supabase
           .from("patient_profiles")
