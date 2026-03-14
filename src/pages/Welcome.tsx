@@ -75,6 +75,17 @@ const Welcome = () => {
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />
+            {canInstall && (
+              <button
+                onClick={install}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-heading font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors"
+              >
+                <Download size={14} /> Install
+              </button>
+            )}
+            {isInstalled && (
+              <span className="text-xs text-muted-foreground px-2">✅ Installed</span>
+            )}
             <button
               onClick={() => navigate("/auth?mode=login")}
               className="px-4 py-2 rounded-xl text-sm font-heading font-bold text-primary hover:bg-secondary transition-colors"
