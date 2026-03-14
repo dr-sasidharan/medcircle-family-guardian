@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import LanguageToggle from "@/components/LanguageToggle";
 import logo from "@/assets/medcircle-logo.png";
 import {
   Heart, UserRound, ScanLine, Shield, Bell, Stethoscope,
-  Pill, QrCode, Brain, ChevronRight, Star,
+  Pill, QrCode, Brain, ChevronRight, Star, Download,
 } from "lucide-react";
 
 const features = [
@@ -61,6 +62,7 @@ const testimonials = [
 const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { canInstall, isInstalled, install } = useInstallPrompt();
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -73,6 +75,17 @@ const Welcome = () => {
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />
+            {canInstall && (
+              <button
+                onClick={install}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-heading font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors"
+              >
+                <Download size={14} /> Install
+              </button>
+            )}
+            {isInstalled && (
+              <span className="text-xs text-muted-foreground px-2">✅ Installed</span>
+            )}
             <button
               onClick={() => navigate("/auth?mode=login")}
               className="px-4 py-2 rounded-xl text-sm font-heading font-bold text-primary hover:bg-secondary transition-colors"
