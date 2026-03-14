@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import EmergencyInfoButton from "@/components/EmergencyInfoButton";
@@ -9,7 +10,7 @@ import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
 import WhatsAppPreview from "@/components/WhatsAppPreview";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope, Undo2, X } from "lucide-react";
+import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope, Undo2, X, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 import { useNotificationReminders } from "@/hooks/useNotificationReminders";
@@ -47,6 +48,8 @@ const PatientDashboard = () => {
   const { t } = useLanguage();
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
+  const { canInstall, install } = useInstallPrompt();
+  const [dismissedInstall, setDismissedInstall] = useState(false);
   const FOOD_LABELS = getFoodLabels(t);
   useNotificationReminders();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
@@ -322,6 +325,20 @@ const PatientDashboard = () => {
 
         <RefillBanner />
 
+        {canInstall && !dismissedInstall && (
+          <div className="mx-4 mt-4 rounded-2xl border border-primary/20 p-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)))" }}>
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Download size={20} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-heading font-bold text-sm text-foreground">Install MedCircle</p>
+              <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
+            </div>
+            <button onClick={install} className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shrink-0">Install</button>
+            <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+          </div>
+        )}
+
         <div className="px-4 mt-8 grid grid-cols-2 gap-4">
           <button onClick={() => navigate("/reminders")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
@@ -444,6 +461,20 @@ const PatientDashboard = () => {
 
       {/* Refill Banner */}
       <RefillBanner />
+
+      {canInstall && !dismissedInstall && (
+        <div className="mx-4 mt-4 rounded-2xl border border-primary/20 p-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)))" }}>
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Download size={20} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-heading font-bold text-sm text-foreground">Install MedCircle</p>
+            <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
+          </div>
+          <button onClick={install} className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shrink-0">Install</button>
+          <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+        </div>
+      )}
 
       {/* Weekly Adherence Chart */}
       {medicines.length > 0 && (() => {
