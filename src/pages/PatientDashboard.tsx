@@ -476,6 +476,7 @@ const PatientDashboard = () => {
         </div>
       )}
 
+      {/* Weekly Adherence Chart */}
       {medicines.length > 0 && (() => {
         const getColor = (pct: number) => pct >= 80 ? "hsl(var(--primary))" : pct >= 50 ? "#f59e0b" : "#f43f5e";
         const weeklyData = [
