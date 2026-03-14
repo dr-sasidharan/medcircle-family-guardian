@@ -62,6 +62,7 @@ const testimonials = [
 const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { canInstall, isInstalled, install } = useInstallPrompt();
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
