@@ -298,6 +298,45 @@ export type Database = {
           },
         ]
       }
+      interaction_cache: {
+        Row: {
+          created_at: string
+          drug1: string
+          drug2: string
+          id: string
+          interaction_data: Json | null
+          rxcui1: string | null
+          rxcui2: string | null
+          severity: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          drug1: string
+          drug2: string
+          id?: string
+          interaction_data?: Json | null
+          rxcui1?: string | null
+          rxcui2?: string | null
+          severity?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          drug1?: string
+          drug2?: string
+          id?: string
+          interaction_data?: Json | null
+          rxcui1?: string | null
+          rxcui2?: string | null
+          severity?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medicine_refills: {
         Row: {
           created_at: string
