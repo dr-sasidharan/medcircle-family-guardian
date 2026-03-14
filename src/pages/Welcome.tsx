@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import LanguageToggle from "@/components/LanguageToggle";
 import logo from "@/assets/medcircle-logo.png";
 import {
   Heart, UserRound, ScanLine, Shield, Bell, Stethoscope,
-  Pill, QrCode, Brain, ChevronRight, Star,
+  Pill, QrCode, Brain, ChevronRight, Star, Download,
 } from "lucide-react";
 
 const features = [
