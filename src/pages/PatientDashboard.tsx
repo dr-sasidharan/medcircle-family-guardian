@@ -48,6 +48,8 @@ const PatientDashboard = () => {
   const { t } = useLanguage();
   const { elderlyMode } = useElderlyMode();
   const navigate = useNavigate();
+  const { canInstall, install } = useInstallPrompt();
+  const [dismissedInstall, setDismissedInstall] = useState(false);
   const FOOD_LABELS = getFoodLabels(t);
   useNotificationReminders();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
