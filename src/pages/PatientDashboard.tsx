@@ -461,7 +461,20 @@ const PatientDashboard = () => {
       {/* Refill Banner */}
       <RefillBanner />
 
-      {/* Weekly Adherence Chart */}
+      {canInstall && !dismissedInstall && (
+        <div className="mx-4 mt-4 rounded-2xl border border-primary/20 p-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)))" }}>
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Download size={20} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-heading font-bold text-sm text-foreground">Install MedCircle</p>
+            <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
+          </div>
+          <button onClick={install} className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shrink-0">Install</button>
+          <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+        </div>
+      )}
+
       {medicines.length > 0 && (() => {
         const getColor = (pct: number) => pct >= 80 ? "hsl(var(--primary))" : pct >= 50 ? "#f59e0b" : "#f43f5e";
         const weeklyData = [
