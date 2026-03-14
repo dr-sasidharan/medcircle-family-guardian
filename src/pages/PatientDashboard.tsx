@@ -339,6 +339,7 @@ const PatientDashboard = () => {
           </div>
         )}
 
+        <div className="px-4 mt-8 grid grid-cols-2 gap-4">
           <button onClick={() => navigate("/reminders")}
             className="bg-card border-2 border-primary rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] hover:bg-secondary transition-colors">
             <Pill size={40} className="text-primary" />
