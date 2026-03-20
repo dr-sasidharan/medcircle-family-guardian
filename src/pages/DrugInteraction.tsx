@@ -221,6 +221,31 @@ const DrugInteraction = () => {
               )}
             </div>
 
+            {/* Share via WhatsApp */}
+            <button
+              onClick={() => {
+                const verdictEmoji = result.verdict === "SAFE" ? "✅" : result.verdict === "CAUTION" ? "⚠️" : "🚨";
+                const sourceLabel = isRxNormVerified ? "FDA Verified (RxNorm)" : "AI Generated";
+                const text = [
+                  `${verdictEmoji} *MedCircle Drug Interaction Report*`,
+                  ``,
+                  `*${med1}* + *${med2}*`,
+                  `Verdict: *${result.verdict}* (${sourceLabel})`,
+                  ``,
+                  (language !== "en" && result.localized_explanation) ? result.localized_explanation : result.explanation,
+                  result.clinical_tip ? `\n💡 Tip: ${result.clinical_tip}` : "",
+                  result.symptoms_to_watch.length > 0 ? `\n👁 Watch for: ${result.symptoms_to_watch.join(", ")}` : "",
+                  ``,
+                  `— Sent from MedCircle`,
+                ].filter(Boolean).join("\n");
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white rounded-2xl py-3 text-sm font-bold hover:opacity-90 transition-opacity"
+            >
+              <Share2 size={18} />
+              Share with Caretaker via WhatsApp
+            </button>
+
             {/* RxCUI info */}
             <div className="flex justify-center gap-4 text-xs text-muted-foreground">
               {result.rxcui1 && <span>RxCUI: {med1} → {result.rxcui1}</span>}
