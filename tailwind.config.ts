@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Lora"', '"Times New Roman"', 'serif'],
-        heading: ['"Lora"', '"Times New Roman"', 'serif'],
+        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+        heading: ['"Syne"', '"Inter"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
