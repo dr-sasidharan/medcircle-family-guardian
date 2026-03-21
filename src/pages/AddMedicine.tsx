@@ -22,7 +22,7 @@ const AddMedicine = () => {
   const toggleTiming = (value: string) => {
     setSelectedTimings((prev) => {
       if (prev.includes(value)) {
-        if (prev.length === 1) return prev; // Must have at least one
+        if (prev.length === 1) return prev;
         return prev.filter((t) => t !== value);
       }
       return [...prev, value];
@@ -63,7 +63,6 @@ const AddMedicine = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Please sign in first"); return; }
 
-    // Store timings as comma-separated string
     const timing = selectedTimings.sort((a, b) => {
       const order = ["morning", "afternoon", "night"];
       return order.indexOf(a) - order.indexOf(b);
@@ -88,13 +87,13 @@ const AddMedicine = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background page-transition">
+    <div className="min-h-screen page-transition">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <button onClick={() => navigate(-1)} className="text-foreground p-1">
+      <div className="glass-header flex items-center justify-between p-4">
+        <button onClick={() => navigate(-1)} className="text-white p-1">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">Add Medicine</h1>
+        <h1 className="text-lg font-heading font-bold text-white">Add Medicine</h1>
         <LanguageToggle />
       </div>
 
@@ -102,38 +101,39 @@ const AddMedicine = () => {
         {/* Scan Tablet Strip Button */}
         <button
           onClick={() => navigate("/scan-tablet")}
-          className="w-full flex items-center justify-center gap-3 bg-secondary border-2 border-primary/30 rounded-2xl py-4 text-base font-bold text-primary hover:bg-accent transition-colors"
+          className="w-full flex items-center justify-center gap-3 glass-card py-4 text-base font-bold text-[#34d399] hover:bg-white/12"
+          style={{ border: "2px solid rgba(13,148,136,0.4)" }}
         >
           <ScanLine size={22} />
           Scan Tablet Strip
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-sm text-muted-foreground font-medium">or enter manually</span>
-          <div className="flex-1 h-px bg-border" />
+          <div className="flex-1 h-px bg-white/15" />
+          <span className="text-sm text-glass-muted font-medium">or enter manually</span>
+          <div className="flex-1 h-px bg-white/15" />
         </div>
 
         {/* Name */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">Medicine Name</label>
+          <label className="text-sm font-semibold text-glass-secondary mb-1.5 block">Medicine Name</label>
           <input value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full glass-input px-4 py-3.5 text-base"
             placeholder="e.g. Metformin" />
         </div>
 
         {/* Dosage */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">Dosage</label>
+          <label className="text-sm font-semibold text-glass-secondary mb-1.5 block">Dosage</label>
           <input value={dosage} onChange={(e) => setDosage(e.target.value)}
-            className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full glass-input px-4 py-3.5 text-base"
             placeholder="e.g. 500mg" />
         </div>
 
         {/* Frequency / Timing Multi-select */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-2 block">
-            Frequency <span className="text-muted-foreground font-normal">(select all that apply)</span>
+          <label className="text-sm font-semibold text-glass-secondary mb-2 block">
+            Frequency <span className="text-glass-muted font-normal">(select all that apply)</span>
           </label>
           <div className="grid grid-cols-3 gap-3">
             {TIMING_OPTIONS.map((opt) => {
@@ -143,24 +143,25 @@ const AddMedicine = () => {
                   key={opt.value}
                   type="button"
                   onClick={() => toggleTiming(opt.value)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all glass-card"
                   style={{
-                    borderColor: isSelected ? opt.color : "var(--border)",
-                    background: isSelected ? `${opt.color}10` : "transparent",
-                    boxShadow: isSelected ? `0 0 12px ${opt.color}20` : "none",
+                    borderColor: isSelected ? opt.color : "rgba(255,255,255,0.15)",
+                    borderWidth: "2px",
+                    background: isSelected ? `${opt.color}15` : "rgba(255,255,255,0.06)",
+                    boxShadow: isSelected ? `0 0 16px ${opt.color}30` : "none",
                   }}
                 >
                   <span className="text-2xl">{opt.label.split(" ")[0]}</span>
                   <span
                     className="text-xs font-bold"
-                    style={{ color: isSelected ? opt.color : "var(--muted-foreground)" }}
+                    style={{ color: isSelected ? opt.color : "rgba(255,255,255,0.4)" }}
                   >
                     {opt.label.split(" ")[1]}
                   </span>
                   <div
                     className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
                     style={{
-                      borderColor: isSelected ? opt.color : "var(--border)",
+                      borderColor: isSelected ? opt.color : "rgba(255,255,255,0.2)",
                       background: isSelected ? opt.color : "transparent",
                     }}
                   >
@@ -175,7 +176,7 @@ const AddMedicine = () => {
             })}
           </div>
           {selectedTimings.length > 1 && (
-            <p className="text-xs text-primary font-medium mt-2 text-center">
+            <p className="text-xs text-[#34d399] font-medium mt-2 text-center">
               💊 {selectedTimings.length}x daily — {selectedTimings.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(", ")}
             </p>
           )}
@@ -183,9 +184,9 @@ const AddMedicine = () => {
 
         {/* Food */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">Food Instruction</label>
+          <label className="text-sm font-semibold text-glass-secondary mb-1.5 block">Food Instruction</label>
           <select value={food} onChange={(e) => setFood(e.target.value)}
-            className="w-full bg-muted border border-border rounded-xl px-4 py-3.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+            className="w-full glass-input px-4 py-3.5 text-base">
             <option value="before_food">Before Food</option>
             <option value="after_food">After Food</option>
             <option value="with_food">With Food</option>
@@ -194,8 +195,9 @@ const AddMedicine = () => {
 
         {/* Upload */}
         <div>
-          <label className="text-sm font-semibold text-foreground mb-1.5 block">Upload Photo</label>
-          <div className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer">
+          <label className="text-sm font-semibold text-glass-secondary mb-1.5 block">Upload Photo</label>
+          <div className="glass-card p-8 flex flex-col items-center justify-center gap-2 text-glass-muted cursor-pointer hover:bg-white/12"
+            style={{ border: "2px dashed rgba(255,255,255,0.2)" }}>
             <Upload size={32} />
             <p className="text-sm">Tap to upload</p>
           </div>
@@ -203,7 +205,8 @@ const AddMedicine = () => {
 
         {/* Save */}
         <button onClick={handleSave}
-          className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold shadow-lg hover:opacity-90 transition-opacity mt-4">
+          className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity mt-4"
+          style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}>
           Save
         </button>
       </div>
