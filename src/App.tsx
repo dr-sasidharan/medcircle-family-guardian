@@ -8,6 +8,7 @@ import { ElderlyModeProvider } from "@/contexts/ElderlyModeContext";
 import { VoiceCommandProvider } from "@/contexts/VoiceCommandContext";
 import VoiceCommandButton from "@/components/VoiceCommandButton";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import GlassBackground from "@/components/GlassBackground";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
@@ -46,34 +47,37 @@ const App = () => (
         <ElderlyModeProvider>
           <Toaster />
           <Sonner />
+          <GlassBackground />
           <BrowserRouter>
             <VoiceCommandProvider>
               <AnimatedPage>
-                <Routes>
-                  <Route path="/" element={<Welcome />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/onboarding" element={<P><Onboarding /></P>} />
-                  <Route path="/patient" element={<P><PatientDashboard /></P>} />
-                  <Route path="/add-medicine" element={<P><AddMedicine /></P>} />
-                  <Route path="/caretaker" element={<P><CaretakerDashboard /></P>} />
-                  <Route path="/medicine-detail/:id" element={<P><MedicineDetail /></P>} />
-                  <Route path="/pricing" element={<P><Pricing /></P>} />
-                  <Route path="/paywall" element={<P><Paywall /></P>} />
-                  <Route path="/scan" element={<P><ScanPrescription /></P>} />
-                  <Route path="/scan-tablet" element={<P><ScanTablet /></P>} />
-                  <Route path="/reminders" element={<P><Reminders /></P>} />
-                  <Route path="/profile" element={<P><Profile /></P>} />
-                  <Route path="/drug-interaction" element={<P><DrugInteraction /></P>} />
-                  <Route path="/doctor-summary" element={<P><DoctorSummary /></P>} />
-                  <Route path="/settings" element={<P><Settings /></P>} />
-                  <Route path="/admin" element={<P><AdminDashboard /></P>} />
-                  <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
-                  <Route path="/notifications" element={<P><NotificationLog /></P>} />
-                  <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
-                  <Route path="/emergency/:token" element={<EmergencyCard />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <div className="relative z-10">
+                  <Routes>
+                    <Route path="/" element={<Welcome />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/onboarding" element={<P><Onboarding /></P>} />
+                    <Route path="/patient" element={<P><PatientDashboard /></P>} />
+                    <Route path="/add-medicine" element={<P><AddMedicine /></P>} />
+                    <Route path="/caretaker" element={<P><CaretakerDashboard /></P>} />
+                    <Route path="/medicine-detail/:id" element={<P><MedicineDetail /></P>} />
+                    <Route path="/pricing" element={<P><Pricing /></P>} />
+                    <Route path="/paywall" element={<P><Paywall /></P>} />
+                    <Route path="/scan" element={<P><ScanPrescription /></P>} />
+                    <Route path="/scan-tablet" element={<P><ScanTablet /></P>} />
+                    <Route path="/reminders" element={<P><Reminders /></P>} />
+                    <Route path="/profile" element={<P><Profile /></P>} />
+                    <Route path="/drug-interaction" element={<P><DrugInteraction /></P>} />
+                    <Route path="/doctor-summary" element={<P><DoctorSummary /></P>} />
+                    <Route path="/settings" element={<P><Settings /></P>} />
+                    <Route path="/admin" element={<P><AdminDashboard /></P>} />
+                    <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
+                    <Route path="/notifications" element={<P><NotificationLog /></P>} />
+                    <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
+                    <Route path="/emergency/:token" element={<EmergencyCard />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
               </AnimatedPage>
               <VoiceCommandButton />
             </VoiceCommandProvider>

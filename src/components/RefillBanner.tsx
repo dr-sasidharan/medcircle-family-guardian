@@ -47,43 +47,37 @@ const RefillBanner = () => {
     <div className="px-4 mt-4 space-y-3">
       {lowRefills.map((r, i) => {
         const isUrgent = r.tablets_remaining <= 2;
+        const accentColor = isUrgent ? "#f43f5e" : "#f59e0b";
         return (
           <div
             key={i}
-            className="rounded-2xl p-4 flex items-center gap-3 animate-slide-in-left border"
+            className="glass-card p-4 flex items-center gap-3 animate-slide-in-left"
             style={{
-              background: isUrgent
-                ? "linear-gradient(135deg, #fff1f2, #ffe4e6)"
-                : "linear-gradient(135deg, #fffbeb, #fef3c7)",
-              borderColor: isUrgent ? "#fda4af" : "#fcd34d",
+              boxShadow: `inset 3px 0 0 ${accentColor}, 0 8px 32px rgba(0,0,0,0.3)`,
               animationDelay: `${i * 100}ms`,
             }}
           >
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                isUrgent ? "bg-[#fda4af]/30" : "bg-[#fcd34d]/30"
-              }`}
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `${accentColor}20` }}
             >
               {isUrgent ? (
-                <AlertTriangle size={20} className="text-[#e11d48]" />
+                <AlertTriangle size={20} className="text-[#f43f5e]" />
               ) : (
-                <Package size={20} className="text-[#b45309]" />
+                <Package size={20} className="text-[#f59e0b]" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-heading font-bold text-sm ${isUrgent ? "text-[#9f1239]" : "text-[#92400e]"}`}>
+              <p className="font-heading font-bold text-sm text-white">
                 {r.medicine_name}
               </p>
-              <p className={`text-xs ${isUrgent ? "text-[#e11d48]/70" : "text-[#b45309]/70"}`}>
+              <p className="text-xs text-glass-muted">
                 {r.tablets_remaining} {t("days_remaining")} · {t("time_to_refill")}
               </p>
             </div>
             <button
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 ${
-                isUrgent
-                  ? "bg-[#e11d48] text-white"
-                  : "bg-[#f59e0b] text-white"
-              }`}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 text-white"
+              style={{ background: accentColor }}
             >
               Refill
             </button>

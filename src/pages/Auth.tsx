@@ -14,20 +14,14 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(initialMode === "login" ? "email" : initialMode);
   const [isLogin, setIsLogin] = useState(initialMode === "login" || !searchParams.get("mode") || isDemoRequest);
 
-  // Email fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-
-  // Phone fields
   const [phone, setPhone] = useState("+91");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
-
-  // Caretaker fields
   const [caretakerCode, setCaretakerCode] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
@@ -35,13 +29,8 @@ export default function Auth() {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
-      // First, ensure the demo account exists by calling the setup-demo edge function
       const { error: setupError } = await supabase.functions.invoke("setup-demo");
-      if (setupError) {
-        console.error("Setup demo error:", setupError);
-        // Continue anyway — account might already exist
-      }
-
+      if (setupError) console.error("Setup demo error:", setupError);
       const { error } = await supabase.auth.signInWithPassword({
         email: "demo@medcircle.app",
         password: "medcircle2026",
@@ -54,17 +43,13 @@ export default function Auth() {
     setDemoLoading(false);
   };
 
-  // Auto-trigger demo login if demo=true
   useEffect(() => {
-    if (isDemoRequest) {
-      handleDemoLogin();
-    }
+    if (isDemoRequest) handleDemoLogin();
   }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        // Check onboarding status
         supabase
           .from("patient_profiles")
           .select("onboarding_complete")
@@ -98,7 +83,6 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // OTP countdown timer
   useEffect(() => {
     if (otpCountdown > 0) {
       const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
@@ -143,9 +127,7 @@ export default function Auth() {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-otp", {
-        body: { phone },
-      });
+      const { data, error } = await supabase.functions.invoke("send-otp", { body: { phone } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setOtpSent(true);
@@ -164,14 +146,10 @@ export default function Auth() {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("verify-otp", {
-        body: { phone, otp },
-      });
+      const { data, error } = await supabase.functions.invoke("verify-otp", { body: { phone, otp } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
       if (data?.session) {
-        // Set the session manually
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
@@ -191,73 +169,49 @@ export default function Auth() {
     }
     setLoading(true);
     try {
-      // First sign up/login as caretaker
       if (!email || !password) {
         toast.error("Please enter your email and password first");
         setLoading(false);
         return;
       }
-
-      // Try sign up first
       let session;
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name, is_caretaker: true } },
+        email, password, options: { data: { full_name: name, is_caretaker: true } },
       });
-
       if (signUpError) {
-        // If already exists, try login
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         session = signInData.session;
       } else {
-      if (!signUpData.session) {
+        if (!signUpData.session) {
           toast.success("Account created! Please log in to continue.");
           setLoading(false);
           return;
         }
         session = signUpData.session;
       }
+      if (!session) { toast.error("Failed to authenticate"); setLoading(false); return; }
 
-      if (!session) {
-        toast.error("Failed to authenticate");
-        setLoading(false);
-        return;
-      }
-
-      // Find patient by medcircle_code
       const { data: patient, error: patientError } = await supabase
         .from("patient_profiles")
         .select("id, name")
         .eq("medcircle_code", caretakerCode)
         .limit(1);
-
       if (patientError || !patient?.length) {
-        toast.error("No patient found with this code. Please check and try again.");
+        toast.error("No patient found with this code.");
         setLoading(false);
         return;
       }
-
-      // Create caretaker link
       const { error: linkError } = await supabase.from("caretaker_links").insert({
         caretaker_user_id: session.user.id,
         patient_profile_id: patient[0].id,
       });
-
       if (linkError) {
-        if (linkError.code === "23505") {
-          toast.info("You're already linked to this patient!");
-        } else {
-          throw linkError;
-        }
+        if (linkError.code === "23505") toast.info("You're already linked to this patient!");
+        else throw linkError;
       } else {
         toast.success(`Linked to ${patient[0].name}'s profile!`);
       }
-
       navigate("/caretaker", { replace: true });
     } catch (error: any) {
       toast.error(error.message);
@@ -285,12 +239,12 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 page-transition">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 page-transition">
       <div className="w-full max-w-md">
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="flex items-center gap-2 text-glass-muted hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft size={18} /> Back
         </button>
@@ -306,20 +260,21 @@ export default function Auth() {
           >
             💊
           </div>
-          <h1 className="text-2xl font-heading font-extrabold text-foreground">{getTitle()}</h1>
-          <p className="text-muted-foreground text-sm mt-1">{getSubtitle()}</p>
+          <h1 className="text-2xl font-heading font-extrabold text-white">{getTitle()}</h1>
+          <p className="text-glass-secondary text-sm mt-1">{getSubtitle()}</p>
         </div>
 
-        {/* Mode tabs (for non-caretaker) */}
+        {/* Mode tabs */}
         {mode !== "caretaker" && (
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => { setMode("email"); setOtpSent(false); }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-colors ${
                 mode === "email"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-accent"
+                  ? "text-white"
+                  : "glass-pill text-glass-secondary hover:bg-white/10"
               }`}
+              style={mode === "email" ? { background: "linear-gradient(135deg, #0d9488, #0f766e)" } : {}}
             >
               ✉️ Email
             </button>
@@ -327,9 +282,10 @@ export default function Auth() {
               onClick={() => { setMode("phone"); }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-colors ${
                 mode === "phone"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-accent"
+                  ? "text-white"
+                  : "glass-pill text-glass-secondary hover:bg-white/10"
               }`}
+              style={mode === "phone" ? { background: "linear-gradient(135deg, #0d9488, #0f766e)" } : {}}
             >
               📱 Phone
             </button>
@@ -340,7 +296,7 @@ export default function Auth() {
         {mode !== "caretaker" && mode !== "phone" && (
           <>
             <button
-              className="w-full flex items-center justify-center gap-2 bg-card border-2 border-border rounded-2xl py-3.5 text-base font-semibold text-foreground hover:bg-secondary transition-colors"
+              className="w-full flex items-center justify-center gap-2 glass-card py-3.5 text-base font-semibold text-white hover:bg-white/12"
               onClick={handleGoogleLogin}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -354,10 +310,10 @@ export default function Auth() {
 
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
+                <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.15)" }} />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">or</span>
+                <span className="px-3 text-glass-muted" style={{ background: "transparent" }}>or</span>
               </div>
             </div>
           </>
@@ -368,46 +324,28 @@ export default function Auth() {
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1 block">Full Name</label>
+                <label className="text-sm font-semibold text-glass-secondary mb-1 block">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                  <input
-                    placeholder="Your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+                  <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
+                    className="w-full glass-input px-4 py-3 pl-10 text-base" required />
                 </div>
               </div>
             )}
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Email</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
+                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Password</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                  minLength={6}
-                />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" required minLength={6} />
               </div>
             </div>
 
@@ -415,22 +353,16 @@ export default function Auth() {
               <button
                 type="button"
                 onClick={async () => {
-                  if (!email) {
-                    toast.error("Please enter your email first");
-                    return;
-                  }
+                  if (!email) { toast.error("Please enter your email first"); return; }
                   setLoading(true);
                   const { error } = await supabase.auth.resetPasswordForEmail(email, {
                     redirectTo: `${window.location.origin}/reset-password`,
                   });
                   setLoading(false);
-                  if (error) {
-                    toast.error(error.message);
-                  } else {
-                    toast.success("Password reset link sent to your email!");
-                  }
+                  if (error) toast.error(error.message);
+                  else toast.success("Password reset link sent to your email!");
                 }}
-                className="text-sm text-primary font-semibold hover:underline"
+                className="text-sm text-[#34d399] font-semibold hover:underline"
               >
                 Forgot password?
               </button>
@@ -439,8 +371,8 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
+              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
             >
               {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
               {isLogin ? "Log In" : "Sign Up"}
@@ -452,17 +384,11 @@ export default function Auth() {
         {mode === "phone" && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Phone Number</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  disabled={otpSent}
-                />
+                <Phone className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input type="tel" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" disabled={otpSent} />
               </div>
             </div>
 
@@ -470,8 +396,8 @@ export default function Auth() {
               <button
                 onClick={handleSendOtp}
                 disabled={loading}
-                className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
+                className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
               >
                 {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
                 Send OTP
@@ -479,35 +405,26 @@ export default function Auth() {
             ) : (
               <>
                 <div>
-                  <label className="text-sm font-semibold text-foreground mb-1 block">Enter OTP</label>
+                  <label className="text-sm font-semibold text-glass-secondary mb-1 block">Enter OTP</label>
                   <div className="relative">
-                    <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Enter 6-digit OTP"
-                      value={otp}
+                    <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                    <input type="text" placeholder="Enter 6-digit OTP" value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary tracking-widest text-center text-lg font-mono"
-                      maxLength={6}
-                    />
+                      className="w-full glass-input px-4 py-3 pl-10 text-base tracking-widest text-center text-lg font-mono"
+                      maxLength={6} />
                   </div>
                 </div>
 
-                <button
-                  onClick={handleVerifyOtp}
-                  disabled={loading || otp.length !== 6}
-                  className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                  style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}
+                <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6}
+                  className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
                 >
                   {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
                   Verify & Continue
                 </button>
 
-                <button
-                  onClick={() => { setOtpSent(false); setOtp(""); }}
-                  disabled={otpCountdown > 0}
-                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => { setOtpSent(false); setOtp(""); }} disabled={otpCountdown > 0}
+                  className="w-full text-sm text-glass-muted hover:text-white transition-colors disabled:opacity-50">
                   {otpCountdown > 0 ? `Resend OTP in ${otpCountdown}s` : "Resend OTP"}
                 </button>
               </>
@@ -518,77 +435,47 @@ export default function Auth() {
         {/* Caretaker Form */}
         {mode === "caretaker" && (
           <div className="space-y-4">
-            <div
-              className="rounded-2xl p-4 border"
-              style={{ background: "linear-gradient(135deg, #ede9fe, #f5f3ff)", borderColor: "#c4b5fd" }}
-            >
-              <p className="text-sm text-[#4c1d95]">
-                Ask the patient for their <strong>6-digit MedCircle code</strong> (found on their Profile page).
+            <div className="glass-card p-4" style={{ boxShadow: "inset 0 0 12px rgba(139,92,246,0.2)" }}>
+              <p className="text-sm text-glass-secondary">
+                Ask the patient for their <strong className="text-white">6-digit MedCircle code</strong> (found on their Profile page).
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Your Name</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Your Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
+                <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
               </div>
             </div>
-
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Your Email</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Your Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
+                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
               </div>
             </div>
-
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Password</label>
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                  minLength={6}
-                />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pl-10 text-base" required minLength={6} />
               </div>
             </div>
-
             <div>
-              <label className="text-sm font-semibold text-foreground mb-1 block">Patient's MedCircle Code</label>
-              <input
-                type="text"
-                placeholder="Enter 6-digit code"
-                value={caretakerCode}
+              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Patient's MedCircle Code</label>
+              <input type="text" placeholder="Enter 6-digit code" value={caretakerCode}
                 onChange={(e) => setCaretakerCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-foreground placeholder:text-muted-foreground placeholder:text-base placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-primary"
-                maxLength={6}
-              />
+                className="w-full glass-input px-4 py-3 text-center text-2xl font-mono tracking-[0.5em]"
+                maxLength={6} />
             </div>
 
-            <button
-              onClick={handleCaretakerLink}
-              disabled={loading}
-              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)" }}
+            <button onClick={handleCaretakerLink} disabled={loading}
+              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)", boxShadow: "0 6px 20px rgba(139,92,246,0.4)" }}
             >
               {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
               Link & Continue
@@ -601,20 +488,19 @@ export default function Auth() {
           <div className="mt-4">
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
+                <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.15)" }} />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">or try it out</span>
+                <span className="px-3 text-glass-muted">or try it out</span>
               </div>
             </div>
-            <button
-              onClick={handleDemoLogin}
-              disabled={demoLoading}
-              className="w-full flex items-center justify-center gap-2 bg-[#f59e0b]/10 border-2 border-[#f59e0b]/30 text-[#b45309] rounded-2xl py-3.5 text-base font-heading font-bold hover:bg-[#f59e0b]/20 transition-colors"
+            <button onClick={handleDemoLogin} disabled={demoLoading}
+              className="w-full flex items-center justify-center gap-2 glass-card py-3.5 text-base font-heading font-bold text-[#f59e0b] hover:bg-white/12"
+              style={{ border: "2px solid rgba(245,158,11,0.3)" }}
             >
               {demoLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "🎮"} Try Demo Account
             </button>
-            <p className="text-center text-xs text-muted-foreground mt-2">
+            <p className="text-center text-xs text-glass-muted mt-2">
               Explore with pre-loaded medicines & health data
             </p>
           </div>
@@ -622,12 +508,9 @@ export default function Auth() {
 
         {/* Toggle login/signup */}
         {mode !== "caretaker" && (
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-glass-secondary mt-6">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-semibold hover:underline"
-            >
+            <button onClick={() => setIsLogin(!isLogin)} className="text-[#34d399] font-semibold hover:underline">
               {isLogin ? "Sign Up" : "Log In"}
             </button>
           </p>
