@@ -27,7 +27,9 @@ const ADMIN_PASSWORD = "medcircle2026";
 
 interface Metrics {
   totalUsers: number;
+  totalAuthUsers: number;
   activeUsers24h: number;
+  activeUsers30d: number;
   payingUsers: number;
   mrr: number;
   oneTimeTotal: number;
