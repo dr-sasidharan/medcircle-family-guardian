@@ -13,10 +13,6 @@ export default {
       },
     },
     extend: {
-      fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
-        heading: ['"Syne"', '"Inter"', 'sans-serif'],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -59,13 +55,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        amber: "hsl(var(--amber))",
-        coral: "hsl(var(--coral))",
-        violet: "hsl(var(--violet))",
-        blue: "hsl(var(--blue))",
-        emerald: "hsl(var(--emerald))",
-        ink: "hsl(var(--ink))",
-        surface: "hsl(var(--surface))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

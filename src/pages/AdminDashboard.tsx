@@ -27,6 +27,8 @@ const ADMIN_PASSWORD = "medcircle2026";
 
 interface Metrics {
   totalUsers: number;
+  totalRegisteredUsers: number;
+  activeUsers30d: number;
   activeUsers24h: number;
   payingUsers: number;
   mrr: number;
@@ -66,7 +68,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
-    totalUsers: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
+    totalUsers: 0, totalRegisteredUsers: 0, activeUsers30d: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
     retentionRate: 0, churnRate: 0, conversionRate: 0, arpu: 0, activeUsers7d: 0,
   });
   const [dauChart, setDauChart] = useState<{ date: string; dau: number }[]>([]);
@@ -81,140 +83,91 @@ export default function AdminDashboard() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      setError("");
-    } else {
-      setError("Incorrect password. Please try again.");
-    }
+    if (password === ADMIN_PASSWORD) { setAuthenticated(true); setError(""); }
+    else { setError("Incorrect password. Please try again."); }
   };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all data via admin edge function (bypasses RLS)
       const { data: adminData, error: fnError } = await supabase.functions.invoke("admin-metrics", {
         body: { password: ADMIN_PASSWORD },
       });
-
       if (fnError) throw fnError;
 
       const allUsers = adminData?.profiles || [];
       setUsers(allUsers);
 
+      const totalRegisteredUsers = adminData?.totalRegisteredUsers || allUsers.length;
+      const activeUsers30d = adminData?.activeUsers30d || 0;
+
       const paymentsList = adminData?.payments || [];
+      const profileMap = new Map(allUsers.map((u: any) => [u.id, u.name]));
+      const enrichedPayments = paymentsList.map((p: any) => ({ ...p, patient_name: profileMap.get(p.patient_profile_id) || "Unknown" }));
+      setPayments(enrichedPayments.filter((p: any) => p.status === "success"));
+      setPendingPayments(enrichedPayments.filter((p: any) => p.status === "pending_verification"));
 
-      // Map patient names to payments
-      const profileMap = new Map(allUsers.map((u) => [u.id, u.name]));
-      const enrichedPayments = paymentsList.map((p) => ({
-        ...p,
-        patient_name: profileMap.get(p.patient_profile_id) || "Unknown",
-      }));
-      setPayments(enrichedPayments.filter((p) => p.status === "success"));
-      setPendingPayments(enrichedPayments.filter((p) => p.status === "pending_verification"));
-
-      // Metrics
       const totalUsers = allUsers.length;
       const now = new Date();
       const twentyFourAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const activeUsers24h = allUsers.filter(
-        (u) => u.last_active_at && new Date(u.last_active_at) > twentyFourAgo
-      ).length;
-
-      const payingUsers = allUsers.filter((u) => u.plan !== "free").length;
+      const activeUsers24h = allUsers.filter((u: any) => u.last_active_at && new Date(u.last_active_at) > twentyFourAgo).length;
+      const payingUsers = allUsers.filter((u: any) => u.plan !== "free").length;
 
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const monthlyPayments = paymentsList.filter(
-        (p) => p.plan !== "one_time" && p.created_at >= monthStart
-      );
-      const mrr = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
-
-      const oneTimeTotal = paymentsList
-        .filter((p) => p.plan === "one_time" || p.amount === 19)
-        .reduce((sum, p) => sum + p.amount, 0);
-
+      const monthlyPayments = paymentsList.filter((p: any) => p.plan !== "one_time" && p.created_at >= monthStart);
+      const mrr = monthlyPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const oneTimeTotal = paymentsList.filter((p: any) => p.plan === "one_time" || p.amount === 19).reduce((sum: number, p: any) => sum + p.amount, 0);
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const revenueToday = paymentsList
-        .filter((p) => p.created_at >= todayStart)
-        .reduce((sum, p) => sum + p.amount, 0);
+      const revenueToday = paymentsList.filter((p: any) => p.created_at >= todayStart).reduce((sum: number, p: any) => sum + p.amount, 0);
 
-      // Advanced metrics
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const activeUsers7d = allUsers.filter(
-        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
-      ).length;
-
-      // Retention: users active in last 7 days who signed up more than 7 days ago
-      const usersOlderThan7d = allUsers.filter((u) => new Date(u.created_at) < sevenDaysAgo);
-      const retainedUsers = usersOlderThan7d.filter(
-        (u) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo
-      ).length;
-      const retentionRate = usersOlderThan7d.length > 0
-        ? Math.round((retainedUsers / usersOlderThan7d.length) * 100)
-        : 0;
-
-      // Churn: users older than 7d who haven't been active in 7 days
-      const churnRate = usersOlderThan7d.length > 0
-        ? Math.round(((usersOlderThan7d.length - retainedUsers) / usersOlderThan7d.length) * 100)
-        : 0;
-
-      // Conversion: free to paid
-      const conversionRate = totalUsers > 0
-        ? Math.round((payingUsers / totalUsers) * 100)
-        : 0;
-
-      // ARPU
-      const totalRevenue = paymentsList.filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0);
+      const activeUsers7d = allUsers.filter((u: any) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo).length;
+      const usersOlderThan7d = allUsers.filter((u: any) => new Date(u.created_at) < sevenDaysAgo);
+      const retainedUsers = usersOlderThan7d.filter((u: any) => u.last_active_at && new Date(u.last_active_at) > sevenDaysAgo).length;
+      const retentionRate = usersOlderThan7d.length > 0 ? Math.round((retainedUsers / usersOlderThan7d.length) * 100) : 0;
+      const churnRate = usersOlderThan7d.length > 0 ? Math.round(((usersOlderThan7d.length - retainedUsers) / usersOlderThan7d.length) * 100) : 0;
+      const conversionRate = totalUsers > 0 ? Math.round((payingUsers / totalUsers) * 100) : 0;
+      const totalRevenue = paymentsList.filter((p: any) => p.status === "success").reduce((s: number, p: any) => s + p.amount, 0);
       const arpu = payingUsers > 0 ? Math.round(totalRevenue / payingUsers) : 0;
 
-      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
+      setMetrics({ totalUsers, totalRegisteredUsers, activeUsers30d, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
 
       // DAU chart (last 14 days)
       const dauData = [];
       for (let i = 13; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
+        const d = new Date(now); d.setDate(d.getDate() - i);
         const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
         const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
         const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-        const dau = allUsers.filter(
-          (u) => u.last_active_at && u.last_active_at >= dayStart && u.last_active_at < dayEnd
-        ).length;
+        const dau = allUsers.filter((u: any) => u.last_active_at && u.last_active_at >= dayStart && u.last_active_at < dayEnd).length;
         dauData.push({ date: dateStr, dau });
       }
       setDauChart(dauData);
 
-      // User growth chart (last 7 days)
       const growthData = [];
       for (let i = 6; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
+        const d = new Date(now); d.setDate(d.getDate() - i);
         const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
         const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-        const count = allUsers.filter((u) => u.created_at < dayEnd).length;
+        const count = allUsers.filter((u: any) => u.created_at < dayEnd).length;
         growthData.push({ date: dateStr, users: count });
       }
       setUserGrowth(growthData);
 
-      // Revenue chart (last 7 days)
       const revData = [];
       for (let i = 6; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
+        const d = new Date(now); d.setDate(d.getDate() - i);
         const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
         const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
         const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-        const dayRev = paymentsList
-          .filter((p) => p.created_at >= dayStart && p.created_at < dayEnd)
-          .reduce((sum, p) => sum + p.amount, 0);
+        const dayRev = paymentsList.filter((p: any) => p.created_at >= dayStart && p.created_at < dayEnd).reduce((sum: number, p: any) => sum + p.amount, 0);
         revData.push({ date: dateStr, revenue: dayRev });
       }
       setRevenueChart(revData);
 
-      // Plan distribution
-      const free = allUsers.filter((u) => u.plan === "free").length;
-      const family = allUsers.filter((u) => u.plan === "family").length;
-      const pro = allUsers.filter((u) => u.plan === "pro").length;
+      const free = allUsers.filter((u: any) => u.plan === "free").length;
+      const family = allUsers.filter((u: any) => u.plan === "family").length;
+      const pro = allUsers.filter((u: any) => u.plan === "pro").length;
       setPlanDist([
         { name: "Free", value: free, color: "hsl(var(--muted-foreground))" },
         { name: "Family", value: family, color: "hsl(var(--primary))" },
@@ -222,9 +175,7 @@ export default function AdminDashboard() {
       ]);
 
       setLastRefresh(new Date());
-    } catch (err) {
-      console.error("Admin fetch error:", err);
-    }
+    } catch (err) { console.error("Admin fetch error:", err); }
     setLoading(false);
   }, []);
 
@@ -232,79 +183,38 @@ export default function AdminDashboard() {
     if (!authenticated) return;
     fetchData();
     const interval = setInterval(fetchData, 60000);
-
-    // Realtime subscriptions for instant updates
-    const paymentsChannel = supabase
-      .channel('admin-payments')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
-      .subscribe();
-
-    const profilesChannel = supabase
-      .channel('admin-profiles')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patient_profiles' }, () => fetchData())
-      .subscribe();
-
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(paymentsChannel);
-      supabase.removeChannel(profilesChannel);
-    };
+    const paymentsChannel = supabase.channel('admin-payments').on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData()).subscribe();
+    const profilesChannel = supabase.channel('admin-profiles').on('postgres_changes', { event: '*', schema: 'public', table: 'patient_profiles' }, () => fetchData()).subscribe();
+    return () => { clearInterval(interval); supabase.removeChannel(paymentsChannel); supabase.removeChannel(profilesChannel); };
   }, [authenticated, fetchData]);
 
-  // Session timeout after 15 minutes of inactivity
   useEffect(() => {
     if (!authenticated) return;
     let timer: ReturnType<typeof setTimeout>;
-    const resetTimer = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => setAuthenticated(false), TIMEOUT_MS);
-    };
+    const resetTimer = () => { clearTimeout(timer); timer = setTimeout(() => setAuthenticated(false), TIMEOUT_MS); };
     const events = ["mousedown", "keydown", "scroll", "touchstart"] as const;
     events.forEach((e) => window.addEventListener(e, resetTimer));
     resetTimer();
-    return () => {
-      clearTimeout(timer);
-      events.forEach((e) => window.removeEventListener(e, resetTimer));
-    };
+    return () => { clearTimeout(timer); events.forEach((e) => window.removeEventListener(e, resetTimer)); };
   }, [authenticated]);
 
-  const handleLogout = () => {
-    setAuthenticated(false);
-    setPassword("");
-  };
+  const handleLogout = () => { setAuthenticated(false); setPassword(""); };
 
   const handlePaymentAction = async (payment: PaymentRow, action: "approve" | "reject") => {
     setActionLoading(payment.id);
     try {
-      await supabase.functions.invoke("admin-metrics", {
-        body: {
-          password: ADMIN_PASSWORD,
-          action,
-          paymentId: payment.id,
-          paymentPlan: payment.plan,
-          patientProfileId: payment.patient_profile_id,
-        },
-      });
+      await supabase.functions.invoke("admin-metrics", { body: { password: ADMIN_PASSWORD, action, paymentId: payment.id, paymentPlan: payment.plan, patientProfileId: payment.patient_profile_id } });
       await fetchData();
-    } catch (err) {
-      console.error("Payment action error:", err);
-    }
+    } catch (err) { console.error("Payment action error:", err); }
     setActionLoading(null);
   };
 
   const exportCSV = () => {
     const header = "Name,Plan,Signup Date,Last Active\n";
-    const rows = users
-      .map((u) =>
-        `"${u.name}","${u.plan}","${new Date(u.created_at).toLocaleDateString("en-IN")}","${u.last_active_at ? new Date(u.last_active_at).toLocaleDateString("en-IN") : "N/A"}"`
-      )
-      .join("\n");
+    const rows = users.map((u) => `"${u.name}","${u.plan}","${new Date(u.created_at).toLocaleDateString("en-IN")}","${u.last_active_at ? new Date(u.last_active_at).toLocaleDateString("en-IN") : "N/A"}"`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `medcircle-users-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `medcircle-users-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -315,25 +225,14 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Lock className="w-8 h-8 text-primary" /></div>
             <CardTitle className="text-2xl">MedCircle Admin</CardTitle>
             <p className="text-muted-foreground text-sm">Enter password to access the dashboard</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Enter admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="text-center text-lg"
-            />
+            <Input type="password" placeholder="Enter admin password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="text-center text-lg" />
             {error && <p className="text-destructive text-sm text-center">{error}</p>}
-            <Button onClick={handleLogin} className="w-full" size="lg">
-              <Shield className="w-4 h-4 mr-2" /> Access Dashboard
-            </Button>
+            <Button onClick={handleLogin} className="w-full" size="lg"><Shield className="w-4 h-4 mr-2" /> Access Dashboard</Button>
           </CardContent>
         </Card>
       </div>
@@ -341,20 +240,20 @@ export default function AdminDashboard() {
   }
 
   const metricCards = [
-    { label: "Total Users", value: metrics.totalUsers, icon: Users, fmt: (v: number) => v.toString() },
+    { label: "Total Registered", value: metrics.totalRegisteredUsers, icon: Users, fmt: (v: number) => v.toString() },
+    { label: "Active (30 days)", value: metrics.activeUsers30d, icon: UserCheck, fmt: (v: number) => v.toString() },
     { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
     { label: "Active (7d)", value: metrics.activeUsers7d, icon: Activity, fmt: (v: number) => v.toString() },
     { label: "Paying Users", value: metrics.payingUsers, icon: CreditCard, fmt: (v: number) => v.toString() },
-    { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
     { label: "Revenue Today", value: metrics.revenueToday, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
   ];
 
   const advancedMetricCards = [
+    { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-primary" },
     { label: "Retention Rate", value: metrics.retentionRate, icon: UserCheck, fmt: (v: number) => `${v}%`, color: "text-green-600" },
     { label: "Churn Rate", value: metrics.churnRate, icon: UserMinus, fmt: (v: number) => `${v}%`, color: "text-destructive" },
     { label: "Conversion Rate", value: metrics.conversionRate, icon: ArrowUpRight, fmt: (v: number) => `${v}%`, color: "text-primary" },
     { label: "ARPU", value: metrics.arpu, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-primary" },
-    { label: "One-Time Revenue", value: metrics.oneTimeTotal, icon: IndianRupee, fmt: (v: number) => `₹${v}`, color: "text-foreground" },
   ];
 
   const planBadgeColor = (plan: string) => {
@@ -363,51 +262,30 @@ export default function AdminDashboard() {
     return "outline" as const;
   };
 
-  const chartConfig = {
-    users: { label: "Users", color: "hsl(var(--primary))" },
-    revenue: { label: "Revenue", color: "hsl(var(--primary))" },
-  };
+  const chartConfig = { users: { label: "Users", color: "hsl(var(--primary))" }, revenue: { label: "Revenue", color: "hsl(var(--primary))" } };
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div
-        className="border-b border-border sticky top-0 z-10"
-        style={{ background: "linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #0c3532 100%)" }}
-      >
+      <div className="border-b border-border sticky top-0 z-10" style={{ background: "linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #0c3532 100%)" }}>
         <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">MedCircle Admin</h1>
-            <p className="text-sm text-white/60">
-              Last refreshed: {lastRefresh.toLocaleTimeString("en-IN")} · Auto-refresh every 60s
-            </p>
+            <p className="text-sm text-white/60">Last refreshed: {lastRefresh.toLocaleTimeString("en-IN")} · Auto-refresh every 60s</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={fetchData} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <Button variant="secondary" onClick={exportCSV}>
-              <Download className="w-4 h-4 mr-2" /> Export
-            </Button>
-            <Button variant="secondary" onClick={handleLogout}>
-              <Lock className="w-4 h-4 mr-2" /> Logout
-            </Button>
+            <Button variant="secondary" onClick={fetchData} disabled={loading}><RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />Refresh</Button>
+            <Button variant="secondary" onClick={exportCSV}><Download className="w-4 h-4 mr-2" /> Export</Button>
+            <Button variant="secondary" onClick={handleLogout}><Lock className="w-4 h-4 mr-2" /> Logout</Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {metricCards.map((m) => (
             <Card key={m.label} className="relative overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <m.icon className="w-4 h-4 text-primary" />
-                  </div>
-                </div>
+                <div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><m.icon className="w-4 h-4 text-primary" /></div></div>
                 <p className="text-3xl font-bold text-foreground tracking-tight">{m.fmt(m.value)}</p>
                 <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
               </CardContent>
@@ -415,16 +293,11 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Advanced Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {advancedMetricCards.map((m) => (
             <Card key={m.label} className="relative overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <m.icon className={`w-4 h-4 ${m.color}`} />
-                  </div>
-                </div>
+                <div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><m.icon className={`w-4 h-4 ${m.color}`} /></div></div>
                 <p className={`text-3xl font-bold tracking-tight ${m.color}`}>{m.fmt(m.value)}</p>
                 <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
               </CardContent>
@@ -434,20 +307,11 @@ export default function AdminDashboard() {
 
         {/* DAU Chart */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> Daily Active Users (14 days)
-            </CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="w-4 h-4 text-primary" /> Daily Active Users (14 days)</CardTitle></CardHeader>
           <CardContent>
             <ChartContainer config={{ ...chartConfig, dau: { label: "DAU", color: "hsl(var(--primary))" } }} className="h-[250px] w-full">
               <AreaChart data={dauChart}>
-                <defs>
-                  <linearGradient id="dauGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+                <defs><linearGradient id="dauGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} /><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                 <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" allowDecimals={false} />
@@ -460,69 +324,29 @@ export default function AdminDashboard() {
 
         {/* Charts */}
         <div className="grid md:grid-cols-3 gap-6">
-          {/* User Growth */}
           <Card className="md:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> User Growth (7 days)
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> User Growth (7 days)</CardTitle></CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                <LineChart data={userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line type="monotone" dataKey="users" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))" }} />
-                </LineChart>
+                <LineChart data={userGrowth}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" /><ChartTooltip content={<ChartTooltipContent />} /><Line type="monotone" dataKey="users" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))" }} /></LineChart>
               </ChartContainer>
             </CardContent>
           </Card>
-
-          {/* Revenue */}
           <Card className="md:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" /> Revenue (7 days)
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Revenue (7 days)</CardTitle></CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                <BarChart data={revenueChart}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                <BarChart data={revenueChart}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" /><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} /></BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
-
-          {/* Plan Distribution */}
           <Card className="md:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <PieChartIcon className="w-4 h-4 text-primary" /> Plan Distribution
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><PieChartIcon className="w-4 h-4 text-primary" /> Plan Distribution</CardTitle></CardHeader>
             <CardContent className="flex items-center justify-center">
               <div className="h-[200px] w-full flex items-center justify-center">
                 <PieChart width={220} height={200}>
-                  <Pie
-                    data={planDist.filter((d) => d.value > 0)}
-                    cx={110}
-                    cy={90}
-                    innerRadius={45}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {planDist.filter((d) => d.value > 0).map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
+                  <Pie data={planDist.filter((d) => d.value > 0)} cx={110} cy={90} innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                    {planDist.filter((d) => d.value > 0).map((entry, i) => (<Cell key={i} fill={entry.color} />))}
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -533,53 +357,24 @@ export default function AdminDashboard() {
 
         {/* User List */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg">Users ({users.length})</CardTitle>
-          </CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-lg">Users ({users.length})</CardTitle></CardHeader>
           <CardContent>
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Signup Date</TableHead>
-                    <TableHead>Last Active</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Plan</TableHead><TableHead>Signup Date</TableHead><TableHead>Last Active</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {users.map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${
-                              u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                            title={
-                              u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000
-                                ? "Online"
-                                : "Offline"
-                            }
-                          />
+                          <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000 ? "bg-green-500" : "bg-red-500"}`}
+                            title={u.last_active_at && (Date.now() - new Date(u.last_active_at).getTime()) < 5 * 60 * 1000 ? "Online" : "Offline"} />
                           {u.name}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={planBadgeColor(u.plan)}>
-                          {u.plan.charAt(0).toUpperCase() + u.plan.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(u.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {u.last_active_at
-                          ? new Date(u.last_active_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
-                          : "—"}
-                      </TableCell>
+                      <TableCell><Badge variant={planBadgeColor(u.plan)}>{u.plan.charAt(0).toUpperCase() + u.plan.slice(1)}</Badge></TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</TableCell>
+                      <TableCell className="text-muted-foreground">{u.last_active_at ? new Date(u.last_active_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -591,78 +386,30 @@ export default function AdminDashboard() {
         {/* Pending UPI Payments */}
         <Card className="border-2 border-yellow-500/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-600" />
-              Pending UPI Payments
-              {pendingPayments.length > 0 && (
-                <Badge variant="destructive" className="ml-2">{pendingPayments.length}</Badge>
-              )}
-            </CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2"><Clock className="w-5 h-5 text-yellow-600" />Pending UPI Payments{pendingPayments.length > 0 && <Badge variant="destructive" className="ml-2">{pendingPayments.length}</Badge>}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>UPI Txn ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow><TableHead>Patient</TableHead><TableHead>Amount</TableHead><TableHead>Plan</TableHead><TableHead>UPI Txn ID</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {pendingPayments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No pending payments to verify
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No pending payments to verify</TableCell></TableRow>
+                  ) : pendingPayments.map((p) => (
+                    <TableRow key={p.id} className="bg-yellow-500/5">
+                      <TableCell className="font-medium">{p.patient_name}</TableCell>
+                      <TableCell className="font-semibold">₹{p.amount}</TableCell>
+                      <TableCell><Badge variant={planBadgeColor(p.plan)}>{p.plan.charAt(0).toUpperCase() + p.plan.slice(1)}</Badge></TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{p.razorpay_payment_id || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(p.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button size="sm" variant="default" disabled={actionLoading === p.id} onClick={() => handlePaymentAction(p, "approve")} className="bg-green-600 hover:bg-green-700 text-white"><CheckCircle2 className="w-4 h-4 mr-1" />Approve</Button>
+                          <Button size="sm" variant="destructive" disabled={actionLoading === p.id} onClick={() => handlePaymentAction(p, "reject")}><XCircle className="w-4 h-4 mr-1" />Reject</Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    pendingPayments.map((p) => (
-                      <TableRow key={p.id} className="bg-yellow-500/5">
-                        <TableCell className="font-medium">{p.patient_name}</TableCell>
-                        <TableCell className="font-semibold">₹{p.amount}</TableCell>
-                        <TableCell>
-                          <Badge variant={planBadgeColor(p.plan)}>
-                            {p.plan.charAt(0).toUpperCase() + p.plan.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {p.razorpay_payment_id || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(p.created_at).toLocaleString("en-IN", {
-                            day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              disabled={actionLoading === p.id}
-                              onClick={() => handlePaymentAction(p, "approve")}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              disabled={actionLoading === p.id}
-                              onClick={() => handlePaymentAction(p, "reject")}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </div>
@@ -671,57 +418,24 @@ export default function AdminDashboard() {
 
         {/* Payment History */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Payment History</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-lg">Payment History</CardTitle></CardHeader>
           <CardContent>
             <div className="rounded-lg border border-border overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Razorpay ID</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow><TableHead>Patient</TableHead><TableHead>Amount</TableHead><TableHead>Plan</TableHead><TableHead>Razorpay ID</TableHead><TableHead>Date & Time</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {payments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No payments recorded yet
-                      </TableCell>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No payments recorded yet</TableCell></TableRow>
+                  ) : payments.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.patient_name}</TableCell>
+                      <TableCell className="font-semibold">₹{p.amount}</TableCell>
+                      <TableCell><Badge variant={planBadgeColor(p.plan)}>{p.plan.charAt(0).toUpperCase() + p.plan.slice(1)}</Badge></TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{p.razorpay_payment_id || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(p.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</TableCell>
                     </TableRow>
-                  ) : (
-                    payments.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.patient_name}</TableCell>
-                        <TableCell className="font-semibold">₹{p.amount}</TableCell>
-                        <TableCell>
-                          <Badge variant={planBadgeColor(p.plan)}>
-                            {p.plan.charAt(0).toUpperCase() + p.plan.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {p.razorpay_payment_id || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(p.created_at).toLocaleString("en-IN", {
-                            day: "2-digit", month: "short", year: "numeric",
-                            hour: "2-digit", minute: "2-digit",
-                          })}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                  {payments.length > 0 && (
-                    <TableRow className="bg-muted/50 font-semibold">
-                      <TableCell>Total</TableCell>
-                      <TableCell>₹{runningTotal}</TableCell>
-                      <TableCell colSpan={3} />
-                    </TableRow>
-                  )}
+                  ))}
+                  {payments.length > 0 && <TableRow className="bg-muted/50 font-semibold"><TableCell>Total</TableCell><TableCell>₹{runningTotal}</TableCell><TableCell colSpan={3} /></TableRow>}
                 </TableBody>
               </Table>
             </div>

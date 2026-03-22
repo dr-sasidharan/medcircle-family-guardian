@@ -100,12 +100,8 @@ export default function Auth() {
         toast.success("Logged in successfully!");
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: name },
-            emailRedirectTo: window.location.origin,
-          },
+          email, password,
+          options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
         if (data?.session) {
@@ -121,10 +117,7 @@ export default function Auth() {
   };
 
   const handleSendOtp = async () => {
-    if (!phone || phone.length < 10) {
-      toast.error("Please enter a valid phone number");
-      return;
-    }
+    if (!phone || phone.length < 10) { toast.error("Please enter a valid phone number"); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-otp", { body: { phone } });
@@ -140,20 +133,14 @@ export default function Auth() {
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      toast.error("Please enter the 6-digit OTP");
-      return;
-    }
+    if (!otp || otp.length !== 6) { toast.error("Please enter the 6-digit OTP"); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-otp", { body: { phone, otp } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
+        await supabase.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
         toast.success(data.is_new_user ? "Account created!" : "Welcome back!");
       }
     } catch (error: any) {
@@ -163,17 +150,10 @@ export default function Auth() {
   };
 
   const handleCaretakerLink = async () => {
-    if (!caretakerCode || caretakerCode.length !== 6) {
-      toast.error("Please enter the 6-digit MedCircle code");
-      return;
-    }
+    if (!caretakerCode || caretakerCode.length !== 6) { toast.error("Please enter the 6-digit MedCircle code"); return; }
     setLoading(true);
     try {
-      if (!email || !password) {
-        toast.error("Please enter your email and password first");
-        setLoading(false);
-        return;
-      }
+      if (!email || !password) { toast.error("Please enter your email and password first"); setLoading(false); return; }
       let session;
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email, password, options: { data: { full_name: name, is_caretaker: true } },
@@ -183,29 +163,14 @@ export default function Auth() {
         if (signInError) throw signInError;
         session = signInData.session;
       } else {
-        if (!signUpData.session) {
-          toast.success("Account created! Please log in to continue.");
-          setLoading(false);
-          return;
-        }
+        if (!signUpData.session) { toast.success("Account created! Please log in to continue."); setLoading(false); return; }
         session = signUpData.session;
       }
       if (!session) { toast.error("Failed to authenticate"); setLoading(false); return; }
 
-      const { data: patient, error: patientError } = await supabase
-        .from("patient_profiles")
-        .select("id, name")
-        .eq("medcircle_code", caretakerCode)
-        .limit(1);
-      if (patientError || !patient?.length) {
-        toast.error("No patient found with this code.");
-        setLoading(false);
-        return;
-      }
-      const { error: linkError } = await supabase.from("caretaker_links").insert({
-        caretaker_user_id: session.user.id,
-        patient_profile_id: patient[0].id,
-      });
+      const { data: patient, error: patientError } = await supabase.from("patient_profiles").select("id, name").eq("medcircle_code", caretakerCode).limit(1);
+      if (patientError || !patient?.length) { toast.error("No patient found with this code."); setLoading(false); return; }
+      const { error: linkError } = await supabase.from("caretaker_links").insert({ caretaker_user_id: session.user.id, patient_profile_id: patient[0].id });
       if (linkError) {
         if (linkError.code === "23505") toast.info("You're already linked to this patient!");
         else throw linkError;
@@ -220,9 +185,7 @@ export default function Auth() {
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
+    const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (error) toast.error(error.message);
   };
 
@@ -239,66 +202,34 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 page-transition">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 page-transition">
       <div className="w-full max-w-md">
-        {/* Back button */}
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-glass-muted hover:text-white mb-6 transition-colors"
-        >
+        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft size={18} /> Back
         </button>
 
-        {/* Header */}
         <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
-            style={{
-              background: "linear-gradient(135deg, #0d9488, #0f766e)",
-              boxShadow: "0 4px 20px rgba(13,148,136,0.3)",
-            }}
-          >
-            💊
-          </div>
-          <h1 className="text-2xl font-heading font-extrabold text-white">{getTitle()}</h1>
-          <p className="text-glass-secondary text-sm mt-1">{getSubtitle()}</p>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 bg-primary/10">💊</div>
+          <h1 className="text-2xl font-bold text-foreground">{getTitle()}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{getSubtitle()}</p>
         </div>
 
-        {/* Mode tabs */}
         {mode !== "caretaker" && (
           <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => { setMode("email"); setOtpSent(false); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-colors ${
-                mode === "email"
-                  ? "text-white"
-                  : "glass-pill text-glass-secondary hover:bg-white/10"
-              }`}
-              style={mode === "email" ? { background: "linear-gradient(135deg, #0d9488, #0f766e)" } : {}}
-            >
+            <button onClick={() => { setMode("email"); setOtpSent(false); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${mode === "email" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
               ✉️ Email
             </button>
-            <button
-              onClick={() => { setMode("phone"); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-colors ${
-                mode === "phone"
-                  ? "text-white"
-                  : "glass-pill text-glass-secondary hover:bg-white/10"
-              }`}
-              style={mode === "phone" ? { background: "linear-gradient(135deg, #0d9488, #0f766e)" } : {}}
-            >
+            <button onClick={() => setMode("phone")}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${mode === "phone" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
               📱 Phone
             </button>
           </div>
         )}
 
-        {/* Google Login */}
         {mode !== "caretaker" && mode !== "phone" && (
           <>
-            <button
-              className="w-full flex items-center justify-center gap-2 glass-card py-3.5 text-base font-semibold text-white hover:bg-white/12"
-              onClick={handleGoogleLogin}
-            >
+            <button className="w-full flex items-center justify-center gap-2 bg-card border border-border rounded-2xl py-3.5 text-base font-semibold text-foreground hover:bg-muted shadow-sm" onClick={handleGoogleLogin}>
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -307,124 +238,92 @@ export default function Auth() {
               </svg>
               Continue with Google
             </button>
-
             <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.15)" }} />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="px-3 text-glass-muted" style={{ background: "transparent" }}>or</span>
-              </div>
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="px-3 text-muted-foreground bg-background">or</span></div>
             </div>
           </>
         )}
 
-        {/* Email Form */}
         {mode === "email" && (
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="text-sm font-semibold text-glass-secondary mb-1 block">Full Name</label>
+                <label className="text-sm font-semibold text-foreground mb-1 block">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                   <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
-                    className="w-full glass-input px-4 py-3 pl-10 text-base" required />
+                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required />
                 </div>
               </div>
             )}
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Email</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Password</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" required minLength={6} />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required minLength={6} />
               </div>
             </div>
-
             {isLogin && (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!email) { toast.error("Please enter your email first"); return; }
-                  setLoading(true);
-                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: `${window.location.origin}/reset-password`,
-                  });
-                  setLoading(false);
-                  if (error) toast.error(error.message);
-                  else toast.success("Password reset link sent to your email!");
-                }}
-                className="text-sm text-[#34d399] font-semibold hover:underline"
-              >
+              <button type="button" onClick={async () => {
+                if (!email) { toast.error("Please enter your email first"); return; }
+                setLoading(true);
+                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+                setLoading(false);
+                if (error) toast.error(error.message);
+                else toast.success("Password reset link sent to your email!");
+              }} className="text-sm text-primary font-semibold hover:underline">
                 Forgot password?
               </button>
             )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
-            >
+            <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold disabled:opacity-50 shadow-lg hover:opacity-90">
               {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
               {isLogin ? "Log In" : "Sign Up"}
             </button>
           </form>
         )}
 
-        {/* Phone Form */}
         {mode === "phone" && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Phone Number</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input type="tel" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" disabled={otpSent} />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" disabled={otpSent} />
               </div>
             </div>
-
             {!otpSent ? (
-              <button
-                onClick={handleSendOtp}
-                disabled={loading}
-                className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
-              >
-                {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
-                Send OTP
+              <button onClick={handleSendOtp} disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold disabled:opacity-50 shadow-lg">
+                {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />} Send OTP
               </button>
             ) : (
               <>
                 <div>
-                  <label className="text-sm font-semibold text-glass-secondary mb-1 block">Enter OTP</label>
+                  <label className="text-sm font-semibold text-foreground mb-1 block">Enter OTP</label>
                   <div className="relative">
-                    <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                    <KeyRound className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                     <input type="text" placeholder="Enter 6-digit OTP" value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      className="w-full glass-input px-4 py-3 pl-10 text-base tracking-widest text-center text-lg font-mono"
+                      className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground tracking-widest text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                       maxLength={6} />
                   </div>
                 </div>
-
                 <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6}
-                  className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
-                  style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
-                >
-                  {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
-                  Verify & Continue
+                  className="w-full bg-primary text-primary-foreground rounded-2xl py-4 text-lg font-bold disabled:opacity-50 shadow-lg">
+                  {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />} Verify & Continue
                 </button>
-
                 <button onClick={() => { setOtpSent(false); setOtp(""); }} disabled={otpCountdown > 0}
-                  className="w-full text-sm text-glass-muted hover:text-white transition-colors disabled:opacity-50">
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
                   {otpCountdown > 0 ? `Resend OTP in ${otpCountdown}s` : "Resend OTP"}
                 </button>
               </>
@@ -432,85 +331,70 @@ export default function Auth() {
           </div>
         )}
 
-        {/* Caretaker Form */}
         {mode === "caretaker" && (
           <div className="space-y-4">
-            <div className="glass-card p-4" style={{ boxShadow: "inset 0 0 12px rgba(139,92,246,0.2)" }}>
-              <p className="text-sm text-glass-secondary">
-                Ask the patient for their <strong className="text-white">6-digit MedCircle code</strong> (found on their Profile page).
+            <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
+              <p className="text-sm text-foreground">
+                Ask the patient for their <strong>6-digit MedCircle code</strong> (found on their Profile page).
               </p>
             </div>
-
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Your Name</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Your Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <User className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Your Email</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Your Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" required />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Password</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                 <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pl-10 text-base" required minLength={6} />
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 pl-10 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" required minLength={6} />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-glass-secondary mb-1 block">Patient's MedCircle Code</label>
+              <label className="text-sm font-semibold text-foreground mb-1 block">Patient's MedCircle Code</label>
               <input type="text" placeholder="Enter 6-digit code" value={caretakerCode}
                 onChange={(e) => setCaretakerCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="w-full glass-input px-4 py-3 text-center text-2xl font-mono tracking-[0.5em]"
+                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 maxLength={6} />
             </div>
-
             <button onClick={handleCaretakerLink} disabled={loading}
-              className="w-full text-white rounded-2xl py-4 text-lg font-heading font-bold disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)", boxShadow: "0 6px 20px rgba(139,92,246,0.4)" }}
-            >
-              {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />}
-              Link & Continue
+              className="w-full text-white rounded-2xl py-4 text-lg font-bold disabled:opacity-50 shadow-lg"
+              style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)" }}>
+              {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin inline" />} Link & Continue
             </button>
           </div>
         )}
 
-        {/* Demo Button */}
         {isLogin && mode === "email" && (
           <div className="mt-4">
             <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.15)" }} />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="px-3 text-glass-muted">or try it out</span>
-              </div>
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="px-3 text-muted-foreground bg-background">or try it out</span></div>
             </div>
             <button onClick={handleDemoLogin} disabled={demoLoading}
-              className="w-full flex items-center justify-center gap-2 glass-card py-3.5 text-base font-heading font-bold text-[#f59e0b] hover:bg-white/12"
-              style={{ border: "2px solid rgba(245,158,11,0.3)" }}
-            >
+              className="w-full flex items-center justify-center gap-2 bg-card border-2 border-warning/30 rounded-2xl py-3.5 text-base font-bold text-warning hover:bg-warning/5 shadow-sm">
               {demoLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "🎮"} Try Demo Account
             </button>
-            <p className="text-center text-xs text-glass-muted mt-2">
-              Explore with pre-loaded medicines & health data
-            </p>
+            <p className="text-center text-xs text-muted-foreground mt-2">Explore with pre-loaded medicines & health data</p>
           </div>
         )}
 
-        {/* Toggle login/signup */}
         {mode !== "caretaker" && (
-          <p className="text-center text-sm text-glass-secondary mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button onClick={() => setIsLogin(!isLogin)} className="text-[#34d399] font-semibold hover:underline">
+            <button onClick={() => setIsLogin(!isLogin)} className="text-primary font-semibold hover:underline">
               {isLogin ? "Sign Up" : "Log In"}
             </button>
           </p>

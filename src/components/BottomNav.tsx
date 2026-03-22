@@ -41,7 +41,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass-nav z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50">
       <div className="flex justify-around items-end py-2 px-2 max-w-lg mx-auto">
         {items.map((item) => {
           if (item.path === "__add__") {
@@ -51,14 +51,8 @@ const BottomNav = () => {
                 onClick={() => navigate("/add-medicine")}
                 className="relative -mt-6 flex flex-col items-center"
               >
-                <div
-                  className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #0d9488, #0f766e)",
-                    boxShadow: "0 6px 20px rgba(13, 148, 136, 0.5)",
-                  }}
-                >
-                  <Plus size={26} className="text-white" strokeWidth={2.5} />
+                <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center bg-primary shadow-lg">
+                  <Plus size={26} className="text-primary-foreground" strokeWidth={2.5} />
                 </div>
               </button>
             );
@@ -71,30 +65,19 @@ const BottomNav = () => {
               onClick={() => navigate(item.path)}
               className="relative flex flex-col items-center gap-0.5 px-3 py-1.5"
             >
-              <div
-                className="relative p-2 rounded-xl transition-all"
-                style={isActive ? {
-                  background: "rgba(13, 148, 136, 0.2)",
-                  boxShadow: "0 0 12px rgba(13, 148, 136, 0.3)",
-                } : {}}
-              >
+              <div className={`relative p-2 rounded-xl transition-all ${isActive ? "bg-primary/10" : ""}`}>
                 <item.icon
                   size={20}
                   strokeWidth={isActive ? 2.5 : 2}
-                  className={isActive ? "text-[#34d399]" : "text-white/50"}
+                  className={isActive ? "text-primary" : "text-muted-foreground"}
                 />
                 {item.path === "/reminders" && missedCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 text-white text-[9px] font-bold rounded-full flex items-center justify-center"
-                    style={{ background: "#f43f5e" }}>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                     {missedCount}
                   </span>
                 )}
               </div>
-              <span
-                className={`font-heading text-[10px] font-bold ${
-                  isActive ? "text-[#34d399]" : "text-white/40"
-                }`}
-              >
+              <span className={`text-[10px] font-bold ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {item.label}
               </span>
             </button>
