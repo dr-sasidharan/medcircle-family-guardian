@@ -345,12 +345,12 @@ export default function AdminDashboard() {
   }
 
   const metricCards = [
-    { label: "Total Users", value: metrics.totalUsers, icon: Users, fmt: (v: number) => v.toString() },
-    { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
+    { label: "Total Registered", value: metrics.totalAuthUsers, icon: Users, fmt: (v: number) => v.toString() },
+    { label: "Active (30d)", value: metrics.activeUsers30d, icon: UserCheck, fmt: (v: number) => v.toString() },
     { label: "Active (7d)", value: metrics.activeUsers7d, icon: Activity, fmt: (v: number) => v.toString() },
+    { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
     { label: "Paying Users", value: metrics.payingUsers, icon: CreditCard, fmt: (v: number) => v.toString() },
     { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
-    { label: "Revenue Today", value: metrics.revenueToday, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
   ];
 
   const advancedMetricCards = [
