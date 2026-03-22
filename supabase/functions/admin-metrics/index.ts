@@ -42,51 +42,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Default: fetch all data including auth.users for accurate counts
-    const [profilesRes, paymentsRes, authUsersRes] = await Promise.all([
+    // Default: fetch all data
+    const [profilesRes, paymentsRes] = await Promise.all([
       supabaseAdmin
         .from("patient_profiles")
-        .select("id, name, plan, created_at, last_active_at, user_id")
+        .select("id, name, plan, created_at, last_active_at")
         .order("created_at", { ascending: false }),
       supabaseAdmin
         .from("payments")
         .select("*")
         .order("created_at", { ascending: false }),
-      supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
     ]);
-
-    // Build auth users data with last_sign_in_at
-    const authUsers = authUsersRes.data?.users || [];
-    const profiles = profilesRes.data || [];
-
-    // Merge: use auth.users as source of truth for total count and last sign in
-    const authMap = new Map(authUsers.map(u => [u.id, u]));
-    
-    // Enrich profiles with auth last_sign_in_at
-    const enrichedProfiles = profiles.map(p => {
-      const authUser = p.user_id ? authMap.get(p.user_id) : null;
-      return {
-        ...p,
-        // Use the most recent of last_active_at or last_sign_in_at
-        last_active_at: getLatest(p.last_active_at, authUser?.last_sign_in_at),
-      };
-    });
-
-    // Count auth users without profiles (registered but no profile yet)
-    const profileUserIds = new Set(profiles.map(p => p.user_id).filter(Boolean));
-    const orphanAuthUsers = authUsers.filter(u => !profileUserIds.has(u.id));
 
     return new Response(
       JSON.stringify({
-        profiles: enrichedProfiles,
+        profiles: profilesRes.data || [],
         payments: paymentsRes.data || [],
-        totalAuthUsers: authUsers.length,
-        activeAuthUsers30d: authUsers.filter(u => {
-          if (!u.last_sign_in_at) return false;
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          return new Date(u.last_sign_in_at) > thirtyDaysAgo;
-        }).length,
-        orphanCount: orphanAuthUsers.length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -97,10 +68,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-function getLatest(a: string | null | undefined, b: string | null | undefined): string | null {
-  if (!a && !b) return null;
-  if (!a) return b as string;
-  if (!b) return a;
-  return new Date(a) > new Date(b) ? a : b;
-}
