@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
-    totalUsers: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
+    totalUsers: 0, totalAuthUsers: 0, activeUsers24h: 0, activeUsers30d: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
     retentionRate: 0, churnRate: 0, conversionRate: 0, arpu: 0, activeUsers7d: 0,
   });
   const [dauChart, setDauChart] = useState<{ date: string; dau: number }[]>([]);
