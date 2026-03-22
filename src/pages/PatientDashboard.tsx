@@ -30,7 +30,6 @@ interface MissedDose {
 }
 
 const MEDICINE_ICONS = ["💊", "🩹", "💉", "🧬", "🫀", "🧪"];
-const ICON_COLORS = ["#0d9488", "#f59e0b", "#8b5cf6", "#3b82f6", "#f43f5e", "#10b981"];
 
 const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
   before_food: t("before_food"),
@@ -39,9 +38,9 @@ const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
 });
 
 const sectionConfig = (t: (key: string) => string) => ({
-  morning: { emoji: "☀️", label: t("morning"), glowColor: "rgba(245,158,11,0.2)", iconColor: "#f59e0b", textColor: "#f59e0b" },
-  afternoon: { emoji: "🌤️", label: t("afternoon"), glowColor: "rgba(59,130,246,0.2)", iconColor: "#3b82f6", textColor: "#3b82f6" },
-  night: { emoji: "🌙", label: t("night"), glowColor: "rgba(139,92,246,0.2)", iconColor: "#8b5cf6", textColor: "#8b5cf6" },
+  morning: { emoji: "☀️", label: t("morning"), color: "hsl(var(--warning))" },
+  afternoon: { emoji: "🌤️", label: t("afternoon"), color: "hsl(var(--blue, 217 91% 60%))" },
+  night: { emoji: "🌙", label: t("night"), color: "hsl(var(--violet, 258 90% 66%))" },
 });
 
 const PatientDashboard = () => {
@@ -277,32 +276,24 @@ const PatientDashboard = () => {
   // Elderly simplified home
   if (elderlyMode) {
     return (
-      <div className="min-h-screen pb-24 page-transition">
-        {/* Header */}
-        <div className="glass-header p-6">
-          <div className="relative z-10">
-            <h1 className="font-heading text-2xl font-extrabold text-white">{t("good_morning")}</h1>
-            <p className="text-glass-secondary mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken_label")}</p>
-            <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden mt-3">
-              <div
-                className="h-full rounded-full animate-progress-fill"
-                style={{
-                  background: "linear-gradient(90deg, white, #0d9488, #10b981)",
-                  boxShadow: "0 0 12px rgba(52,211,153,0.6)",
-                  "--progress-width": `${progressPercent}%`,
-                  width: `${progressPercent}%`,
-                } as React.CSSProperties}
-              />
-            </div>
+      <div className="min-h-screen bg-background pb-24 page-transition">
+        <div className="bg-primary text-primary-foreground p-6">
+          <h1 className="text-2xl font-bold">{t("good_morning")}</h1>
+          <p className="text-primary-foreground/70 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken_label")}</p>
+          <div className="w-full h-4 bg-primary-foreground/20 rounded-full overflow-hidden mt-3">
+            <div
+              className="h-full rounded-full bg-primary-foreground animate-progress-fill"
+              style={{ "--progress-width": `${progressPercent}%`, width: `${progressPercent}%` } as React.CSSProperties}
+            />
           </div>
         </div>
 
         {missedDoses.length > 0 && (
           <div className="px-4 mt-4 space-y-2">
             {missedDoses.map((d) => (
-              <div key={d.id} className="glass-card p-4 flex items-center gap-3 pulse-alert" style={{ boxShadow: "inset 3px 0 0 #f43f5e" }}>
-                <AlertTriangle className="text-[#f43f5e] flex-shrink-0" size={24} />
-                <span className="text-white font-heading font-extrabold text-base">
+              <div key={d.id} className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 flex items-center gap-3 pulse-alert">
+                <AlertTriangle className="text-destructive flex-shrink-0" size={24} />
+                <span className="text-foreground font-bold text-base">
                   {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
                 </span>
               </div>
@@ -313,44 +304,44 @@ const PatientDashboard = () => {
         <RefillBanner />
 
         {canInstall && !dismissedInstall && (
-          <div className="mx-4 mt-4 glass-card p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,148,136,0.2)" }}>
-              <Download size={20} className="text-[#34d399]" />
+          <div className="mx-4 mt-4 bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 flex-shrink-0">
+              <Download size={20} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-heading font-bold text-sm text-white">Install MedCircle</p>
-              <p className="text-xs text-glass-muted">Add to home screen for quick access</p>
+              <p className="font-bold text-sm text-foreground">Install MedCircle</p>
+              <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
             </div>
-            <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 text-white" style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}>Install</button>
-            <button onClick={() => setDismissedInstall(true)} className="p-1 text-white/40 hover:text-white"><X size={16} /></button>
+            <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-primary text-primary-foreground">Install</button>
+            <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
           </div>
         )}
 
         <div className="px-4 mt-8 grid grid-cols-2 gap-4">
           <button onClick={() => navigate("/reminders")}
-            className="glass-card p-8 flex flex-col items-center gap-4 min-h-[140px]" style={{ border: "2px solid rgba(13,148,136,0.4)" }}>
-            <Pill size={40} className="text-[#34d399]" />
-            <span className="text-lg font-heading font-bold text-white">{t("medicines")}</span>
+            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <Pill size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("medicines")}</span>
           </button>
           <button onClick={() => navigate("/scan")}
-            className="glass-card p-8 flex flex-col items-center gap-4 min-h-[140px]" style={{ border: "2px solid rgba(13,148,136,0.4)" }}>
-            <ScanLine size={40} className="text-[#34d399]" />
-            <span className="text-lg font-heading font-bold text-white">{t("scan")}</span>
+            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <ScanLine size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("scan")}</span>
           </button>
           <button onClick={() => navigate("/drug-interaction")}
-            className="glass-card p-8 flex flex-col items-center gap-4 min-h-[140px]" style={{ border: "2px solid rgba(245,158,11,0.4)" }}>
-            <FlaskConical size={40} className="text-[#f59e0b]" />
-            <span className="text-lg font-heading font-bold text-white">{t("drug_interaction_checker")}</span>
+            className="bg-card border-2 border-warning/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <FlaskConical size={40} className="text-warning" />
+            <span className="text-lg font-bold text-foreground">{t("drug_interaction_checker")}</span>
           </button>
           <button onClick={() => navigate("/hospital-booking")}
-            className="glass-card p-8 flex flex-col items-center gap-4 min-h-[140px]" style={{ border: "2px solid rgba(13,148,136,0.4)" }}>
-            <Stethoscope size={40} className="text-[#34d399]" />
-            <span className="text-lg font-heading font-bold text-white">{t("book_checkup")}</span>
+            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <Stethoscope size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("book_checkup")}</span>
           </button>
           <button onClick={() => navigate("/profile")}
-            className="glass-card p-8 flex flex-col items-center gap-4 min-h-[140px]" style={{ border: "2px solid rgba(13,148,136,0.4)" }}>
-            <Settings size={40} className="text-[#34d399]" />
-            <span className="text-lg font-heading font-bold text-white">{t("profile")}</span>
+            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <Settings size={40} className="text-primary" />
+            <span className="text-lg font-bold text-foreground">{t("profile")}</span>
           </button>
         </div>
 
@@ -361,61 +352,49 @@ const PatientDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24 page-transition">
+    <div className="min-h-screen bg-muted/30 pb-24 page-transition">
       {/* Header */}
-      <div className="glass-header p-5 relative overflow-hidden">
+      <div className="bg-primary text-primary-foreground p-5 relative overflow-hidden">
+        <div className="absolute top-[-40px] right-[-40px] w-[140px] h-[140px] rounded-full bg-white/5" />
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
-              {/* Avatar */}
-              <div
-                className="w-12 h-12 flex items-center justify-center text-xl font-heading font-bold text-white"
-                style={{
-                  background: "linear-gradient(135deg, #0d9488, #10b981)",
-                  borderRadius: "14px",
-                  boxShadow: "0 0 16px rgba(13, 148, 136, 0.4)",
-                }}
-              >
+              <div className="w-12 h-12 flex items-center justify-center text-xl font-bold bg-white/20 rounded-[14px] text-white">
                 {patientName.charAt(0)}
               </div>
               <div>
-                <h1 className="text-lg font-heading font-extrabold text-white">{patientName}</h1>
-                <p className="text-glass-muted text-sm">
+                <h1 className="text-lg font-bold text-white">{patientName}</h1>
+                <p className="text-white/60 text-sm">
                   {new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" })}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => navigate("/notifications")} className="p-2 rounded-xl glass-pill hover:bg-white/10">
+              <button onClick={() => navigate("/notifications")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
                 <Bell size={18} className="text-white" />
               </button>
-              <button onClick={() => navigate("/settings")} className="p-2 rounded-xl glass-pill hover:bg-white/10">
+              <button onClick={() => navigate("/settings")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
                 <Settings size={18} className="text-white" />
               </button>
               <LanguageToggle />
             </div>
           </div>
 
-          {/* Progress — glass card */}
-          <div className="glass-card p-4 mt-2">
+          {/* Progress */}
+          <div className="bg-white/10 rounded-2xl p-4 mt-2">
             <div className="flex justify-between items-baseline mb-2">
-              <span className="font-heading font-extrabold text-2xl text-white">
-                {takenCount}<span className="text-white/50 text-base font-sans font-normal">/{totalCount}</span>
+              <span className="font-bold text-2xl text-white">
+                {takenCount}<span className="text-white/50 text-base font-normal">/{totalCount}</span>
               </span>
-              <span className="font-heading font-bold text-[#34d399]">{Math.round(progressPercent)}%</span>
+              <span className="font-bold text-emerald-300">{Math.round(progressPercent)}%</span>
             </div>
             <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full animate-progress-fill"
-                style={{
-                  background: "linear-gradient(90deg, white, #0d9488, #10b981)",
-                  boxShadow: "0 0 12px rgba(52,211,153,0.6)",
-                  "--progress-width": `${progressPercent}%`,
-                  width: `${progressPercent}%`,
-                } as React.CSSProperties}
+                className="h-full rounded-full bg-emerald-400 animate-progress-fill"
+                style={{ "--progress-width": `${progressPercent}%`, width: `${progressPercent}%` } as React.CSSProperties}
               />
             </div>
-            <p className="text-glass-muted text-xs mt-2">{t("medicines_taken_label")}</p>
+            <p className="text-white/50 text-xs mt-2">{t("medicines_taken_label")}</p>
           </div>
         </div>
       </div>
@@ -424,15 +403,11 @@ const PatientDashboard = () => {
       {missedDoses.length > 0 && (
         <div className="px-4 mt-4 space-y-2">
           {missedDoses.map((d) => (
-            <div
-              key={d.id}
-              className="glass-card p-3.5 flex items-center gap-3 pulse-alert"
-              style={{ boxShadow: "inset 3px 0 0 #f43f5e, 0 8px 32px rgba(0,0,0,0.3)" }}
-            >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(244,63,94,0.2)" }}>
-                <AlertTriangle size={18} className="text-[#f43f5e]" />
+            <div key={d.id} className="bg-destructive/10 border border-destructive/30 rounded-2xl p-3.5 flex items-center gap-3 pulse-alert">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-destructive/20 flex-shrink-0">
+                <AlertTriangle size={18} className="text-destructive" />
               </div>
-              <span className="text-white font-heading font-bold text-sm">
+              <span className="text-foreground font-bold text-sm">
                 {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
               </span>
             </div>
@@ -440,26 +415,25 @@ const PatientDashboard = () => {
         </div>
       )}
 
-      {/* Refill Banner */}
       <RefillBanner />
 
       {canInstall && !dismissedInstall && (
-        <div className="mx-4 mt-4 glass-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,148,136,0.2)" }}>
-            <Download size={20} className="text-[#34d399]" />
+        <div className="mx-4 mt-4 bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 flex-shrink-0">
+            <Download size={20} className="text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-heading font-bold text-sm text-white">Install MedCircle</p>
-            <p className="text-xs text-glass-muted">Add to home screen for quick access</p>
+            <p className="font-bold text-sm text-foreground">Install MedCircle</p>
+            <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
           </div>
-          <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 text-white" style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)" }}>Install</button>
-          <button onClick={() => setDismissedInstall(true)} className="p-1 text-white/40 hover:text-white"><X size={16} /></button>
+          <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-primary text-primary-foreground">Install</button>
+          <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
         </div>
       )}
 
       {/* Weekly Adherence Chart */}
       {medicines.length > 0 && (() => {
-        const getColor = (pct: number) => pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#f43f5e";
+        const getColor = (pct: number) => pct >= 80 ? "hsl(var(--success))" : pct >= 50 ? "hsl(var(--warning))" : "hsl(var(--destructive))";
         const weeklyData = [
           { day: "Mon", pct: 100 }, { day: "Tue", pct: 83 }, { day: "Wed", pct: 67 },
           { day: "Thu", pct: 100 }, { day: "Fri", pct: 50 }, { day: "Sat", pct: 83 },
@@ -467,11 +441,11 @@ const PatientDashboard = () => {
         ];
         return (
           <div className="px-4 mt-5">
-            <h3 className="text-sm font-bold text-glass-secondary uppercase tracking-wide mb-3">{t("weekly_progress")}</h3>
-            <div className="glass-card p-4 h-48">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">{t("weekly_progress")}</h3>
+            <div className="bg-card border border-border rounded-2xl p-4 h-48 shadow-sm">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.4)" }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                   <YAxis hide domain={[0, 100]} />
                   <Bar dataKey="pct" radius={[6, 6, 0, 0]}>
                     {weeklyData.map((entry, index) => (
@@ -487,15 +461,13 @@ const PatientDashboard = () => {
 
       {!loading && medicines.length === 0 && (
         <div className="px-4 mt-12 text-center animate-fade-in">
-          <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(255,255,255,0.08)" }}>
-            <Pill size={48} className="text-[#34d399]" />
+          <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Pill size={48} className="text-primary" />
           </div>
-          <h2 className="text-xl font-heading font-bold text-white">{t("no_medicines_title")}</h2>
-          <p className="text-glass-secondary text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine_tracking")}</p>
+          <h2 className="text-xl font-bold text-foreground">{t("no_medicines_title")}</h2>
+          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine_tracking")}</p>
           <button onClick={() => navigate("/add-medicine")}
-            className="mt-6 text-white px-8 py-4 rounded-2xl text-base font-heading font-bold shadow-lg hover:opacity-90 transition-opacity"
-            style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", boxShadow: "0 6px 20px rgba(13,148,136,0.4)" }}
-          >
+            className="mt-6 bg-primary text-primary-foreground px-8 py-4 rounded-2xl text-base font-bold shadow-lg hover:opacity-90 transition-opacity">
             {t("add_medicine_btn")}
           </button>
         </div>
@@ -505,13 +477,13 @@ const PatientDashboard = () => {
       {medicines.length > 0 && (
         <div className="px-4 mt-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-heading font-extrabold text-lg text-white">{t("todays_medicines")}</h2>
+            <h2 className="font-bold text-lg text-foreground">{t("todays_medicines")}</h2>
             <button
               onClick={() => navigate("/scan")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-pill hover:bg-white/15"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20"
             >
-              <ScanLine size={16} className="text-[#34d399]" />
-              <span className="text-xs font-heading font-bold text-[#34d399]">{t("scan")}</span>
+              <ScanLine size={16} className="text-primary" />
+              <span className="text-xs font-bold text-primary">{t("scan")}</span>
             </button>
           </div>
           {sections.map((section) => {
@@ -521,17 +493,12 @@ const PatientDashboard = () => {
             if (sectionMeds.length === 0) return null;
             return (
               <div key={section.key}>
-                {/* Section header pill */}
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="flex items-center gap-2 glass-pill px-3 py-1.5 flex-shrink-0"
-                    style={{ boxShadow: `inset 0 0 12px ${config.glowColor}` }}>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
-                      style={{ background: `${config.iconColor}30` }}>
-                      {config.emoji}
-                    </div>
-                    <span className="font-heading font-bold text-sm text-white">{config.label}</span>
+                  <div className="flex items-center gap-2 bg-card border border-border rounded-full px-3 py-1.5 shadow-sm flex-shrink-0">
+                    <span className="text-sm">{config.emoji}</span>
+                    <span className="font-bold text-sm text-foreground">{config.label}</span>
                   </div>
-                  <div className="flex-1 h-[1px] bg-white/15 rounded-full" />
+                  <div className="flex-1 h-[1px] bg-border rounded-full" />
                 </div>
 
                 <div className="space-y-3">
@@ -539,54 +506,43 @@ const PatientDashboard = () => {
                     const isTaken = takenIds.has(`${med.id}:${section.key}`);
                     const isMissed = missedDoses.some((d) => d.medicine_name === med.name && d.scheduled_time === section.key);
                     const iconIdx = idx % MEDICINE_ICONS.length;
-                    const colorIdx = idx % ICON_COLORS.length;
 
                     return (
                       <div
                         key={`${med.id}-${section.key}`}
-                        className="glass-card p-4 flex items-center gap-3 cursor-pointer animate-slide-up"
+                        className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer shadow-sm animate-slide-up hover:shadow-md transition-shadow"
                         style={{
-                          borderLeft: `4px solid ${isTaken ? "#10b981" : isMissed ? "#f43f5e" : "#f59e0b"}`,
-                          background: isTaken ? "rgba(16,185,129,0.13)" : isMissed ? "rgba(244,63,94,0.08)" : "rgba(255,255,255,0.08)",
+                          borderLeftWidth: "4px",
+                          borderLeftColor: isTaken ? "hsl(var(--success))" : isMissed ? "hsl(var(--destructive))" : "hsl(var(--warning))",
                           animationDelay: `${idx * 80}ms`,
                         }}
                         onClick={() => navigate(`/medicine-detail/${med.id}`)}
                       >
-                        {/* Icon box */}
-                        <div
-                          className="w-[46px] h-[46px] flex items-center justify-center flex-shrink-0 text-xl rounded-[14px]"
-                          style={{ background: "rgba(255,255,255,0.12)" }}
-                        >
+                        <div className="w-[46px] h-[46px] flex items-center justify-center flex-shrink-0 text-xl bg-muted rounded-[14px]">
                           {MEDICINE_ICONS[iconIdx]}
                         </div>
 
-                        {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-heading font-bold text-[15px] text-white truncate">{med.name}</h3>
+                          <h3 className="font-bold text-[15px] text-foreground truncate">{med.name}</h3>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-glass-muted text-xs">{med.dosage}</span>
-                            <span
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full glass-pill"
-                              style={{
-                                color: med.food_instruction === "before_food" ? "#0d9488" : "#f59e0b",
-                              }}
-                            >
+                            <span className="text-muted-foreground text-xs">{med.dosage}</span>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                              med.food_instruction === "before_food" ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
+                            }`}>
                               {FOOD_LABELS[med.food_instruction] || med.food_instruction}
                             </span>
                           </div>
                         </div>
 
-                        {/* Status badges */}
                         <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                           {isTaken ? (
                             <>
-                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white flex items-center gap-1 pulse-green"
-                                style={{ background: "#10b981", boxShadow: "0 0 16px rgba(16,185,129,0.4)" }}>
+                              <div className="px-3 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1 bg-success pulse-green">
                                 <Check size={14} /> {t("taken_label")}
                               </div>
                               <button
                                 onClick={() => handleUndoTaken(med.id, section.key)}
-                                className="p-2 rounded-xl text-xs text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                 title="Undo"
                               >
                                 <Undo2 size={16} />
@@ -594,13 +550,12 @@ const PatientDashboard = () => {
                             </>
                           ) : isMissed ? (
                             <div className="flex items-center gap-1.5">
-                              <div className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white flex items-center gap-1"
-                                style={{ background: "#f43f5e" }}>
+                              <div className="px-3 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1 bg-destructive">
                                 <X size={14} /> {t("missed_label")}
                               </div>
                               <button
                                 onClick={() => handleMarkTaken(med.id, section.key)}
-                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-[#34d399] glass-pill hover:bg-white/10 transition-colors"
+                                className="px-3 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                               >
                                 {t("take_now")}
                               </button>
@@ -609,14 +564,13 @@ const PatientDashboard = () => {
                             <>
                               <button
                                 onClick={() => handleMarkTaken(med.id, section.key)}
-                                className="px-3 py-2 rounded-xl text-xs font-heading font-bold text-white glass-pill hover:bg-white/15 transition-colors"
-                                style={{ borderColor: "rgba(245,158,11,0.4)" }}
+                                className="px-3 py-2 rounded-xl text-xs font-bold text-foreground border border-warning/40 bg-card hover:bg-muted transition-colors"
                               >
                                 {t("mark_taken_btn")}
                               </button>
                               <button
                                 onClick={() => handleMarkMissed(med.id, section.key)}
-                                className="p-2 rounded-xl text-xs text-white/40 hover:bg-white/10 hover:text-[#f43f5e] transition-colors"
+                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
                                 title="Skip / Missed"
                               >
                                 <X size={16} />
@@ -634,24 +588,21 @@ const PatientDashboard = () => {
         </div>
       )}
 
-      {/* Daily Insights */}
       <DailyInsights />
 
       {/* Action Buttons */}
       <div className="px-4 mt-6 space-y-3">
         <button onClick={() => navigate("/scan")}
-          className="w-full flex items-center justify-center gap-3 glass-card py-4 text-base font-heading font-bold text-[#34d399] hover:bg-white/12"
-          style={{ border: "2px solid rgba(13,148,136,0.4)" }}
-        >
+          className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary/30 rounded-2xl py-4 text-base font-bold text-primary hover:bg-primary/5 shadow-sm">
           <ScanLine size={22} /> {t("scan_prescription")}
         </button>
         <button onClick={() => navigate("/scan-tablet?mode=identify")}
-          className="w-full flex items-center justify-center gap-3 glass-card py-4 text-base font-heading font-bold text-glass-secondary hover:bg-white/12">
+          className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-muted-foreground hover:bg-muted shadow-sm">
           <HelpCircle size={22} /> {t("what_is_tablet")}
         </button>
         <button onClick={() => navigate("/drug-interaction")}
-          className="w-full flex items-center justify-center gap-3 glass-card py-4 text-base font-heading font-bold text-white hover:bg-white/12">
-          <FlaskConical size={22} className="text-[#f59e0b]" /> {t("drug_interaction_checker")}
+          className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-foreground hover:bg-muted shadow-sm">
+          <FlaskConical size={22} className="text-warning" /> {t("drug_interaction_checker")}
         </button>
       </div>
 

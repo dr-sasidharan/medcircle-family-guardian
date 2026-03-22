@@ -54,10 +54,22 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false }),
     ]);
 
+    // Fetch auth.users data for accurate counts
+    const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+    const authUsers = authData?.users || [];
+
+    const totalRegisteredUsers = authUsers.length;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const activeUsers30d = authUsers.filter(
+      (u) => u.last_sign_in_at && u.last_sign_in_at > thirtyDaysAgo
+    ).length;
+
     return new Response(
       JSON.stringify({
         profiles: profilesRes.data || [],
         payments: paymentsRes.data || [],
+        totalRegisteredUsers,
+        activeUsers30d,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

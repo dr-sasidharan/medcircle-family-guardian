@@ -1,5 +1,4 @@
-# Memory: index.md
-Updated: now
+Design system restored to clean default (white bg, solid teal primary, standard shadows, no glassmorphism).
 
 ## Design & Language Preferences
 
@@ -9,14 +8,17 @@ Updated: now
 - Voice command language auto-syncs with the app's UI language preference
 - Supported languages for AI content: English (en), Tamil (ta), Hindi (hi), Malayalam (ml)
 
-## Design System — Glassmorphism
+## Design System — Clean Default
 
-- **Fonts**: Syne (600,700,800) for headings; Plus Jakarta Sans (400,500,600) for body
-- **Background**: Fixed animated gradient mesh with 4 blurred blobs (teal, emerald, slate blue, dark ink)
-- **Glass cards**: `glass-card` class — rgba(255,255,255,0.08) bg, blur(20px), white/15 border, 24px radius
-- **Glass inputs**: `glass-input` class — rgba(255,255,255,0.06) bg, white text, white/40 placeholder
-- **Glass nav**: `glass-nav` class — rgba(10,25,23,0.8) bg, blur(20px)
-- **Text on glass**: white (primary), rgba(255,255,255,0.65) (secondary), rgba(255,255,255,0.4) (muted)
-- **Accent colors**: Teal #0d9488, Emerald #10b981/#34d399, Amber #f59e0b, Coral #f43f5e, Violet #8b5cf6, Blue #3b82f6
-- **Never use solid color backgrounds** — only for accents, glows, badges
-- **All pages use transparent bg** with the global GlassBackground component in App.tsx
+- **Background**: White (#fff) for pages, light grey (bg-muted/30) for dashboards
+- **Cards**: White bg-card with border-border, rounded-2xl, shadow-sm
+- **Primary**: Teal hsl(174, 84%, 32%) — used for headers, buttons, accents
+- **Inputs**: bg-muted border border-border rounded-xl, focus:ring-ring
+- **Headers**: Solid bg-primary with white text
+- **Bottom nav**: White bg with border-t border-border
+- **No glassmorphism, no backdrop-filter blur, no animated gradient background**
+
+## Admin Dashboard
+
+- Active users metric uses auth.users last_sign_in_at (30-day window)
+- "Total Registered" and "Active (30 days)" shown side by side as top metrics
