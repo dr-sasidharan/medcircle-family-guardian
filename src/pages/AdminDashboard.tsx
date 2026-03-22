@@ -27,7 +27,9 @@ const ADMIN_PASSWORD = "medcircle2026";
 
 interface Metrics {
   totalUsers: number;
+  totalAuthUsers: number;
   activeUsers24h: number;
+  activeUsers30d: number;
   payingUsers: number;
   mrr: number;
   oneTimeTotal: number;
@@ -66,7 +68,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
-    totalUsers: 0, activeUsers24h: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
+    totalUsers: 0, totalAuthUsers: 0, activeUsers24h: 0, activeUsers30d: 0, payingUsers: 0, mrr: 0, oneTimeTotal: 0, revenueToday: 0,
     retentionRate: 0, churnRate: 0, conversionRate: 0, arpu: 0, activeUsers7d: 0,
   });
   const [dauChart, setDauChart] = useState<{ date: string; dau: number }[]>([]);
@@ -113,7 +115,9 @@ export default function AdminDashboard() {
       setPayments(enrichedPayments.filter((p) => p.status === "success"));
       setPendingPayments(enrichedPayments.filter((p) => p.status === "pending_verification"));
 
-      // Metrics
+      // Metrics — use auth.users count as totalAuthUsers
+      const totalAuthUsers = adminData?.totalAuthUsers || allUsers.length;
+      const activeUsers30d = adminData?.activeAuthUsers30d || 0;
       const totalUsers = allUsers.length;
       const now = new Date();
       const twentyFourAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -159,15 +163,15 @@ export default function AdminDashboard() {
         : 0;
 
       // Conversion: free to paid
-      const conversionRate = totalUsers > 0
-        ? Math.round((payingUsers / totalUsers) * 100)
+      const conversionRate = totalAuthUsers > 0
+        ? Math.round((payingUsers / totalAuthUsers) * 100)
         : 0;
 
       // ARPU
       const totalRevenue = paymentsList.filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0);
       const arpu = payingUsers > 0 ? Math.round(totalRevenue / payingUsers) : 0;
 
-      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
+      setMetrics({ totalUsers, totalAuthUsers, activeUsers24h, activeUsers30d, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
 
       // DAU chart (last 14 days)
       const dauData = [];
@@ -341,12 +345,12 @@ export default function AdminDashboard() {
   }
 
   const metricCards = [
-    { label: "Total Users", value: metrics.totalUsers, icon: Users, fmt: (v: number) => v.toString() },
-    { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
+    { label: "Total Registered", value: metrics.totalAuthUsers, icon: Users, fmt: (v: number) => v.toString() },
+    { label: "Active (30d)", value: metrics.activeUsers30d, icon: UserCheck, fmt: (v: number) => v.toString() },
     { label: "Active (7d)", value: metrics.activeUsers7d, icon: Activity, fmt: (v: number) => v.toString() },
+    { label: "Active (24h)", value: metrics.activeUsers24h, icon: TrendingUp, fmt: (v: number) => v.toString() },
     { label: "Paying Users", value: metrics.payingUsers, icon: CreditCard, fmt: (v: number) => v.toString() },
     { label: "MRR", value: metrics.mrr, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
-    { label: "Revenue Today", value: metrics.revenueToday, icon: IndianRupee, fmt: (v: number) => `₹${v}` },
   ];
 
   const advancedMetricCards = [
