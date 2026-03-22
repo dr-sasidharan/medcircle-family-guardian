@@ -115,7 +115,9 @@ export default function AdminDashboard() {
       setPayments(enrichedPayments.filter((p) => p.status === "success"));
       setPendingPayments(enrichedPayments.filter((p) => p.status === "pending_verification"));
 
-      // Metrics
+      // Metrics — use auth.users count as totalAuthUsers
+      const totalAuthUsers = adminData?.totalAuthUsers || allUsers.length;
+      const activeUsers30d = adminData?.activeAuthUsers30d || 0;
       const totalUsers = allUsers.length;
       const now = new Date();
       const twentyFourAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -161,15 +163,15 @@ export default function AdminDashboard() {
         : 0;
 
       // Conversion: free to paid
-      const conversionRate = totalUsers > 0
-        ? Math.round((payingUsers / totalUsers) * 100)
+      const conversionRate = totalAuthUsers > 0
+        ? Math.round((payingUsers / totalAuthUsers) * 100)
         : 0;
 
       // ARPU
       const totalRevenue = paymentsList.filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0);
       const arpu = payingUsers > 0 ? Math.round(totalRevenue / payingUsers) : 0;
 
-      setMetrics({ totalUsers, activeUsers24h, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
+      setMetrics({ totalUsers, totalAuthUsers, activeUsers24h, activeUsers30d, payingUsers, mrr, oneTimeTotal, revenueToday, retentionRate, churnRate, conversionRate, arpu, activeUsers7d });
 
       // DAU chart (last 14 days)
       const dauData = [];
