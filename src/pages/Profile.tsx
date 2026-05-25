@@ -221,15 +221,6 @@ const Profile = () => {
             <p className="text-xs text-muted-foreground">Check if your medicines interact</p>
           </div>
         </button>
-        <button onClick={() => navigate("/pricing")}
-          className="w-full bg-card border border-border rounded-2xl p-4 text-left flex items-center gap-3 animate-slide-up shadow-sm hover:shadow-md transition-shadow"
-          style={{ borderLeftWidth: "4px", borderLeftColor: "hsl(258, 90%, 66%)", animationDelay: "160ms" }}>
-          <div className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center bg-violet-100"><Crown size={20} className="text-violet-500" /></div>
-          <div>
-            <h3 className="font-bold text-[15px] text-foreground">Upgrade Plan</h3>
-            <p className="text-xs text-muted-foreground">Unlock all features</p>
-          </div>
-        </button>
       </div>
 
       {profile && <EditProfileSheet open={showEdit} onClose={() => setShowEdit(false)} profile={profile} onSaved={fetchData} />}
