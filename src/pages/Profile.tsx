@@ -16,9 +16,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [patientPlan, setPatientPlan] = useState("free");
   const [newName, setNewName] = useState("");
   const [newRelation, setNewRelation] = useState("");
   const [newPhone, setNewPhone] = useState("");
