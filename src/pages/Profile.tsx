@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Crown, Pencil } from "lucide-react";
+import { User, Users, Plus, Phone, Mail, Heart, X, FileText, FlaskConical, Settings, ArrowLeft, Pencil } from "lucide-react";
 import EmergencyQRSection from "@/components/EmergencyQRSection";
 import EditProfileSheet from "@/components/EditProfileSheet";
 import { toast } from "sonner";
@@ -16,9 +16,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [patientPlan, setPatientPlan] = useState("free");
   const [newName, setNewName] = useState("");
   const [newRelation, setNewRelation] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -31,7 +29,7 @@ const Profile = () => {
     const { data: profiles } = await supabase.from("patient_profiles").select("*").eq("user_id", user.id).limit(1);
     if (profiles && profiles.length > 0) {
       setProfile(profiles[0] as any);
-      setPatientPlan((profiles[0] as any).plan || "free");
+      
       const { data: ct } = await supabase.from("caretakers").select("*").eq("patient_profile_id", profiles[0].id).eq("is_active", true).order("created_at");
       setCaretakers((ct || []) as any);
     }
@@ -135,7 +133,7 @@ const Profile = () => {
             </div>
             <div className="flex-1 h-[1px] bg-border rounded-full" />
           </div>
-          <button onClick={() => patientPlan === "free" ? setShowUpgradePrompt(true) : setShowAdd(true)}
+          <button onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm">
             <Plus size={14} /> Add
           </button>
@@ -165,29 +163,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Upgrade Prompt */}
-      {showUpgradePrompt && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl border border-border w-full max-w-md p-6 space-y-4 animate-fade-in shadow-xl">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-foreground">Upgrade Required</h2>
-              <button onClick={() => setShowUpgradePrompt(false)} className="text-muted-foreground p-1"><X size={20} /></button>
-            </div>
-            <div className="flex items-center gap-3 bg-violet-50 border border-violet-200 rounded-2xl p-4">
-              <Crown size={24} className="text-violet-500 flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-base text-foreground">Care Circle is a Premium Feature</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Add caretakers who can monitor your medicines and health remotely.</p>
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowUpgradePrompt(false)} className="flex-1 py-3 rounded-xl text-sm font-bold bg-muted text-muted-foreground hover:bg-accent">Maybe Later</button>
-              <button onClick={() => { setShowUpgradePrompt(false); navigate("/pricing"); }}
-                className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg, #8b5cf6, #6d28d9)" }}>View Plans</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Upgrade prompt removed — all features are free */}
 
       {/* Add Caretaker Form */}
       {showAdd && (
@@ -241,15 +217,6 @@ const Profile = () => {
           <div>
             <h3 className="font-bold text-[15px] text-foreground">Drug Interaction Checker</h3>
             <p className="text-xs text-muted-foreground">Check if your medicines interact</p>
-          </div>
-        </button>
-        <button onClick={() => navigate("/pricing")}
-          className="w-full bg-card border border-border rounded-2xl p-4 text-left flex items-center gap-3 animate-slide-up shadow-sm hover:shadow-md transition-shadow"
-          style={{ borderLeftWidth: "4px", borderLeftColor: "hsl(258, 90%, 66%)", animationDelay: "160ms" }}>
-          <div className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center bg-violet-100"><Crown size={20} className="text-violet-500" /></div>
-          <div>
-            <h3 className="font-bold text-[15px] text-foreground">Upgrade Plan</h3>
-            <p className="text-xs text-muted-foreground">Unlock all features</p>
           </div>
         </button>
       </div>

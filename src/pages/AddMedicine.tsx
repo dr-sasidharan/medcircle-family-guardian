@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Upload, ScanLine } from "lucide-react";
@@ -29,19 +29,7 @@ const AddMedicine = () => {
     });
   };
 
-  const checkPlanLimit = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: meds } = await supabase.from("medicines").select("id").eq("is_active", true).eq("user_id", user.id);
-    const { data: profiles } = await supabase.from("patient_profiles").select("id, plan").eq("user_id", user.id).limit(1);
-    const profile = profiles?.[0];
-    const plan = (profile as any)?.plan || "free";
-    if (plan === "free" && (meds?.length || 0) >= 2) {
-      navigate("/paywall", { state: { reason: "medicine_limit", patientProfileId: profile?.id }, replace: true });
-    }
-  }, [navigate]);
-
-  useEffect(() => { checkPlanLimit(); }, [checkPlanLimit]);
+  // Plan limits removed — all features available to all users
 
   const handleSave = async () => {
     if (!name.trim() || !dosage.trim()) { toast.error("Please fill medicine name and dosage"); return; }
