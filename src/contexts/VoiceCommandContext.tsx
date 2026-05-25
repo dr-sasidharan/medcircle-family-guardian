@@ -38,7 +38,7 @@ const COMMANDS: Record<VoiceLang, { patterns: RegExp[]; action: string }[]> = {
     { patterns: [/setting/i], action: "/settings" },
     { patterns: [/doctor\s*summary|visit\s*summary/i], action: "/doctor-summary" },
     { patterns: [/drug\s*interaction|interaction\s*check/i], action: "/drug-interaction" },
-    { patterns: [/pricing|plan|upgrade/i], action: "/pricing" },
+    
   ],
   ta: [
     { patterns: [/முகப்பு|டாஷ்போர்டு/], action: "/patient" },
