@@ -15,8 +15,6 @@ import PatientDashboard from "./pages/PatientDashboard";
 import AddMedicine from "./pages/AddMedicine";
 import CaretakerDashboard from "./pages/CaretakerDashboard";
 import MedicineDetail from "./pages/MedicineDetail";
-import Pricing from "./pages/Pricing";
-import Paywall from "./pages/Paywall";
 import ScanPrescription from "./pages/ScanPrescription";
 import ScanTablet from "./pages/ScanTablet";
 import Reminders from "./pages/Reminders";
