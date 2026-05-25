@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LanguageToggle from "@/components/LanguageToggle";
 import { ArrowLeft, Upload, ScanLine } from "lucide-react";
