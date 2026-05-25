@@ -29,7 +29,7 @@ const Profile = () => {
     const { data: profiles } = await supabase.from("patient_profiles").select("*").eq("user_id", user.id).limit(1);
     if (profiles && profiles.length > 0) {
       setProfile(profiles[0] as any);
-      setPatientPlan((profiles[0] as any).plan || "free");
+      
       const { data: ct } = await supabase.from("caretakers").select("*").eq("patient_profile_id", profiles[0].id).eq("is_active", true).order("created_at");
       setCaretakers((ct || []) as any);
     }
