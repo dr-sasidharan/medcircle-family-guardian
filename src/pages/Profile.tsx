@@ -165,29 +165,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Upgrade Prompt */}
-      {showUpgradePrompt && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl border border-border w-full max-w-md p-6 space-y-4 animate-fade-in shadow-xl">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-foreground">Upgrade Required</h2>
-              <button onClick={() => setShowUpgradePrompt(false)} className="text-muted-foreground p-1"><X size={20} /></button>
-            </div>
-            <div className="flex items-center gap-3 bg-violet-50 border border-violet-200 rounded-2xl p-4">
-              <Crown size={24} className="text-violet-500 flex-shrink-0" />
-              <div>
-                <h3 className="font-bold text-base text-foreground">Care Circle is a Premium Feature</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Add caretakers who can monitor your medicines and health remotely.</p>
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowUpgradePrompt(false)} className="flex-1 py-3 rounded-xl text-sm font-bold bg-muted text-muted-foreground hover:bg-accent">Maybe Later</button>
-              <button onClick={() => { setShowUpgradePrompt(false); navigate("/pricing"); }}
-                className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg, #8b5cf6, #6d28d9)" }}>View Plans</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Upgrade prompt removed — all features are free */}
 
       {/* Add Caretaker Form */}
       {showAdd && (
