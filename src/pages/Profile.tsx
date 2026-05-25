@@ -135,7 +135,7 @@ const Profile = () => {
             </div>
             <div className="flex-1 h-[1px] bg-border rounded-full" />
           </div>
-          <button onClick={() => patientPlan === "free" ? setShowUpgradePrompt(true) : setShowAdd(true)}
+          <button onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-sm">
             <Plus size={14} /> Add
           </button>
