@@ -23,7 +23,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Tooltip,
 } from "recharts";
 
-const ADMIN_PASSWORD = "medcircle2026";
+
 
 interface Metrics {
   totalUsers: number;
