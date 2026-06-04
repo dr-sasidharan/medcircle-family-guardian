@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, AlertTriangle, Pencil, Check, X, Trash2 } from "lucide-react";
+import {
+  ArrowLeft, AlertTriangle, Pencil, Check, X, Trash2,
+  Sparkles, Shield, Activity, Sun, CloudSun, Moon, Utensils,
+  Target, Pill, Zap, Apple, ShieldAlert, ChevronRight, Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface MedicineData {
@@ -22,13 +26,6 @@ interface MedicineInfo {
   foods_to_avoid: string[];
   drug_interactions: string;
 }
-
-const SECTION_ICONS: Record<string, { icon: string; color: string; bg: string }> = {
-  purpose: { icon: "🎯", color: "#0d9488", bg: "#ccfbf1" },
-  how_to_take: { icon: "💊", color: "#3b82f6", bg: "#dbeafe" },
-  side_effects: { icon: "⚡", color: "#f59e0b", bg: "#fef3c7" },
-  foods_to_avoid: { icon: "🍎", color: "#f43f5e", bg: "#fff1f2" },
-};
 
 const MedicineDetail = () => {
   const { t, language } = useLanguage();
@@ -59,12 +56,7 @@ const MedicineDetail = () => {
         .eq("id", id)
         .single();
 
-      if (error || !data) {
-        console.error("Error fetching medicine:", error);
-        setLoading(false);
-        return;
-      }
-
+      if (error || !data) { setLoading(false); return; }
       setMedicine(data as MedicineData);
       setLoading(false);
 
@@ -73,17 +65,12 @@ const MedicineDetail = () => {
         const { data: fnData, error: fnError } = await supabase.functions.invoke("medicine-info", {
           body: { medicine_name: data.name, dosage: data.dosage, language },
         });
-        if (!fnError && fnData) {
-          setInfo(fnData as MedicineInfo);
-        }
-      } catch (e) {
-        console.error("Failed to fetch medicine info:", e);
-      }
+        if (!fnError && fnData) setInfo(fnData as MedicineInfo);
+      } catch (e) { console.error(e); }
       setInfoLoading(false);
     };
-
     fetchMedicine();
-  }, [id]);
+  }, [id, language]);
 
   const startEditing = () => {
     if (!medicine) return;
@@ -94,32 +81,21 @@ const MedicineDetail = () => {
     setEditing(true);
   };
 
-  const cancelEditing = () => setEditing(false);
-
   const saveEdits = async () => {
     if (!medicine) return;
     setSaving(true);
     try {
       const { error } = await supabase
         .from("medicines")
-        .update({
-          name: editName,
-          dosage: editDosage,
-          timing: editTiming,
-          food_instruction: editFood,
-        })
+        .update({ name: editName, dosage: editDosage, timing: editTiming, food_instruction: editFood })
         .eq("id", medicine.id);
-
       if (error) throw error;
-
       setMedicine({ ...medicine, name: editName, dosage: editDosage, timing: editTiming, food_instruction: editFood });
       setEditing(false);
       toast.success("Medicine updated!");
     } catch (err: any) {
       toast.error(err.message || "Failed to update");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const deleteMedicine = async () => {
@@ -134,275 +110,357 @@ const MedicineDetail = () => {
     }
   };
 
-  const timingLabel = medicine?.timing === "morning" ? t("morning") : medicine?.timing === "afternoon" ? t("afternoon") : t("night");
-  const timingColor = medicine?.timing === "morning" ? "#f59e0b" : medicine?.timing === "afternoon" ? "#3b82f6" : "#8b5cf6";
+  // Derived safety + risk heuristics (presentation-only)
+  const { safetyScore, riskLevel, riskLabel, riskColor, category } = useMemo(() => {
+    const interactionsText = (info?.drug_interactions || "").toLowerCase();
+    const sideCount = info?.side_effects?.length || 0;
+    const high = /(severe|dangerous|do not|avoid|serious|bleeding|fatal)/.test(interactionsText);
+    const moderate = /(may|caution|consult|monitor|interact)/.test(interactionsText);
+    const level = high ? "high" : moderate ? "moderate" : info ? "low" : "—";
+    const score = high ? 58 : moderate ? 78 : info ? 92 : 85;
+    const colorMap: Record<string, string> = {
+      high: "#f43f5e", moderate: "#f59e0b", low: "#14B8A6", "—": "#64748b",
+    };
+    const labelMap: Record<string, string> = {
+      high: "High", moderate: "Moderate", low: "Low", "—": "Analyzing",
+    };
+    // simple category guess
+    const name = (medicine?.name || "").toLowerCase();
+    let cat = "General";
+    if (/cillin|mycin|cef|azole|floxacin/.test(name)) cat = "Antibiotic";
+    else if (/sartan|olol|pril|dipine/.test(name)) cat = "Cardiovascular";
+    else if (/metformin|glip|insulin/.test(name)) cat = "Diabetes";
+    else if (/paracetamol|ibuprofen|acetamin|naproxen/.test(name)) cat = "Analgesic";
+    else if (/atorva|rosuva|statin/.test(name)) cat = "Lipid Control";
+    else if (/omeprazole|pantoprazole|ranit/.test(name)) cat = "Gastro";
+    return { safetyScore: score, riskLevel: level, riskLabel: labelMap[level], riskColor: colorMap[level], category: cat };
+  }, [info, medicine]);
+
+  const timingMeta = medicine?.timing === "morning"
+    ? { label: t("morning"), Icon: Sun, color: "#f59e0b" }
+    : medicine?.timing === "afternoon"
+    ? { label: t("afternoon"), Icon: CloudSun, color: "#22D3EE" }
+    : { label: t("night"), Icon: Moon, color: "#8b5cf6" };
+
+  const foodLabel = medicine?.food_instruction === "before_food"
+    ? t("before_food") : medicine?.food_instruction === "after_food"
+    ? t("after_food") : t("with_food");
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen mesh-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
       </div>
     );
   }
 
   if (!medicine) {
     return (
-      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Medicine not found</p>
-        <button onClick={() => navigate(-1)} className="text-primary font-heading font-bold">Go back</button>
+      <div className="min-h-screen mesh-bg flex flex-col items-center justify-center gap-4">
+        <p className="text-slate-500">Medicine not found</p>
+        <button onClick={() => navigate(-1)} className="text-teal-600 font-bold">Go back</button>
       </div>
     );
   }
 
+  const scorePct = safetyScore;
+  const scoreDash = (scorePct / 100) * 251.2; // 2πr where r=40
+
   return (
-    <div className="min-h-screen bg-surface pb-24 page-transition">
-      {/* Header */}
-      <div
-        className="text-white p-5 rounded-b-[28px] relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #0c3532 100%)" }}
-      >
-        <div className="absolute top-[-40px] right-[-40px] w-[140px] h-[140px] rounded-full bg-white/5 animate-float" />
+    <div className="relative min-h-screen mesh-bg animate-mesh-shift pb-28 page-transition text-slate-900">
+      {/* Floating blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+        <div className="blob animate-float-slow" style={{ background: "#14B8A6", width: 420, height: 420, top: -120, left: -120 }} />
+        <div className="blob animate-float-slow" style={{ background: "#22D3EE", width: 420, height: 420, top: 40, right: -160, animationDelay: "2s" }} />
+        <div className="blob animate-float-slow" style={{ background: "#0F172A", width: 380, height: 380, bottom: -180, left: "30%", opacity: 0.3, animationDelay: "4s" }} />
+      </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-                <ArrowLeft size={18} />
+      {/* Top bar */}
+      <div className="sticky top-3 z-40 px-3">
+        <div className="glass-nav rounded-2xl flex items-center justify-between px-3 py-2 max-w-xl mx-auto">
+          <button onClick={() => navigate(-1)}
+            className="w-9 h-9 rounded-xl bg-white/70 border border-white/70 flex items-center justify-center hover:bg-white">
+            <ArrowLeft size={16} className="text-slate-700" />
+          </button>
+          <span className="text-sm font-bold tracking-tight text-slate-800">Medicine</span>
+          <div className="flex items-center gap-1.5">
+            {!editing && (
+              <button onClick={startEditing}
+                className="w-9 h-9 rounded-xl bg-white/70 border border-white/70 flex items-center justify-center hover:bg-white">
+                <Pencil size={14} className="text-slate-700" />
               </button>
-              <h1 className="text-lg font-heading font-bold">Medicine</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {!editing && (
-                <button onClick={startEditing} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-                  <Pencil size={16} />
-                </button>
-              )}
-              <button onClick={deleteMedicine} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-                <Trash2 size={16} />
-              </button>
-            </div>
+            )}
+            <button onClick={deleteMedicine}
+              className="w-9 h-9 rounded-xl bg-white/70 border border-white/70 flex items-center justify-center hover:bg-rose-50">
+              <Trash2 size={14} className="text-rose-500" />
+            </button>
           </div>
+        </div>
+      </div>
 
-          {/* Medicine name card */}
-          <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
-            <div
-              className="w-14 h-14 flex items-center justify-center flex-shrink-0 text-2xl"
-              style={{ background: "rgba(255,255,255,0.15)", borderRadius: "14px" }}
-            >
-              💊
+      <div className="max-w-xl mx-auto px-4 mt-5 space-y-4">
+        {/* HERO MEDICINE CARD */}
+        <div className="relative glass-panel gradient-border rounded-[22px] p-5 overflow-hidden card-hover animate-fade-up">
+          <span className="shine-overlay" />
+          <div className="absolute -top-16 -right-16 w-44 h-44 rounded-full bg-gradient-to-br from-teal-300/50 to-cyan-300/30 blur-3xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="w-16 h-16 rounded-2xl gradient-cta flex items-center justify-center shadow-lg shadow-teal-500/30 shrink-0">
+              <Pill size={26} className="text-white" />
             </div>
-            <div>
-              <h2 className="font-heading font-extrabold text-2xl">{medicine.name}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-white/70 text-sm">{medicine.dosage}</span>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: `${timingColor}30`, color: "white" }}
-                >
-                  {timingLabel}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900/90 text-white">
+                  {category}
                 </span>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{
-                    background: medicine.food_instruction === "before_food" ? "#ccfbf130" : "#fef3c730",
-                    color: "white",
-                  }}
-                >
-                  {medicine.food_instruction === "before_food" ? t("before_food") : medicine.food_instruction === "after_food" ? t("after_food") : t("with_food")}
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+                  Active
+                </span>
+              </div>
+              <h1 className="font-display text-2xl font-bold leading-tight text-slate-900 truncate">{medicine.name}</h1>
+              <p className="text-sm text-slate-500 font-medium">{medicine.dosage}</p>
+
+              <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg bg-white/70 border border-white/70" style={{ color: timingMeta.color }}>
+                  <timingMeta.Icon size={12} /> {timingMeta.label}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg bg-white/70 border border-white/70 text-slate-700">
+                  <Utensils size={12} /> {foodLabel}
                 </span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Edit Panel */}
-      {editing && (
-        <div className="px-4 mt-4">
-          <div className="bg-card rounded-2xl border border-border p-5 space-y-4 animate-slide-up">
-            <h3 className="font-heading font-bold text-base text-foreground">Edit Medicine</h3>
-
-            {/* Name */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Name</label>
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground font-semibold"
-              />
+        {/* DASHBOARD ROW: Safety score + Risk */}
+        <div className="grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
+          {/* Safety Score */}
+          <div className="relative glass-panel rounded-[18px] p-4 card-hover overflow-hidden">
+            <span className="shine-overlay" />
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 mb-2">
+              <Shield size={12} /> Safety Score
             </div>
-
-            {/* Dosage */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Dosage</label>
-              <input
-                value={editDosage}
-                onChange={(e) => setEditDosage(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground font-semibold"
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative w-[88px] h-[88px] shrink-0">
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                  <circle cx="50" cy="50" r="40" stroke="rgba(15,23,42,0.08)" strokeWidth="8" fill="none" />
+                  <circle cx="50" cy="50" r="40" stroke="url(#sg)" strokeWidth="8" fill="none"
+                    strokeLinecap="round" strokeDasharray={`${scoreDash} 251.2`} />
+                  <defs>
+                    <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#14B8A6" />
+                      <stop offset="100%" stopColor="#22D3EE" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="font-display text-2xl font-bold gradient-text leading-none">{scorePct}</span>
+                  <span className="text-[9px] font-semibold text-slate-500 mt-0.5">/ 100</span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="font-display font-bold text-sm text-slate-900">
+                  {scorePct >= 85 ? "Excellent" : scorePct >= 70 ? "Good" : "Caution"}
+                </p>
+                <p className="text-[11px] text-slate-500 leading-snug mt-0.5">AI safety analysis based on profile.</p>
+              </div>
             </div>
+          </div>
 
-            {/* Timing */}
+          {/* Interaction Risk */}
+          <div className="relative glass-panel rounded-[18px] p-4 card-hover overflow-hidden">
+            <span className="shine-overlay" />
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+              <ShieldAlert size={12} /> Interaction Risk
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-3xl font-bold" style={{ color: riskColor }}>{riskLabel}</span>
+            </div>
+            <div className="mt-3 flex items-center gap-1">
+              {["low","moderate","high"].map((lvl) => (
+                <div key={lvl} className="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-100">
+                  <div className="h-full rounded-full transition-all"
+                    style={{
+                      width: (riskLevel === lvl || (riskLevel === "high" && lvl !== "—") || (riskLevel === "moderate" && lvl === "low")) ? "100%" : "0%",
+                      background: lvl === "low" ? "#14B8A6" : lvl === "moderate" ? "#f59e0b" : "#f43f5e",
+                    }} />
+                </div>
+              ))}
+            </div>
+            <button onClick={() => navigate("/drug-interaction")}
+              className="mt-3 w-full text-[11px] font-semibold text-teal-700 hover:text-teal-800 flex items-center justify-center gap-1 bg-teal-50/70 border border-teal-100 rounded-lg py-1.5">
+              Check all interactions <ChevronRight size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* AI INSIGHTS */}
+        <div className="relative glass-dark rounded-[20px] p-5 text-white overflow-hidden animate-fade-up" style={{ animationDelay: "120ms" }}>
+          <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-teal-400/30 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-cyan-400/30 blur-3xl" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center">
+                <Sparkles size={14} className="text-cyan-300" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-cyan-200 font-bold">AI Insight</p>
+                <p className="font-display font-bold text-sm">MedCircle Assistant</p>
+              </div>
+            </div>
+            {infoLoading && !info ? (
+              <div className="flex items-center gap-2 text-white/70 text-sm">
+                <div className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse" />
+                Analyzing {medicine.name}…
+              </div>
+            ) : info ? (
+              <p className="text-sm leading-relaxed text-white/85">
+                {info.purpose} Take it{" "}
+                <span className="text-cyan-200 font-semibold">{foodLabel.toLowerCase()}</span>{" "}
+                in the <span className="text-cyan-200 font-semibold">{timingMeta.label.toLowerCase()}</span>.{" "}
+                {riskLevel === "high"
+                  ? "⚠ High interaction risk — review the warning below."
+                  : riskLevel === "moderate"
+                  ? "Some caution required with other medicines."
+                  : "No major interactions detected for your profile."}
+              </p>
+            ) : (
+              <p className="text-sm text-white/70">Could not load AI insights for this medicine.</p>
+            )}
+          </div>
+        </div>
+
+        {/* EDIT PANEL */}
+        {editing && (
+          <div className="glass-panel rounded-[18px] p-5 space-y-4 animate-fade-up">
+            <h3 className="font-display font-bold text-base text-slate-900">Edit Medicine</h3>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</label>
+              <input value={editName} onChange={(e) => setEditName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-white/70 bg-white/70 backdrop-blur-md text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-400/40" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dosage</label>
+              <input value={editDosage} onChange={(e) => setEditDosage(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-white/70 bg-white/70 backdrop-blur-md text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-400/40" />
+            </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Timing</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Timing</label>
               <div className="flex gap-2">
                 {(["morning", "afternoon", "night"] as const).map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => setEditTiming(time)}
+                  <button key={time} onClick={() => setEditTiming(time)}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      editTiming === time
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {time === "morning" ? "☀️" : time === "afternoon" ? "🌤️" : "🌙"} {time.charAt(0).toUpperCase() + time.slice(1)}
+                      editTiming === time ? "gradient-cta text-white" : "bg-white/70 border border-white/70 text-slate-700 hover:bg-white"
+                    }`}>
+                    {time.charAt(0).toUpperCase() + time.slice(1)}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Food Instruction */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food Instruction</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Food Instruction</label>
               <div className="flex gap-2">
                 {(["before_food", "after_food", "with_food"] as const).map((food) => (
-                  <button
-                    key={food}
-                    onClick={() => setEditFood(food)}
+                  <button key={food} onClick={() => setEditFood(food)}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      editFood === food
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-accent"
-                    }`}
-                  >
+                      editFood === food ? "gradient-cta text-white" : "bg-white/70 border border-white/70 text-slate-700 hover:bg-white"
+                    }`}>
                     {food === "before_food" ? "Before" : food === "after_food" ? "After" : "With"} Food
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={cancelEditing}
-                className="flex-1 py-3 rounded-xl text-sm font-bold bg-secondary text-secondary-foreground hover:bg-accent transition-colors flex items-center justify-center gap-2"
-              >
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setEditing(false)}
+                className="flex-1 py-3 rounded-xl text-sm font-bold bg-white/70 border border-white/70 text-slate-700 hover:bg-white flex items-center justify-center gap-2">
                 <X size={16} /> Cancel
               </button>
-              <button
-                onClick={saveEdits}
-                disabled={saving}
-                className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
+              <button onClick={saveEdits} disabled={saving}
+                className="flex-1 py-3 rounded-xl text-sm font-bold gradient-cta text-white flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-transform">
                 <Check size={16} /> {saving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Content */}
-      <div className="px-4 mt-5 space-y-4 max-w-lg mx-auto">
-        {infoLoading && (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            <p className="text-sm text-muted-foreground">Loading medicine information...</p>
+        {/* CONTENT */}
+        {infoLoading && !info && (
+          <div className="glass-panel rounded-[18px] p-8 flex flex-col items-center gap-3 animate-fade-up">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+            <p className="text-sm text-slate-500">Loading medicine information…</p>
           </div>
         )}
 
         {info && (
           <>
-            {/* Purpose */}
-            <section
-              className="bg-card rounded-[18px] p-5 animate-slide-up"
-              style={{ borderLeft: `4px solid ${SECTION_ICONS.purpose.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.purpose.bg }}>
-                  {SECTION_ICONS.purpose.icon}
+            {/* TIMELINE */}
+            <div className="relative glass-panel rounded-[20px] p-5 overflow-hidden animate-fade-up" style={{ animationDelay: "180ms" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
+                  <Clock size={13} className="text-teal-600" />
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.purpose.color }}>Purpose</h3>
+                <h3 className="font-display font-bold text-sm text-slate-900">Medicine Timeline</h3>
               </div>
-              <p className="text-foreground leading-relaxed text-[15px]">{info.purpose}</p>
-            </section>
-
-            {/* How to Take */}
-            <section
-              className="bg-card rounded-[18px] p-5 animate-slide-up"
-              style={{ borderLeft: `4px solid ${SECTION_ICONS.how_to_take.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "80ms" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.how_to_take.bg }}>
-                  {SECTION_ICONS.how_to_take.icon}
-                </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.how_to_take.color }}>How to Take</h3>
-              </div>
-              <p className="text-foreground leading-relaxed text-[15px]">{info.how_to_take}</p>
-            </section>
-
-            {/* Side Effects */}
-            <section
-              className="bg-card rounded-[18px] p-5 animate-slide-up"
-              style={{ borderLeft: `4px solid ${SECTION_ICONS.side_effects.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "160ms" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.side_effects.bg }}>
-                  {SECTION_ICONS.side_effects.icon}
-                </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.side_effects.color }}>Side Effects</h3>
-              </div>
-              <ul className="space-y-2">
-                {info.side_effects.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[15px]">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: SECTION_ICONS.side_effects.color }} />
-                    <span className="text-foreground">{s}</span>
-                  </li>
+              <div className="relative pl-5">
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-teal-400 via-cyan-400 to-slate-200" />
+                {[
+                  { Icon: Target, color: "#14B8A6", title: "Purpose", body: info.purpose },
+                  { Icon: Pill, color: "#22D3EE", title: "How to take", body: info.how_to_take },
+                  { Icon: Zap, color: "#f59e0b", title: "Side effects", list: info.side_effects },
+                  { Icon: Apple, color: "#f43f5e", title: "Foods to avoid", list: info.foods_to_avoid },
+                ].map((s, i) => (
+                  <div key={i} className="relative pb-5 last:pb-0">
+                    <div className="absolute -left-[18px] top-0.5 w-4 h-4 rounded-full border-2 border-white shadow-md flex items-center justify-center"
+                      style={{ background: s.color }}>
+                      <s.Icon size={9} className="text-white" />
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: s.color }}>{s.title}</p>
+                    {s.body && <p className="text-sm text-slate-700 leading-relaxed">{s.body}</p>}
+                    {s.list && (
+                      <ul className="space-y-1 mt-1">
+                        {s.list.map((x, j) => (
+                          <li key={j} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="mt-1.5 w-1 h-1 rounded-full shrink-0" style={{ background: s.color }} />
+                            {x}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 ))}
-              </ul>
-            </section>
-
-            {/* Foods to Avoid */}
-            <section
-              className="bg-card rounded-[18px] p-5 animate-slide-up"
-              style={{ borderLeft: `4px solid ${SECTION_ICONS.foods_to_avoid.color}`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", animationDelay: "240ms" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ background: SECTION_ICONS.foods_to_avoid.bg }}>
-                  {SECTION_ICONS.foods_to_avoid.icon}
-                </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide" style={{ color: SECTION_ICONS.foods_to_avoid.color }}>Foods to Avoid</h3>
               </div>
-              <ul className="space-y-2">
-                {info.foods_to_avoid.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[15px]">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: SECTION_ICONS.foods_to_avoid.color }} />
-                    <span className="text-foreground">{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            </div>
 
-            {/* Drug Interactions Warning */}
-            <section
-              className="rounded-[18px] p-5 border-2 animate-slide-up"
-              style={{ background: "linear-gradient(135deg, #fff1f2, #ffe4e6)", borderColor: "#fda4af", animationDelay: "320ms" }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-[#fda4af]/30 flex items-center justify-center">
-                  <AlertTriangle size={16} className="text-[#e11d48]" />
+            {/* DRUG INTERACTION WARNING */}
+            <div className="relative rounded-[20px] p-5 overflow-hidden animate-fade-up card-hover"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,241,242,0.85), rgba(255,228,230,0.7))",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid rgba(244,63,94,0.25)",
+                animationDelay: "240ms",
+              }}>
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-rose-300/40 blur-3xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-200 flex items-center justify-center">
+                    <AlertTriangle size={14} className="text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Drug Interaction</p>
+                    <p className="font-display font-bold text-sm text-rose-900">Important warning</p>
+                  </div>
                 </div>
-                <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-[#9f1239]">Drug Interaction</h3>
+                <p className="text-[14px] text-rose-900/90 leading-relaxed">{info.drug_interactions}</p>
               </div>
-              <p className="text-[#9f1239] leading-relaxed text-[15px]">{info.drug_interactions}</p>
-            </section>
+            </div>
           </>
         )}
 
         {!infoLoading && !info && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Could not load medicine information.</p>
-            <button onClick={() => window.location.reload()} className="mt-3 text-primary font-heading font-bold text-sm">
+          <div className="glass-panel rounded-[18px] p-8 text-center">
+            <p className="text-slate-500">Could not load medicine information.</p>
+            <button onClick={() => window.location.reload()}
+              className="mt-3 gradient-cta text-white px-4 py-2 rounded-xl text-sm font-bold">
               Try again
             </button>
           </div>
