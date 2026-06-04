@@ -189,8 +189,6 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Demo account ready",
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
