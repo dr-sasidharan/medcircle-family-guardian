@@ -224,16 +224,17 @@ export default function AdminDashboard() {
     return () => { clearTimeout(timer); events.forEach((e) => window.removeEventListener(e, resetTimer)); };
   }, [authenticated]);
 
-  const handleLogout = () => { setAuthenticated(false); setPassword(""); };
+  const handleLogout = async () => { await supabase.auth.signOut(); setAuthenticated(false); setPassword(""); setEmail(""); };
 
   const handlePaymentAction = async (payment: PaymentRow, action: "approve" | "reject") => {
     setActionLoading(payment.id);
     try {
-      await supabase.functions.invoke("admin-metrics", { body: { password: ADMIN_PASSWORD, action, paymentId: payment.id, paymentPlan: payment.plan, patientProfileId: payment.patient_profile_id } });
+      await supabase.functions.invoke("admin-metrics", { body: { action, paymentId: payment.id, paymentPlan: payment.plan, patientProfileId: payment.patient_profile_id } });
       await fetchData();
     } catch (err) { console.error("Payment action error:", err); }
     setActionLoading(null);
   };
+
 
   const exportCSV = () => {
     const header = "Name,Plan,Signup Date,Last Active\n";
