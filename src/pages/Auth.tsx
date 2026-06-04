@@ -168,7 +168,8 @@ export default function Auth() {
       }
       if (!session) { toast.error("Failed to authenticate"); setLoading(false); return; }
 
-      const { data: patient, error: patientError } = await supabase.from("patient_profiles").select("id, name").eq("medcircle_code", caretakerCode).limit(1);
+      const { data: patientList, error: patientError } = await supabase.rpc("lookup_patient_by_medcircle_code", { _code: caretakerCode });
+      const patient = patientList as { id: string; name: string }[] | null;
       if (patientError || !patient?.length) { toast.error("No patient found with this code."); setLoading(false); return; }
       const { error: linkError } = await supabase.from("caretaker_links").insert({ caretaker_user_id: session.user.id, patient_profile_id: patient[0].id });
       if (linkError) {

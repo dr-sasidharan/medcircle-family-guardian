@@ -52,7 +52,8 @@ Deno.serve(async (req) => {
     const { data: medicines } = await supabase
       .from("medicines")
       .select("name, dosage, timing, food_instruction, purpose")
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("user_id", profile.user_id);
 
     // Fetch recent hospital visits
     const { data: visits } = await supabase

@@ -23,7 +23,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Tooltip,
 } from "recharts";
 
-const ADMIN_PASSWORD = "medcircle2026";
+
 
 interface Metrics {
   totalUsers: number;
@@ -65,6 +65,7 @@ const TIMEOUT_MS = 15 * 60 * 1000;
 
 export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
@@ -82,18 +83,43 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) { setAuthenticated(true); setError(""); }
-    else { setError("Incorrect password. Please try again."); }
+  const verifyAdmin = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .eq("role", "admin")
+      .limit(1);
+    return !!roles?.length;
   };
+
+  const handleLogin = async () => {
+    setError("");
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) { setError("Invalid credentials."); return; }
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      setError("This account does not have admin access.");
+      return;
+    }
+    setAuthenticated(true);
+  };
+
+  useEffect(() => {
+    verifyAdmin().then((ok) => { if (ok) setAuthenticated(true); });
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: adminData, error: fnError } = await supabase.functions.invoke("admin-metrics", {
-        body: { password: ADMIN_PASSWORD },
+        body: {},
       });
       if (fnError) throw fnError;
+
 
       const allUsers = adminData?.profiles || [];
       setUsers(allUsers);
@@ -198,16 +224,17 @@ export default function AdminDashboard() {
     return () => { clearTimeout(timer); events.forEach((e) => window.removeEventListener(e, resetTimer)); };
   }, [authenticated]);
 
-  const handleLogout = () => { setAuthenticated(false); setPassword(""); };
+  const handleLogout = async () => { await supabase.auth.signOut(); setAuthenticated(false); setPassword(""); setEmail(""); };
 
   const handlePaymentAction = async (payment: PaymentRow, action: "approve" | "reject") => {
     setActionLoading(payment.id);
     try {
-      await supabase.functions.invoke("admin-metrics", { body: { password: ADMIN_PASSWORD, action, paymentId: payment.id, paymentPlan: payment.plan, patientProfileId: payment.patient_profile_id } });
+      await supabase.functions.invoke("admin-metrics", { body: { action, paymentId: payment.id, paymentPlan: payment.plan, patientProfileId: payment.patient_profile_id } });
       await fetchData();
     } catch (err) { console.error("Payment action error:", err); }
     setActionLoading(null);
   };
+
 
   const exportCSV = () => {
     const header = "Name,Plan,Signup Date,Last Active\n";
@@ -227,10 +254,11 @@ export default function AdminDashboard() {
           <CardHeader className="text-center space-y-2">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Lock className="w-8 h-8 text-primary" /></div>
             <CardTitle className="text-2xl">MedCircle Admin</CardTitle>
-            <p className="text-muted-foreground text-sm">Enter password to access the dashboard</p>
+            <p className="text-muted-foreground text-sm">Sign in with an admin account</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input type="password" placeholder="Enter admin password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="text-center text-lg" />
+            <Input type="email" placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
             {error && <p className="text-destructive text-sm text-center">{error}</p>}
             <Button onClick={handleLogin} className="w-full" size="lg"><Shield className="w-4 h-4 mr-2" /> Access Dashboard</Button>
           </CardContent>

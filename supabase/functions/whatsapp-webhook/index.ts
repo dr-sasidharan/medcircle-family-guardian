@@ -24,9 +24,35 @@ Deno.serve(async (req) => {
     const fromPhone = Deno.env.get("TWILIO_PHONE_NUMBER")!;
 
     // Twilio sends form-urlencoded data
-    const formData = await req.formData();
-    const incomingBody = (formData.get("Body") as string || "").trim().toLowerCase();
-    const fromNumber = (formData.get("From") as string || "").replace("whatsapp:", "");
+    const rawBody = await req.text();
+    const params = new URLSearchParams(rawBody);
+
+    // Validate Twilio signature: HMAC-SHA1(authToken, url + sortedConcatParams), base64
+    const signature = req.headers.get("X-Twilio-Signature") || "";
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+    const fullUrl = `${proto}://${host}${new URL(req.url).pathname}`;
+    const sortedKeys = [...params.keys()].sort();
+    const dataToSign = fullUrl + sortedKeys.map((k) => k + (params.get(k) ?? "")).join("");
+
+    const keyData = new TextEncoder().encode(authToken);
+    const cryptoKey = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: "SHA-1" },
+      false,
+      ["sign"]
+    );
+    const sigBuf = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(dataToSign));
+    const expected = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+    if (signature !== expected) {
+      console.warn("Invalid Twilio signature");
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    const incomingBody = (params.get("Body") || "").trim().toLowerCase();
+    const fromNumber = (params.get("From") || "").replace("whatsapp:", "");
+
 
     console.log(`WhatsApp reply from ${fromNumber}: "${incomingBody}"`);
 
