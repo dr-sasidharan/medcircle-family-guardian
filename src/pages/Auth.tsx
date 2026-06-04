@@ -203,7 +203,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 page-transition">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 page-transition" style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
       <div className="w-full max-w-md">
         <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft size={18} /> Back
