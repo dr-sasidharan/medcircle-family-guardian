@@ -254,10 +254,11 @@ export default function AdminDashboard() {
           <CardHeader className="text-center space-y-2">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Lock className="w-8 h-8 text-primary" /></div>
             <CardTitle className="text-2xl">MedCircle Admin</CardTitle>
-            <p className="text-muted-foreground text-sm">Enter password to access the dashboard</p>
+            <p className="text-muted-foreground text-sm">Sign in with an admin account</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input type="password" placeholder="Enter admin password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="text-center text-lg" />
+            <Input type="email" placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
             {error && <p className="text-destructive text-sm text-center">{error}</p>}
             <Button onClick={handleLogin} className="w-full" size="lg"><Shield className="w-4 h-4 mr-2" /> Access Dashboard</Button>
           </CardContent>
