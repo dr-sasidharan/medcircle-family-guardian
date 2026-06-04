@@ -65,6 +65,7 @@ const TIMEOUT_MS = 15 * 60 * 1000;
 
 export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState<Metrics>({
@@ -82,18 +83,43 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) { setAuthenticated(true); setError(""); }
-    else { setError("Incorrect password. Please try again."); }
+  const verifyAdmin = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .eq("role", "admin")
+      .limit(1);
+    return !!roles?.length;
   };
+
+  const handleLogin = async () => {
+    setError("");
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) { setError("Invalid credentials."); return; }
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      setError("This account does not have admin access.");
+      return;
+    }
+    setAuthenticated(true);
+  };
+
+  useEffect(() => {
+    verifyAdmin().then((ok) => { if (ok) setAuthenticated(true); });
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: adminData, error: fnError } = await supabase.functions.invoke("admin-metrics", {
-        body: { password: ADMIN_PASSWORD },
+        body: {},
       });
       if (fnError) throw fnError;
+
 
       const allUsers = adminData?.profiles || [];
       setUsers(allUsers);
