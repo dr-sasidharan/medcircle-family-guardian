@@ -263,6 +263,23 @@
   }
 }
 
+/* Reduce heavy decorative blur filters on mobile to keep scrolling smooth */
+@media (max-width: 768px) {
+  .blur-3xl { filter: blur(24px) !important; }
+  .blur-2xl { filter: blur(16px) !important; }
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+}
+
+/* Smooth momentum scrolling on iOS */
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-overflow-scrolling: touch; }
+
+
 
 
 /* Elderly Mode Overrides */
