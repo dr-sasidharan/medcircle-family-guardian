@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import LanguageToggle from "@/components/LanguageToggle";
-import logo from "@/assets/medcircle-logo.png";
+import logo from "@/assets/medcircle-logo.webp";
 import {
   Heart, ScanLine, Shield, Bell, Stethoscope, Pill,
   QrCode, Brain, ChevronRight, Star, Download, Sparkles,
