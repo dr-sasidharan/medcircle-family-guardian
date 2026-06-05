@@ -202,19 +202,19 @@ const ScanTablet = () => {
 
             {/* Purpose Card - English */}
             <div className="bg-card rounded-2xl border border-border p-5">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">What does it do?</h3>
+              <h3 className="text-sm font-bold text-primary mb-2">What does it do?</h3>
               <p className="text-foreground leading-relaxed">{result.purpose_en}</p>
             </div>
 
             {/* Purpose Card - Tamil */}
             <div className="bg-secondary rounded-2xl border border-border p-5">
-              <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">தமிழில்</h3>
+              <h3 className="text-sm font-bold text-primary mb-2">தமிழில்</h3>
               <p className="text-foreground leading-relaxed">{result.purpose_ta}</p>
             </div>
 
             {/* Expiry Explanation */}
             <div className={`rounded-2xl border-2 p-5 ${result.isExpired ? "bg-destructive/5 border-destructive/30" : "bg-success/5 border-success/30"}`}>
-              <h3 className={`text-sm font-bold uppercase tracking-wide mb-2 ${result.isExpired ? "text-destructive" : "text-success"}`}>
+              <h3 className={`text-sm font-bold mb-2 ${result.isExpired ? "text-destructive" : "text-success"}`}>
                 Expiry Status
               </h3>
               <p className="text-foreground text-sm leading-relaxed mb-2">{result.expiry_explanation_en}</p>
@@ -225,7 +225,7 @@ const ScanTablet = () => {
             <div className="bg-card rounded-2xl border border-border p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Thermometer size={18} className="text-primary" />
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide">Storage</h3>
+                <h3 className="text-sm font-bold text-primary">Storage</h3>
               </div>
               <p className="text-foreground text-sm leading-relaxed">{result.storage}</p>
             </div>
@@ -235,7 +235,7 @@ const ScanTablet = () => {
               <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
                 {/* Timing */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">When to take</label>
+                  <label className="text-xs font-bold text-muted-foreground">When to take</label>
                   <div className="flex gap-2">
                     {(["morning", "afternoon", "night"] as const).map((time) => (
                       <button
@@ -255,7 +255,7 @@ const ScanTablet = () => {
 
                 {/* Food Instruction */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food instruction</label>
+                  <label className="text-xs font-bold text-muted-foreground">Food instruction</label>
                   <div className="flex gap-2">
                     {(["before_food", "after_food", "with_food"] as const).map((food) => (
                       <button

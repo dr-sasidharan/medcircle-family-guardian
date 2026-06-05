@@ -74,7 +74,7 @@ const EmergencyCard = () => {
       <div className="bg-red-600 text-white p-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
           <Shield size={24} />
-          <span className="text-sm font-bold tracking-widest uppercase">Emergency Health Card</span>
+          <span className="text-sm font-bold tracking-widest">Emergency Health Card</span>
         </div>
         <h1 className="text-3xl font-extrabold">{data.name}</h1>
         <p className="text-red-100 mt-1">Age {data.age}</p>
@@ -85,7 +85,7 @@ const EmergencyCard = () => {
         <div className="bg-white border-2 border-red-200 rounded-2xl p-6 text-center shadow-sm">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Droplets size={22} className="text-red-600" />
-            <span className="text-sm font-bold text-gray-500 uppercase">Blood Group</span>
+            <span className="text-sm font-bold text-gray-500">Blood Group</span>
           </div>
           <p className="text-6xl font-extrabold text-red-600">{data.blood_group || "?"}</p>
         </div>

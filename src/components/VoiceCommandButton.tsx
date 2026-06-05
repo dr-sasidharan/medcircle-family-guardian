@@ -38,7 +38,7 @@ const VoiceCommandButton = () => {
         <div className="fixed bottom-28 right-4 z-[90] animate-slide-up">
           <div className="bg-card/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-3 shadow-xl space-y-1.5">
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Voice Language</span>
+              <span className="text-xs font-bold text-muted-foreground">Voice Language</span>
               <button onClick={() => setShowPanel(false)} className="p-1 rounded-lg hover:bg-secondary">
                 <X size={14} className="text-muted-foreground" />
               </button>
@@ -69,7 +69,7 @@ const VoiceCommandButton = () => {
         {/* Language indicator chip */}
         <button
           onClick={() => setShowPanel(!showPanel)}
-          className="px-2.5 py-1 rounded-full bg-card/90 backdrop-blur border border-primary/15 text-[10px] font-bold text-muted-foreground uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+          className="px-2.5 py-1 rounded-full bg-card/90 backdrop-blur border border-primary/15 text-[10px] font-bold text-muted-foreground shadow-md hover:shadow-lg transition-all"
         >
           {langLabels.find((l) => l.code === voiceLang)?.label}
         </button>

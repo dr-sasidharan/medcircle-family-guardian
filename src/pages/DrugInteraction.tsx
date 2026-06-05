@@ -131,7 +131,7 @@ const DrugInteraction = () => {
         {/* Verification pipeline indicator */}
         {loading && (
           <div className="bg-card border border-border rounded-2xl p-4 space-y-2 animate-fade-in">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Verification Pipeline</p>
+            <p className="text-xs font-bold text-muted-foreground">Verification Pipeline</p>
             <div className="flex items-center gap-2">
               <Loader2 size={14} className="animate-spin text-primary" />
               <span className="text-sm text-foreground">Layer 1: Looking up RxNorm identifiers...</span>
@@ -190,7 +190,7 @@ const DrugInteraction = () => {
               {/* RxNorm Source Details */}
               {isRxNormVerified && result.rxnorm_interactions.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Source Data</p>
+                  <p className="text-xs font-bold text-muted-foreground">Source Data</p>
                   {result.rxnorm_interactions.map((interaction, i) => (
                     <div key={i} className="bg-card/50 border border-border rounded-xl p-3">
                       <div className="flex items-center gap-2 mb-1">

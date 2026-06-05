@@ -259,7 +259,7 @@ const CaretakerDashboard = () => {
 
           {/* Medicine Status */}
           <div className="space-y-2">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Medicine Status</h3>
+            <h3 className="text-sm font-bold text-muted-foreground">Medicine Status</h3>
             {doses.map((d) => (
               <div key={d.id} className={`flex items-center justify-between bg-card rounded-xl p-3.5 border ${d.missed && !d.taken ? "border-destructive/30" : "border-border"}`}>
                 <div>
@@ -277,7 +277,7 @@ const CaretakerDashboard = () => {
 
           {/* Refill Tracker */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Refill Tracker</h3>
+            <h3 className="text-sm font-bold text-muted-foreground">Refill Tracker</h3>
             {refills.map((r, i) => {
               const daysLeft = r.tablets_remaining;
               const pct = (r.tablets_remaining / r.total_tablets) * 100;
@@ -302,7 +302,7 @@ const CaretakerDashboard = () => {
         <div className="px-4 mt-5 space-y-5">
           {/* Weekly Chart */}
           <div>
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">{t("weekly_adherence")}</h3>
+            <h3 className="text-sm font-bold text-muted-foreground mb-3">{t("weekly_adherence")}</h3>
             <div className="bg-card rounded-2xl border border-border p-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
@@ -320,7 +320,7 @@ const CaretakerDashboard = () => {
 
           {/* Monthly Calendar */}
           <div>
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Monthly View — March 2026</h3>
+            <h3 className="text-sm font-bold text-muted-foreground mb-3">Monthly View — March 2026</h3>
             <div className="bg-card rounded-2xl border border-border p-4">
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
@@ -354,7 +354,7 @@ const CaretakerDashboard = () => {
       {/* VISITS TAB */}
       {activeTab === "visits" && (
         <div className="px-4 mt-5 space-y-4">
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Hospital Visits</h3>
+          <h3 className="text-sm font-bold text-muted-foreground">Hospital Visits</h3>
           {visits.length === 0 ? (
             <p className="text-center text-muted-foreground py-8 text-sm">No hospital visits recorded</p>
           ) : (
@@ -419,14 +419,14 @@ const CaretakerDashboard = () => {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">Emergency Contact</h3>
+                <h3 className="text-sm font-bold text-primary mb-2">Emergency Contact</h3>
                 <a href={`tel:${profile.emergency_contact}`} className="flex items-center gap-3 text-lg font-bold text-foreground">
                   <Phone size={20} className="text-primary" /> {profile.emergency_contact}
                 </a>
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">Allergies</h3>
+                <h3 className="text-sm font-bold text-primary mb-2">Allergies</h3>
                 <div className="flex flex-wrap gap-2">
                   {(profile.allergies || []).map((a, i) => (
                     <span key={i} className="bg-destructive/10 text-destructive px-3 py-1.5 rounded-lg text-sm font-bold">{a}</span>
@@ -435,7 +435,7 @@ const CaretakerDashboard = () => {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">Chronic Conditions</h3>
+                <h3 className="text-sm font-bold text-primary mb-2">Chronic Conditions</h3>
                 <div className="flex flex-wrap gap-2">
                   {(profile.chronic_conditions || []).map((c, i) => (
                     <span key={i} className="bg-warning/10 text-warning px-3 py-1.5 rounded-lg text-sm font-bold">{c}</span>
@@ -444,12 +444,12 @@ const CaretakerDashboard = () => {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">Critical Notes</h3>
+                <h3 className="text-sm font-bold text-primary mb-2">Critical Notes</h3>
                 <p className="text-foreground leading-relaxed">{profile.emergency_notes}</p>
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-2">Current Medicines</h3>
+                <h3 className="text-sm font-bold text-primary mb-2">Current Medicines</h3>
                 <div className="space-y-2">
                   {doses.map((d) => (
                     <div key={d.id} className="flex items-center gap-2">

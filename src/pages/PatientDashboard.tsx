@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useElderlyMode } from "@/contexts/ElderlyModeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,10 +8,11 @@ import BottomNav from "@/components/BottomNav";
 import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
-import WhatsAppPreview from "@/components/WhatsAppPreview";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell, Stethoscope, Undo2, X, Download } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
+import {
+  Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell,
+  Stethoscope, Undo2, X, Download, Clock, Flame, TrendingUp, ShieldCheck, ChevronRight, Info,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationReminders } from "@/hooks/useNotificationReminders";
 
@@ -29,19 +30,44 @@ interface MissedDose {
   scheduled_time: string;
 }
 
-const MEDICINE_ICONS = ["💊", "🩹", "💉", "🧬", "🫀", "🧪"];
+const TIMING_HOURS: Record<string, number> = { morning: 8, afternoon: 14, night: 21 };
+const TIMING_LABEL: Record<string, string> = { morning: "Morning", afternoon: "Afternoon", night: "Evening" };
+const TIMING_EMOJI: Record<string, string> = { morning: "☀️", afternoon: "🌤️", night: "🌙" };
 
-const getFoodLabels = (t: (key: string) => string): Record<string, string> => ({
-  before_food: t("before_food"),
-  after_food: t("after_food"),
-  with_food: t("with_food"),
-});
+// Lightweight rule-based alerts derived from medicine names / food instructions
+const buildAiAlerts = (medicines: Medicine[], missedCount: number) => {
+  const alerts: { severity: "critical" | "moderate" | "info" | "good"; text: string }[] = [];
+  const lc = medicines.map((m) => m.name.toLowerCase());
 
-const sectionConfig = (t: (key: string) => string) => ({
-  morning: { emoji: "☀️", label: t("morning"), color: "hsl(var(--warning))" },
-  afternoon: { emoji: "🌤️", label: t("afternoon"), color: "hsl(var(--blue, 217 91% 60%))" },
-  night: { emoji: "🌙", label: t("night"), color: "hsl(var(--violet, 258 90% 66%))" },
-});
+  if (lc.some((n) => n.includes("metrogyl") || n.includes("metronidazole") || n.includes("tinidazole"))) {
+    alerts.push({ severity: "critical", text: "Avoid alcohol while taking Metronidazole — can cause severe reaction." });
+  }
+  if (lc.some((n) => n.includes("aceclofenac") || n.includes("ibuprofen") || n.includes("diclofenac") || n.includes("naproxen"))) {
+    alerts.push({ severity: "moderate", text: "Take pain relievers after food to avoid stomach irritation." });
+  }
+  if (lc.some((n) => n.includes("warfarin")) && lc.some((n) => n.includes("aspirin"))) {
+    alerts.push({ severity: "critical", text: "Warfarin + Aspirin together — high bleeding risk. Confirm with your doctor." });
+  }
+  if (lc.some((n) => n.includes("metformin"))) {
+    alerts.push({ severity: "info", text: "Take Metformin with meals to reduce nausea." });
+  }
+  if (missedCount > 0) {
+    alerts.push({ severity: "moderate", text: `${missedCount} dose${missedCount > 1 ? "s" : ""} missed today — please catch up if safe.` });
+  }
+  if (alerts.length === 0) {
+    alerts.push({ severity: "good", text: "No significant interactions or warnings detected today." });
+  }
+  return alerts.slice(0, 4);
+};
+
+const severityStyle = (s: string) => {
+  switch (s) {
+    case "critical": return { bg: "bg-destructive/10", border: "border-destructive/30", icon: "text-destructive", Icon: AlertTriangle };
+    case "moderate": return { bg: "bg-warning/10", border: "border-warning/30", icon: "text-warning", Icon: AlertTriangle };
+    case "good":     return { bg: "bg-success/10", border: "border-success/30", icon: "text-success", Icon: ShieldCheck };
+    default:         return { bg: "bg-primary/10", border: "border-primary/30", icon: "text-primary", Icon: Info };
+  }
+};
 
 const PatientDashboard = () => {
   const { t } = useLanguage();
@@ -49,13 +75,15 @@ const PatientDashboard = () => {
   const navigate = useNavigate();
   const { canInstall, install } = useInstallPrompt();
   const [dismissedInstall, setDismissedInstall] = useState(false);
-  const FOOD_LABELS = getFoodLabels(t);
   useNotificationReminders();
+
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [takenIds, setTakenIds] = useState<Set<string>>(new Set());
   const [missedDoses, setMissedDoses] = useState<MissedDose[]>([]);
   const [patientName, setPatientName] = useState("Patient");
+  const [weekly, setWeekly] = useState<{ day: string; pct: number }[]>([]);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,11 +101,10 @@ const PatientDashboard = () => {
       const { data: takenDoses } = await supabase.from("doses").select("medicine_id, scheduled_time").eq("scheduled_date", today).eq("taken", true);
       setTakenIds(new Set((takenDoses || []).map((d: any) => `${d.medicine_id}:${d.scheduled_time}`)));
 
+      // mark missed
       const now = new Date();
       const currentHour = now.getHours();
-      const TIMING_HOURS: Record<string, number> = { morning: 8, afternoon: 14, night: 21 };
       const GRACE_MINUTES = 30;
-
       for (const med of medsList) {
         const timings = med.timing.split(",");
         for (const timingSlot of timings) {
@@ -86,194 +113,129 @@ const PatientDashboard = () => {
           const totalNow = currentHour * 60 + now.getMinutes();
           const targetMin = targetHour * 60 + GRACE_MINUTES;
           if (totalNow < targetMin) continue;
-
-          const { data: existing } = await supabase
-            .from("doses")
+          const { data: existing } = await supabase.from("doses")
             .select("id, taken, missed")
-            .eq("medicine_id", med.id)
-            .eq("scheduled_date", today)
-            .eq("scheduled_time", timingSlot)
-            .maybeSingle();
-
+            .eq("medicine_id", med.id).eq("scheduled_date", today).eq("scheduled_time", timingSlot).maybeSingle();
           if (existing?.taken || existing?.missed) continue;
-
-          if (existing) {
-            await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
-          } else {
-            await supabase.from("doses").insert({
-              medicine_id: med.id,
-              user_id: user.id,
-              scheduled_date: today,
-              scheduled_time: timingSlot,
-              taken: false,
-              missed: true,
-            });
-          }
+          if (existing) await supabase.from("doses").update({ missed: true }).eq("id", existing.id);
+          else await supabase.from("doses").insert({ medicine_id: med.id, user_id: user.id, scheduled_date: today, scheduled_time: timingSlot, taken: false, missed: true });
         }
       }
 
-      const { data: missed } = await supabase
-        .from("doses")
-        .select("id, scheduled_time, medicines(name)")
-        .eq("scheduled_date", today)
-        .eq("missed", true)
-        .eq("taken", false);
-
-      const missedList = (missed || []).map((d: any) => ({
-        id: d.id,
-        medicine_name: d.medicines?.name || "Unknown",
-        scheduled_time: d.scheduled_time,
-      }));
+      const { data: missed } = await supabase.from("doses").select("id, scheduled_time, medicines(name)")
+        .eq("scheduled_date", today).eq("missed", true).eq("taken", false);
+      const missedList = (missed || []).map((d: any) => ({ id: d.id, medicine_name: d.medicines?.name || "Unknown", scheduled_time: d.scheduled_time }));
       setMissedDoses(missedList);
 
-      for (const missed of missedList) {
-        supabase.functions.invoke("caretaker-alert", {
-          body: {
-            type: "missed_dose",
-            details: {
-              medicine_name: missed.medicine_name,
-              timing: missed.scheduled_time,
-            },
-          },
-        }).catch(() => {});
+      // 7-day adherence
+      const days: { day: string; pct: number; date: string }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const iso = d.toISOString().split("T")[0];
+        const label = d.toLocaleDateString("en-IN", { weekday: "short" });
+        days.push({ day: label, pct: 0, date: iso });
       }
+      const totalSlots = medsList.reduce((s, m) => s + m.timing.split(",").length, 0);
+      if (totalSlots > 0) {
+        const { data: weekDoses } = await supabase.from("doses")
+          .select("scheduled_date, taken")
+          .gte("scheduled_date", days[0].date).lte("scheduled_date", days[6].date)
+          .eq("user_id", user.id);
+        const byDay: Record<string, number> = {};
+        (weekDoses || []).forEach((d: any) => { if (d.taken) byDay[d.scheduled_date] = (byDay[d.scheduled_date] || 0) + 1; });
+        days.forEach((d) => { d.pct = Math.min(100, Math.round(((byDay[d.date] || 0) / totalSlots) * 100)); });
+      }
+      setWeekly(days.map(({ day, pct }) => ({ day, pct })));
+
+      // streak = consecutive days (ending yesterday or today) with >= 80% adherence
+      let s = 0;
+      for (let i = days.length - 1; i >= 0; i--) {
+        if (days[i].pct >= 80) s++; else break;
+      }
+      setStreak(s);
 
       setLoading(false);
     };
 
     fetchData();
-
-    const channel = supabase
-      .channel("dashboard-rt")
+    const channel = supabase.channel("dashboard-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "doses" }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "medicines" }, () => fetchData())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const handleMarkTaken = async (medicineId: string, timing: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser(); if (!user) return;
+      const today = new Date().toISOString().split("T")[0];
+      const med = medicines.find((m) => m.id === medicineId);
+      const { data: existing } = await supabase.from("doses").select("id")
+        .eq("medicine_id", medicineId).eq("scheduled_date", today).eq("scheduled_time", timing).maybeSingle();
+      if (existing) await supabase.from("doses").update({ taken: true, missed: false, taken_at: new Date().toISOString() }).eq("id", existing.id);
+      else await supabase.from("doses").insert({ medicine_id: medicineId, user_id: user.id, scheduled_date: today, scheduled_time: timing, taken: true, missed: false, taken_at: new Date().toISOString() });
+      setTakenIds((prev) => new Set([...prev, `${medicineId}:${timing}`]));
+      setMissedDoses((prev) => prev.filter((d) => !(d.medicine_name === med?.name && d.scheduled_time === timing)));
+      toast.success(`${med?.name} marked as taken`, {
+        action: { label: "Undo", onClick: () => handleUndoTaken(medicineId, timing) },
+        duration: 4000,
+      });
+    } catch { toast.error("Failed to mark as taken"); }
+  };
 
   const handleUndoTaken = async (medicineId: string, timing: string) => {
     try {
       const today = new Date().toISOString().split("T")[0];
-      await supabase
-        .from("doses")
-        .update({ taken: false, taken_at: null })
-        .eq("medicine_id", medicineId)
-        .eq("scheduled_date", today)
-        .eq("scheduled_time", timing);
-
-      setTakenIds((prev) => {
-        const next = new Set(prev);
-        next.delete(`${medicineId}:${timing}`);
-        return next;
-      });
+      await supabase.from("doses").update({ taken: false, taken_at: null })
+        .eq("medicine_id", medicineId).eq("scheduled_date", today).eq("scheduled_time", timing);
+      setTakenIds((prev) => { const n = new Set(prev); n.delete(`${medicineId}:${timing}`); return n; });
       toast.success("Undo successful");
-    } catch {
-      toast.error("Failed to undo");
-    }
+    } catch { toast.error("Failed to undo"); }
   };
 
-  const handleMarkMissed = async (medicineId: string, timing: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const today = new Date().toISOString().split("T")[0];
-      const med = medicines.find((m) => m.id === medicineId);
-
-      const { data: existing } = await supabase
-        .from("doses")
-        .select("id")
-        .eq("medicine_id", medicineId)
-        .eq("scheduled_date", today)
-        .eq("scheduled_time", timing)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase.from("doses").update({ taken: false, missed: true, taken_at: null }).eq("id", existing.id);
-      } else {
-        await supabase.from("doses").insert({
-          medicine_id: medicineId,
-          user_id: user.id,
-          scheduled_date: today,
-          scheduled_time: timing,
-          taken: false,
-          missed: true,
-        });
-      }
-
-      setMissedDoses((prev) => [...prev, { id: medicineId, medicine_name: med?.name || "", scheduled_time: timing }]);
-      
-      supabase.functions.invoke("caretaker-alert", {
-        body: {
-          type: "missed_dose",
-          details: { medicine_name: med?.name, timing },
-        },
-      }).catch(() => {});
-
-      toast(`${med?.name} marked as skipped`, {
-        action: { label: "Undo", onClick: () => handleMarkTaken(medicineId, timing) },
-        duration: 5000,
-      });
-    } catch {
-      toast.error("Failed to mark as missed");
-    }
-  };
-
-  const handleMarkTaken = async (medicineId: string, timing: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const today = new Date().toISOString().split("T")[0];
-      const med = medicines.find((m) => m.id === medicineId);
-
-      const { data: existing } = await supabase
-        .from("doses")
-        .select("id")
-        .eq("medicine_id", medicineId)
-        .eq("scheduled_date", today)
-        .eq("scheduled_time", timing)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase.from("doses").update({ taken: true, missed: false, taken_at: new Date().toISOString() }).eq("id", existing.id);
-      } else {
-        await supabase.from("doses").insert({
-          medicine_id: medicineId,
-          user_id: user.id,
-          scheduled_date: today,
-          scheduled_time: timing,
-          taken: true,
-          missed: false,
-          taken_at: new Date().toISOString(),
-        });
-      }
-
-      setTakenIds((prev) => new Set([...prev, `${medicineId}:${timing}`]));
-      setMissedDoses((prev) => prev.filter((d) => !(d.medicine_name === med?.name && d.scheduled_time === timing)));
-      toast.success(`${med?.name} marked as taken!`, {
-        action: {
-          label: "Undo",
-          onClick: () => handleUndoTaken(medicineId, timing),
-        },
-        duration: 5000,
-      });
-    } catch (err: any) {
-      toast.error("Failed to mark as taken");
-    }
-  };
-
+  // Derived metrics
   const totalCount = medicines.reduce((sum, m) => sum + m.timing.split(",").length, 0);
   const takenCount = takenIds.size;
-  const progressPercent = totalCount > 0 ? (takenCount / totalCount) * 100 : 0;
+  const missedCount = missedDoses.length;
+  const pendingCount = Math.max(0, totalCount - takenCount - missedCount);
+  const progressPercent = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
 
-  const sections: { key: string }[] = [
-    { key: "morning" },
-    { key: "afternoon" },
-    { key: "night" },
-  ];
+  // Build all today's slots
+  const todaySlots = useMemo(() => {
+    const slots: { med: Medicine; timing: string; status: "taken" | "missed" | "pending"; hour: number }[] = [];
+    medicines.forEach((med) => {
+      med.timing.split(",").forEach((tm) => {
+        const key = `${med.id}:${tm}`;
+        const status: "taken" | "missed" | "pending" =
+          takenIds.has(key) ? "taken"
+          : missedDoses.some((d) => d.medicine_name === med.name && d.scheduled_time === tm) ? "missed"
+          : "pending";
+        slots.push({ med, timing: tm, status, hour: TIMING_HOURS[tm] ?? 12 });
+      });
+    });
+    return slots.sort((a, b) => a.hour - b.hour);
+  }, [medicines, takenIds, missedDoses]);
 
-  // Elderly simplified home
+  // Next due dose
+  const nextDose = useMemo(() => {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const pending = todaySlots.filter((s) => s.status === "pending");
+    // prefer future; otherwise earliest pending past
+    const future = pending.filter((s) => s.hour * 60 >= nowMin - 30);
+    return (future[0] ?? pending[0]) ?? null;
+  }, [todaySlots]);
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good Morning";
+    if (h < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const aiAlerts = useMemo(() => buildAiAlerts(medicines, missedCount), [medicines, missedCount]);
+
+  // Elderly simplified home (unchanged)
   if (elderlyMode) {
     return (
       <div className="min-h-screen bg-background pb-24 page-transition">
@@ -281,70 +243,29 @@ const PatientDashboard = () => {
           <h1 className="text-2xl font-bold">{t("good_morning")}</h1>
           <p className="text-primary-foreground/70 mt-1">{takenCount} {t("of")} {totalCount} {t("medicines_taken_label")}</p>
           <div className="w-full h-4 bg-primary-foreground/20 rounded-full overflow-hidden mt-3">
-            <div
-              className="h-full rounded-full bg-primary-foreground animate-progress-fill"
-              style={{ "--progress-width": `${progressPercent}%`, width: `${progressPercent}%` } as React.CSSProperties}
-            />
+            <div className="h-full rounded-full bg-primary-foreground animate-progress-fill"
+              style={{ "--progress-width": `${progressPercent}%`, width: `${progressPercent}%` } as React.CSSProperties} />
           </div>
         </div>
-
         {missedDoses.length > 0 && (
           <div className="px-4 mt-4 space-y-2">
             {missedDoses.map((d) => (
               <div key={d.id} className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 flex items-center gap-3 pulse-alert">
                 <AlertTriangle className="text-destructive flex-shrink-0" size={24} />
-                <span className="text-foreground font-bold text-base">
-                  {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
-                </span>
+                <span className="text-foreground font-bold text-base">{t("missed_label")}: {d.medicine_name} ({d.scheduled_time})</span>
               </div>
             ))}
           </div>
         )}
-
         <RefillBanner />
-
-        {canInstall && !dismissedInstall && (
-          <div className="mx-4 mt-4 bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 flex-shrink-0">
-              <Download size={20} className="text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm text-foreground">Install MedCircle</p>
-              <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
-            </div>
-            <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-primary text-primary-foreground">Install</button>
-            <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
-          </div>
-        )}
-
         <div className="px-4 mt-8 grid grid-cols-2 gap-4">
-          <button onClick={() => navigate("/reminders")}
-            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
-            <Pill size={40} className="text-primary" />
-            <span className="text-lg font-bold text-foreground">{t("medicines")}</span>
+          <button onClick={() => navigate("/reminders")} className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <Pill size={40} className="text-primary" /><span className="text-lg font-bold text-foreground">{t("medicines")}</span>
           </button>
-          <button onClick={() => navigate("/scan")}
-            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
-            <ScanLine size={40} className="text-primary" />
-            <span className="text-lg font-bold text-foreground">{t("scan")}</span>
-          </button>
-          <button onClick={() => navigate("/drug-interaction")}
-            className="bg-card border-2 border-warning/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
-            <FlaskConical size={40} className="text-warning" />
-            <span className="text-lg font-bold text-foreground">{t("drug_interaction_checker")}</span>
-          </button>
-          <button onClick={() => navigate("/hospital-booking")}
-            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
-            <Stethoscope size={40} className="text-primary" />
-            <span className="text-lg font-bold text-foreground">{t("book_checkup")}</span>
-          </button>
-          <button onClick={() => navigate("/profile")}
-            className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
-            <Settings size={40} className="text-primary" />
-            <span className="text-lg font-bold text-foreground">{t("profile")}</span>
+          <button onClick={() => navigate("/scan")} className="bg-card border-2 border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-4 min-h-[140px] shadow-sm">
+            <ScanLine size={40} className="text-primary" /><span className="text-lg font-bold text-foreground">{t("scan")}</span>
           </button>
         </div>
-
         <EmergencyInfoButton />
         <BottomNav />
       </div>
@@ -352,264 +273,256 @@ const PatientDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-24 page-transition">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-5 relative overflow-hidden">
-        <div className="absolute top-[-40px] right-[-40px] w-[140px] h-[140px] rounded-full bg-white/5" />
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 flex items-center justify-center text-xl font-bold bg-white/20 rounded-[14px] text-white">
-                {patientName.charAt(0)}
+    <div className="min-h-screen bg-muted/30 pb-24 page-transition font-sans">
+      {/* === Compact Header === */}
+      <header className="bg-primary text-primary-foreground px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 flex items-center justify-center text-sm font-semibold bg-white/15 rounded-xl text-white">
+              {patientName.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white/70 text-[11px] leading-tight">{new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" })}</p>
+              <h1 className="text-base font-semibold text-white leading-tight truncate">{greeting()}, {patientName}</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => navigate("/notifications")} className="p-2 rounded-lg hover:bg-white/10"><Bell size={16} className="text-white" /></button>
+            <button onClick={() => navigate("/settings")} className="p-2 rounded-lg hover:bg-white/10"><Settings size={16} className="text-white" /></button>
+            <LanguageToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* === SECTION 1: Next Action === */}
+      <section className="px-4 -mt-2">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+          {nextDose ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-medium text-muted-foreground">Next Medicine Due</span>
+                <span className="flex items-center gap-1 text-[11px] font-medium text-primary">
+                  <Clock size={12} /> {TIMING_LABEL[nextDose.timing]} • {String(nextDose.hour).padStart(2, "0")}:00
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl">{TIMING_EMOJI[nextDose.timing]}</div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-semibold text-foreground truncate">{nextDose.med.name}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {nextDose.med.dosage} • {nextDose.med.food_instruction.replace("_", " ")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => handleMarkTaken(nextDose.med.id, nextDose.timing)}
+                  className="flex-1 bg-primary text-primary-foreground rounded-xl py-3 text-sm font-medium hover:opacity-95 transition-opacity">
+                  Take Now
+                </button>
+                <button onClick={() => navigate(`/medicine-detail/${nextDose.med.id}`)}
+                  className="px-4 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                  Details
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-5 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center">
+                <Check size={22} className="text-success" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">{patientName}</h1>
-                <p className="text-white/60 text-sm">
-                  {new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" })}
-                </p>
+                <h2 className="text-base font-semibold text-foreground">All caught up</h2>
+                <p className="text-sm text-muted-foreground">No medicines due right now.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => navigate("/notifications")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-                <Bell size={18} className="text-white" />
-              </button>
-              <button onClick={() => navigate("/settings")} className="p-2 rounded-xl bg-white/10 hover:bg-white/20">
-                <Settings size={18} className="text-white" />
-              </button>
-              <LanguageToggle />
-            </div>
-          </div>
-
-          {/* Progress */}
-          <div className="bg-white/10 rounded-2xl p-4 mt-2">
-            <div className="flex justify-between items-baseline mb-2">
-              <span className="font-bold text-2xl text-white">
-                {takenCount}<span className="text-white/50 text-base font-normal">/{totalCount}</span>
-              </span>
-              <span className="font-bold text-emerald-300">{Math.round(progressPercent)}%</span>
-            </div>
-            <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-emerald-400 animate-progress-fill"
-                style={{ "--progress-width": `${progressPercent}%`, width: `${progressPercent}%` } as React.CSSProperties}
-              />
-            </div>
-            <p className="text-white/50 text-xs mt-2">{t("medicines_taken_label")}</p>
-          </div>
+          )}
         </div>
-      </div>
+      </section>
 
-      {/* Missed Dose Alerts */}
-      {missedDoses.length > 0 && (
-        <div className="px-4 mt-4 space-y-2">
-          {missedDoses.map((d) => (
-            <div key={d.id} className="bg-destructive/10 border border-destructive/30 rounded-2xl p-3.5 flex items-center gap-3 pulse-alert">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-destructive/20 flex-shrink-0">
-                <AlertTriangle size={18} className="text-destructive" />
-              </div>
-              <span className="text-foreground font-bold text-sm">
-                {t("missed_label")}: {d.medicine_name} ({d.scheduled_time})
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <RefillBanner />
-
-      {canInstall && !dismissedInstall && (
-        <div className="mx-4 mt-4 bg-card border border-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 flex-shrink-0">
-            <Download size={20} className="text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-foreground">Install MedCircle</p>
-            <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
-          </div>
-          <button onClick={install} className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-primary text-primary-foreground">Install</button>
-          <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground hover:text-foreground"><X size={16} /></button>
-        </div>
-      )}
-
-      {/* Weekly Adherence Chart */}
-      {medicines.length > 0 && (() => {
-        const getColor = (pct: number) => pct >= 80 ? "hsl(var(--success))" : pct >= 50 ? "hsl(var(--warning))" : "hsl(var(--destructive))";
-        const weeklyData = [
-          { day: "Mon", pct: 100 }, { day: "Tue", pct: 83 }, { day: "Wed", pct: 67 },
-          { day: "Thu", pct: 100 }, { day: "Fri", pct: 50 }, { day: "Sat", pct: 83 },
-          { day: "Sun", pct: Math.round(progressPercent) },
-        ];
-        return (
-          <div className="px-4 mt-5">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">{t("weekly_progress")}</h3>
-            <div className="bg-card border border-border rounded-2xl p-4 h-48 shadow-sm">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData}>
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                  <YAxis hide domain={[0, 100]} />
-                  <Bar dataKey="pct" radius={[6, 6, 0, 0]}>
-                    {weeklyData.map((entry, index) => (
-                      <Cell key={index} fill={getColor(entry.pct)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        );
-      })()}
-
-      {!loading && medicines.length === 0 && (
-        <div className="px-4 mt-12 text-center animate-fade-in">
-          <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Pill size={48} className="text-primary" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground">{t("no_medicines_title")}</h2>
-          <p className="text-muted-foreground text-sm mt-2 max-w-xs mx-auto">{t("add_first_medicine_tracking")}</p>
-          <button onClick={() => navigate("/add-medicine")}
-            className="mt-6 bg-primary text-primary-foreground px-8 py-4 rounded-2xl text-base font-bold shadow-lg hover:opacity-90 transition-opacity">
-            {t("add_medicine_btn")}
-          </button>
-        </div>
-      )}
-
-      {/* Medicine Sections */}
-      {medicines.length > 0 && (
-        <div className="px-4 mt-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-lg text-foreground">{t("todays_medicines")}</h2>
-            <button
-              onClick={() => navigate("/scan")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20"
-            >
-              <ScanLine size={16} className="text-primary" />
-              <span className="text-xs font-bold text-primary">{t("scan")}</span>
-            </button>
-          </div>
-          {sections.map((section) => {
-            const configs = sectionConfig(t);
-            const config = configs[section.key as keyof typeof configs];
-            const sectionMeds = medicines.filter((m) => m.timing.split(",").includes(section.key));
-            if (sectionMeds.length === 0) return null;
+      {/* === SECTION 2: AI Health Alerts === */}
+      <section className="px-4 mt-4">
+        <h3 className="text-sm font-semibold text-foreground mb-2">AI Health Alerts</h3>
+        <div className="space-y-2">
+          {aiAlerts.map((a, i) => {
+            const s = severityStyle(a.severity);
             return (
-              <div key={section.key}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex items-center gap-2 bg-card border border-border rounded-full px-3 py-1.5 shadow-sm flex-shrink-0">
-                    <span className="text-sm">{config.emoji}</span>
-                    <span className="font-bold text-sm text-foreground">{config.label}</span>
-                  </div>
-                  <div className="flex-1 h-[1px] bg-border rounded-full" />
-                </div>
-
-                <div className="space-y-3">
-                  {sectionMeds.map((med, idx) => {
-                    const isTaken = takenIds.has(`${med.id}:${section.key}`);
-                    const isMissed = missedDoses.some((d) => d.medicine_name === med.name && d.scheduled_time === section.key);
-                    const iconIdx = idx % MEDICINE_ICONS.length;
-
-                    return (
-                      <div
-                        key={`${med.id}-${section.key}`}
-                        className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer shadow-sm animate-slide-up hover:shadow-md transition-shadow"
-                        style={{
-                          borderLeftWidth: "4px",
-                          borderLeftColor: isTaken ? "hsl(var(--success))" : isMissed ? "hsl(var(--destructive))" : "hsl(var(--warning))",
-                          animationDelay: `${idx * 80}ms`,
-                        }}
-                        onClick={() => navigate(`/medicine-detail/${med.id}`)}
-                      >
-                        <div className="w-[46px] h-[46px] flex items-center justify-center flex-shrink-0 text-xl bg-muted rounded-[14px]">
-                          {MEDICINE_ICONS[iconIdx]}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-[15px] text-foreground truncate">{med.name}</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-muted-foreground text-xs">{med.dosage}</span>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                              med.food_instruction === "before_food" ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
-                            }`}>
-                              {FOOD_LABELS[med.food_instruction] || med.food_instruction}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                          {isTaken ? (
-                            <>
-                              <div className="px-3 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1 bg-success pulse-green">
-                                <Check size={14} /> {t("taken_label")}
-                              </div>
-                              <button
-                                onClick={() => handleUndoTaken(med.id, section.key)}
-                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                                title="Undo"
-                              >
-                                <Undo2 size={16} />
-                              </button>
-                            </>
-                          ) : isMissed ? (
-                            <div className="flex items-center gap-1.5">
-                              <div className="px-3 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1 bg-destructive">
-                                <X size={14} /> {t("missed_label")}
-                              </div>
-                              <button
-                                onClick={() => handleMarkTaken(med.id, section.key)}
-                                className="px-3 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
-                              >
-                                {t("take_now")}
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleMarkTaken(med.id, section.key)}
-                                className="px-3 py-2 rounded-xl text-xs font-bold text-foreground border border-warning/40 bg-card hover:bg-muted transition-colors"
-                              >
-                                {t("mark_taken_btn")}
-                              </button>
-                              <button
-                                onClick={() => handleMarkMissed(med.id, section.key)}
-                                className="p-2 rounded-xl text-xs text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                                title="Skip / Missed"
-                              >
-                                <X size={16} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div key={i} className={`${s.bg} ${s.border} border rounded-xl px-3 py-2.5 flex items-start gap-2.5`}>
+                <s.Icon size={16} className={`${s.icon} mt-0.5 flex-shrink-0`} />
+                <p className="text-[13px] text-foreground leading-snug">{a.text}</p>
               </div>
             );
           })}
         </div>
+      </section>
+
+      <RefillBanner />
+
+      {canInstall && !dismissedInstall && (
+        <div className="mx-4 mt-4 bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-sm">
+          <Download size={18} className="text-primary flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm text-foreground">Install MedCircle</p>
+            <p className="text-xs text-muted-foreground">Add to home screen for quick access</p>
+          </div>
+          <button onClick={install} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground">Install</button>
+          <button onClick={() => setDismissedInstall(true)} className="p-1 text-muted-foreground"><X size={14} /></button>
+        </div>
       )}
+
+      {/* === SECTION 3: Today's Summary === */}
+      <section className="px-4 mt-5">
+        <h3 className="text-sm font-semibold text-foreground mb-2">Today's Summary</h3>
+        <div className="grid grid-cols-5 gap-2">
+          <Stat icon={<Check size={14} className="text-success" />} value={takenCount} label="Taken" />
+          <Stat icon={<Clock size={14} className="text-warning" />} value={pendingCount} label="Pending" />
+          <Stat icon={<AlertTriangle size={14} className="text-destructive" />} value={missedCount} label="Missed" />
+          <Stat icon={<Flame size={14} className="text-orange-500" />} value={streak} label="Streak" />
+          <Stat icon={<Pill size={14} className="text-primary" />} value={medicines.length} label="Total" />
+        </div>
+      </section>
+
+      {/* === SECTION 4: Adherence Analytics === */}
+      <section className="px-4 mt-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-foreground">Adherence Analytics</h3>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp size={12} /> 7-day</span>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+          <div className="flex items-baseline justify-between mb-3">
+            <div>
+              <p className="text-[11px] text-muted-foreground">Adherence Score</p>
+              <p className="text-3xl font-bold text-foreground leading-tight">{progressPercent}<span className="text-base text-muted-foreground font-normal">%</span></p>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] text-muted-foreground">Today</p>
+              <p className="text-sm font-medium text-foreground">{takenCount}/{totalCount} doses</p>
+            </div>
+          </div>
+          <div className="flex items-end gap-1.5 h-20">
+            {weekly.map((d, i) => {
+              const color = d.pct >= 80 ? "bg-success" : d.pct >= 50 ? "bg-warning" : d.pct > 0 ? "bg-destructive" : "bg-muted";
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full flex-1 flex items-end">
+                    <div className={`w-full rounded-md ${color} transition-all`} style={{ height: `${Math.max(8, d.pct)}%` }} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{d.day}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* === SECTION 5: Medication Timeline === */}
+      <section className="px-4 mt-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-foreground">Today's Timeline</h3>
+          <button onClick={() => navigate("/reminders")} className="flex items-center gap-0.5 text-xs text-primary font-medium">
+            All <ChevronRight size={12} />
+          </button>
+        </div>
+
+        {!loading && medicines.length === 0 && (
+          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <Pill size={28} className="text-primary" />
+            </div>
+            <h4 className="text-base font-semibold text-foreground">No medicines yet</h4>
+            <p className="text-xs text-muted-foreground mt-1">Add your first medicine to start tracking</p>
+            <button onClick={() => navigate("/add-medicine")} className="mt-4 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-medium">
+              Add Medicine
+            </button>
+          </div>
+        )}
+
+        {medicines.length > 0 && (
+          <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
+            {["morning", "afternoon", "night"].map((slot) => {
+              const slotItems = todaySlots.filter((s) => s.timing === slot);
+              if (slotItems.length === 0) return null;
+              return (
+                <div key={slot} className="py-2 first:pt-0 last:pb-0 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border/60">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-sm">{TIMING_EMOJI[slot]}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">{TIMING_LABEL[slot]}</span>
+                    <span className="text-[11px] text-muted-foreground">• {String(TIMING_HOURS[slot]).padStart(2, "0")}:00</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {slotItems.map(({ med, status }, idx) => (
+                      <div key={`${med.id}-${slot}`}
+                        onClick={() => navigate(`/medicine-detail/${med.id}`)}
+                        className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-muted/60 cursor-pointer transition-colors">
+                        <span className="text-base">💊</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate leading-tight">{med.name}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">
+                            {med.dosage} • {med.food_instruction.replace("_", " ")}
+                          </p>
+                        </div>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <StatusPill status={status} onTake={() => handleMarkTaken(med.id, slot)} onUndo={() => handleUndoTaken(med.id, slot)} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <DailyInsights />
 
-      {/* Action Buttons */}
-      <div className="px-4 mt-6 space-y-3">
-        <button onClick={() => navigate("/scan")}
-          className="w-full flex items-center justify-center gap-3 bg-card border-2 border-primary/30 rounded-2xl py-4 text-base font-bold text-primary hover:bg-primary/5 shadow-sm">
-          <ScanLine size={22} /> {t("scan_prescription")}
-        </button>
-        <button onClick={() => navigate("/scan-tablet?mode=identify")}
-          className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-muted-foreground hover:bg-muted shadow-sm">
-          <HelpCircle size={22} /> {t("what_is_tablet")}
-        </button>
-        <button onClick={() => navigate("/drug-interaction")}
-          className="w-full flex items-center justify-center gap-3 bg-card border border-border rounded-2xl py-4 text-base font-bold text-foreground hover:bg-muted shadow-sm">
-          <FlaskConical size={22} className="text-warning" /> {t("drug_interaction_checker")}
-        </button>
-      </div>
+      {/* Quick Actions */}
+      <section className="px-4 mt-5 grid grid-cols-3 gap-2">
+        <QuickAction icon={<ScanLine size={18} />} label="Scan Rx" onClick={() => navigate("/scan")} />
+        <QuickAction icon={<HelpCircle size={18} />} label="ID Tablet" onClick={() => navigate("/scan-tablet?mode=identify")} />
+        <QuickAction icon={<FlaskConical size={18} className="text-warning" />} label="Interactions" onClick={() => navigate("/drug-interaction")} />
+      </section>
 
       <EmergencyInfoButton />
       <BottomNav />
     </div>
   );
 };
+
+const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) => (
+  <div className="bg-card border border-border rounded-xl p-2.5 shadow-sm flex flex-col items-center gap-0.5">
+    <div className="flex items-center gap-1">{icon}<span className="text-base font-bold text-foreground leading-none">{value}</span></div>
+    <span className="text-[10px] text-muted-foreground">{label}</span>
+  </div>
+);
+
+const StatusPill = ({ status, onTake, onUndo }: { status: "taken" | "missed" | "pending"; onTake: () => void; onUndo: () => void }) => {
+  if (status === "taken") {
+    return (
+      <div className="flex items-center gap-1">
+        <span className="px-2 py-1 rounded-md text-[11px] font-medium bg-success/15 text-success flex items-center gap-1"><Check size={11} /> Taken</span>
+        <button onClick={onUndo} className="p-1 text-muted-foreground hover:text-foreground" title="Undo"><Undo2 size={12} /></button>
+      </div>
+    );
+  }
+  if (status === "missed") {
+    return (
+      <button onClick={onTake} className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-destructive/15 text-destructive hover:bg-destructive/20 transition-colors">
+        Take Now
+      </button>
+    );
+  }
+  return (
+    <button onClick={onTake} className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors">
+      Mark Taken
+    </button>
+  );
+};
+
+const QuickAction = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) => (
+  <button onClick={onClick} className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1.5 hover:bg-muted/60 transition-colors shadow-sm">
+    <span className="text-primary">{icon}</span>
+    <span className="text-[11px] font-medium text-foreground">{label}</span>
+  </button>
+);
 
 export default PatientDashboard;
