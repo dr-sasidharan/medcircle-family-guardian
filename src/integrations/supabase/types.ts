@@ -528,7 +528,9 @@ export type Database = {
           id: string
           otp: string
           phone: string
+          send_count: number
           verified: boolean
+          window_started_at: string
         }
         Insert: {
           created_at?: string
@@ -536,7 +538,9 @@ export type Database = {
           id?: string
           otp: string
           phone: string
+          send_count?: number
           verified?: boolean
+          window_started_at?: string
         }
         Update: {
           created_at?: string
@@ -544,7 +548,9 @@ export type Database = {
           id?: string
           otp?: string
           phone?: string
+          send_count?: number
           verified?: boolean
+          window_started_at?: string
         }
         Relationships: []
       }

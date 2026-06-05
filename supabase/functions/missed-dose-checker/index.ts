@@ -20,6 +20,16 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Require CRON_SECRET — this function may only be invoked by the scheduler
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (!cronSecret || req.headers.get("Authorization") !== `Bearer ${cronSecret}`) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
