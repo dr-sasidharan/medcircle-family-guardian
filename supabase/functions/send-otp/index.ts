@@ -29,25 +29,40 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Rate limit: max 3 OTP requests per phone per hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count: recentCount } = await supabase
-      .from("phone_otps")
-      .select("*", { count: "exact", head: true })
-      .eq("phone", phone)
-      .gt("created_at", oneHourAgo);
+    // Rate limit: max 3 OTP requests per phone per hour using a sliding window per row
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    if ((recentCount ?? 0) >= 3) {
-      return new Response(
-        JSON.stringify({ error: "Too many OTP requests. Please try again in an hour." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const { data: existing } = await supabase
+      .from("phone_otps")
+      .select("send_count, window_started_at")
+      .eq("phone", phone)
+      .maybeSingle();
+
+    let sendCount = 1;
+    let windowStartedAt = now.toISOString();
+    if (existing) {
+      if (existing.window_started_at && new Date(existing.window_started_at) > oneHourAgo) {
+        if ((existing.send_count ?? 0) >= 3) {
+          return new Response(
+            JSON.stringify({ error: "Too many OTP requests. Please try again in an hour." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        sendCount = (existing.send_count ?? 0) + 1;
+        windowStartedAt = existing.window_started_at as string;
+      }
     }
 
-    // Insert OTP record (keep history to enforce rate limit; clean up old ones)
-    await supabase.from("phone_otps").delete().eq("phone", phone).lt("created_at", oneHourAgo);
     await supabase.from("phone_otps").upsert(
-      { phone, otp, expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), verified: false },
+      {
+        phone,
+        otp,
+        expires_at: new Date(now.getTime() + 5 * 60 * 1000).toISOString(),
+        verified: false,
+        send_count: sendCount,
+        window_started_at: windowStartedAt,
+      },
       { onConflict: "phone" }
     );
 
