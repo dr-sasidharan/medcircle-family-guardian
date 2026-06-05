@@ -158,7 +158,7 @@ const Welcome = () => {
                     <Shield size={16} className="text-rose-500" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[11px] uppercase tracking-wide font-semibold text-rose-500">Interaction alert</p>
+                    <p className="text-[11px] font-semibold text-rose-500">Interaction alert</p>
                     <p className="text-sm font-semibold text-slate-800">Warfarin × Ibuprofen</p>
                     <p className="text-xs text-slate-500 mt-0.5">Bleeding risk · ask Dr. Iyer</p>
                   </div>
@@ -199,7 +199,7 @@ const Welcome = () => {
           {stats.map((s,i)=>(
             <div key={i} className="text-center">
               <p className="font-display text-3xl md:text-4xl font-bold gradient-text">{s.value}</p>
-              <p className="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">{s.label}</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium">{s.label}</p>
             </div>
           ))}
         </div>
@@ -208,7 +208,7 @@ const Welcome = () => {
       {/* Features */}
       <section id="features" className="relative max-w-6xl mx-auto px-6 py-20">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-teal-600 mb-3">Platform</p>
+          <p className="text-xs font-semibold text-teal-600 mb-3">Platform</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
             Everything your family needs,
             <span className="gradient-text"> nothing they don't.</span>
@@ -311,7 +311,7 @@ const Welcome = () => {
       {/* Trust Section */}
       <section id="trust" className="relative max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest text-teal-600 mb-3">Trust & Security</p>
+          <p className="text-xs font-semibold text-teal-600 mb-3">Trust & Security</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
             Built to <span className="gradient-text">hospital-grade</span> standards.
           </h2>

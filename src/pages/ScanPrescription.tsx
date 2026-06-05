@@ -212,7 +212,7 @@ const ScanPrescription = () => {
               <div className="bg-destructive/10 border-2 border-destructive/50 rounded-2xl p-4 pulse-alert">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldAlert className="text-destructive" size={24} />
-                  <h3 className="text-base font-extrabold text-destructive uppercase tracking-wide">
+                  <h3 className="text-base font-extrabold text-destructive">
                     DRUG INTERACTION ALERT
                   </h3>
                 </div>
@@ -250,7 +250,7 @@ const ScanPrescription = () => {
 
                 {/* Editable Timing */}
                 <div className="space-y-2 pt-2 border-t border-border">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Timing</label>
+                  <label className="text-xs font-bold text-muted-foreground">Timing</label>
                   <div className="flex gap-2">
                     {(["morning", "afternoon", "night"] as const).map((time) => (
                       <button
@@ -274,7 +274,7 @@ const ScanPrescription = () => {
 
                 {/* Editable Food Instruction */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Food Instruction</label>
+                  <label className="text-xs font-bold text-muted-foreground">Food Instruction</label>
                   <div className="flex gap-2">
                     {(["before_food", "after_food", "with_food"] as const).map((food) => (
                       <button

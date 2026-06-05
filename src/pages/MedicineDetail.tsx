@@ -209,10 +209,10 @@ const MedicineDetail = () => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900/90 text-white">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900/90 text-white">
                   {category}
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
                   Active
                 </span>
               </div>
@@ -236,7 +236,7 @@ const MedicineDetail = () => {
           {/* Safety Score */}
           <div className="relative glass-panel rounded-[18px] p-4 card-hover overflow-hidden">
             <span className="shine-overlay" />
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 mb-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-teal-700 mb-2">
               <Shield size={12} /> Safety Score
             </div>
             <div className="flex items-center gap-3">
@@ -269,7 +269,7 @@ const MedicineDetail = () => {
           {/* Interaction Risk */}
           <div className="relative glass-panel rounded-[18px] p-4 card-hover overflow-hidden">
             <span className="shine-overlay" />
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 mb-2">
               <ShieldAlert size={12} /> Interaction Risk
             </div>
             <div className="flex items-baseline gap-2">
@@ -303,7 +303,7 @@ const MedicineDetail = () => {
                 <Sparkles size={14} className="text-cyan-300" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-cyan-200 font-bold">AI Insight</p>
+                <p className="text-[10px] text-cyan-200 font-bold">AI Insight</p>
                 <p className="font-display font-bold text-sm">MedCircle Assistant</p>
               </div>
             </div>
@@ -334,17 +334,17 @@ const MedicineDetail = () => {
           <div className="glass-panel rounded-[18px] p-5 space-y-4 animate-fade-up">
             <h3 className="font-display font-bold text-base text-slate-900">Edit Medicine</h3>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</label>
+              <label className="text-[10px] font-bold text-slate-500">Name</label>
               <input value={editName} onChange={(e) => setEditName(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-white/70 bg-white/70 backdrop-blur-md text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-400/40" />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dosage</label>
+              <label className="text-[10px] font-bold text-slate-500">Dosage</label>
               <input value={editDosage} onChange={(e) => setEditDosage(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-white/70 bg-white/70 backdrop-blur-md text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-400/40" />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Timing</label>
+              <label className="text-[10px] font-bold text-slate-500">Timing</label>
               <div className="flex gap-2">
                 {(["morning", "afternoon", "night"] as const).map((time) => (
                   <button key={time} onClick={() => setEditTiming(time)}
@@ -357,7 +357,7 @@ const MedicineDetail = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Food Instruction</label>
+              <label className="text-[10px] font-bold text-slate-500">Food Instruction</label>
               <div className="flex gap-2">
                 {(["before_food", "after_food", "with_food"] as const).map((food) => (
                   <button key={food} onClick={() => setEditFood(food)}
@@ -413,7 +413,7 @@ const MedicineDetail = () => {
                       style={{ background: s.color }}>
                       <s.Icon size={9} className="text-white" />
                     </div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: s.color }}>{s.title}</p>
+                    <p className="text-[10px] font-bold mb-1" style={{ color: s.color }}>{s.title}</p>
                     {s.body && <p className="text-sm text-slate-700 leading-relaxed">{s.body}</p>}
                     {s.list && (
                       <ul className="space-y-1 mt-1">
@@ -446,7 +446,7 @@ const MedicineDetail = () => {
                     <AlertTriangle size={14} className="text-rose-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Drug Interaction</p>
+                    <p className="text-[10px] font-bold text-rose-600">Drug Interaction</p>
                     <p className="font-display font-bold text-sm text-rose-900">Important warning</p>
                   </div>
                 </div>
