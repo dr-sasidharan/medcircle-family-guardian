@@ -264,21 +264,6 @@
 }
 
 
-.animate-slide-in-left {
-  animation: slide-in-left 0.4s ease-out both;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.4s ease-out both;
-}
-
-.animate-progress-fill {
-  animation: progress-fill 1s ease-out both;
-}
-
-.animate-float {
-  animation: float-circle 6s ease-in-out infinite;
-}
 
 /* Elderly Mode Overrides */
 .elderly-mode {
