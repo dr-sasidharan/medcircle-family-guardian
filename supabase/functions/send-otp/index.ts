@@ -29,7 +29,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Upsert OTP record
+    // Rate limit: max 3 OTP requests per phone per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("phone_otps")
+      .select("*", { count: "exact", head: true })
+      .eq("phone", phone)
+      .gt("created_at", oneHourAgo);
+
+    if ((recentCount ?? 0) >= 3) {
+      return new Response(
+        JSON.stringify({ error: "Too many OTP requests. Please try again in an hour." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Insert OTP record (keep history to enforce rate limit; clean up old ones)
+    await supabase.from("phone_otps").delete().eq("phone", phone).lt("created_at", oneHourAgo);
     await supabase.from("phone_otps").upsert(
       { phone, otp, expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), verified: false },
       { onConflict: "phone" }
