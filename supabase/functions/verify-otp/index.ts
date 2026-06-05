@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function randomSecret() {
+  const bytes = new Uint8Array(48);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -51,94 +57,60 @@ Deno.serve(async (req) => {
     // Mark OTP as verified
     await supabase.from("phone_otps").update({ verified: true }).eq("phone", phone);
 
-    // Check if user exists with this phone as email (phone@medcircle.local)
     const phoneEmail = `${phone.replace("+", "")}@phone.medcircle.local`;
-    const tempPassword = `mc_${phone}_${Date.now()}`;
 
-    // Try to find existing user
+    // Find existing user by synthetic email or phone
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(
       (u) => u.phone === phone || u.email === phoneEmail
     );
 
-    if (existingUser) {
-      // Sign in existing user by generating a magic link session
-      const { data: session, error: signInError } = await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email: phoneEmail,
-      });
+    // Generate a fresh random password for this sign-in (rotated every login)
+    const ephemeralPassword = randomSecret();
 
+    if (existingUser) {
+      // Rotate password to a fresh random secret, then sign in
+      const { error: updErr } = await supabase.auth.admin.updateUserById(existingUser.id, {
+        password: ephemeralPassword,
+      });
+      if (updErr) throw updErr;
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: phoneEmail,
+        password: ephemeralPassword,
+      });
       if (signInError) throw signInError;
 
-      // Get session tokens
-      const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
-        type: "magiclink", 
-        email: phoneEmail,
-      });
-
-      // Use admin to create session
-      const { data: signInData, error: adminSignInError } = await supabase.auth.signInWithPassword({
-        email: phoneEmail,
-        password: existingUser.id, // We'll set this as password
-      });
-
-      // If password login fails, update password and retry
-      if (adminSignInError) {
-        await supabase.auth.admin.updateUserById(existingUser.id, { password: existingUser.id });
-        const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-          email: phoneEmail,
-          password: existingUser.id,
-        });
-        if (retryError) throw retryError;
-        return new Response(JSON.stringify({ 
-          success: true, 
-          session: retryData.session,
-          is_new_user: false 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        session: signInData.session,
-        is_new_user: false 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: true, session: signInData.session, is_new_user: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     } else {
-      // Create new user
-      const userId = crypto.randomUUID();
+      // Create new user with random password (never derived from UUID)
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: phoneEmail,
         phone: phone,
-        password: userId,
+        password: ephemeralPassword,
         email_confirm: true,
         phone_confirm: true,
         user_metadata: { phone_signup: true, phone: phone },
       });
-
       if (createError) throw createError;
 
-      // Sign in the new user
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: phoneEmail,
-        password: newUser.user.id,
+        password: ephemeralPassword,
       });
-
       if (signInError) throw signInError;
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        session: signInData.session,
-        is_new_user: true 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: true, session: signInData.session, is_new_user: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
   } catch (error) {
     console.error("verify-otp error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Verification failed" }), {
+    return new Response(JSON.stringify({ error: (error as Error).message || "Verification failed" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
