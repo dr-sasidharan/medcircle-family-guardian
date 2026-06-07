@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  callAssistant,
+  langInstructionFor,
+  type AssistantResponse,
+} from "../_shared/assistant.ts";
+import { loadPatientContext, summarizeContext } from "../_shared/context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,117 +17,120 @@ async function requireUser(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.slice(7);
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
   return data.user;
 }
 
+function deriveUrgency(assistant: AssistantResponse): {
+  urgency: "EMERGENCY" | "URGENT" | "MONITOR" | "NORMAL";
+  urgency_color: "red" | "orange" | "yellow" | "green";
+  likely_medicine: string;
+  is_side_effect: boolean;
+  summary: string;
+} {
+  const severityCard = assistant.cards.find((c) => c.kind === "severity") as
+    | { kind: "severity"; severity: string; what_to_do: string; title: string }
+    | undefined;
+  const sev = severityCard?.severity || "low";
+  const map = {
+    critical: { urgency: "EMERGENCY", urgency_color: "red" },
+    high: { urgency: "URGENT", urgency_color: "orange" },
+    moderate: { urgency: "MONITOR", urgency_color: "yellow" },
+    low: { urgency: "NORMAL", urgency_color: "green" },
+  } as const;
+  const m = (map as any)[sev] || map.low;
+  const heroOrSummary = assistant.cards.find(
+    (c) => c.kind === "summary" || c.kind === "hero",
+  );
+  const summary =
+    (heroOrSummary as any)?.body ||
+    (heroOrSummary as any)?.subtitle ||
+    "Review the guidance below.";
+  // Try to extract likely medicine from a bullets/summary card mentioning "likely"
+  const causeCard = assistant.cards.find(
+    (c) =>
+      "title" in c &&
+      typeof (c as any).title === "string" &&
+      /likely|cause|suspect/i.test((c as any).title),
+  );
+  const likely_medicine =
+    (causeCard as any)?.body?.split(/[.,]/)[0] ||
+    (causeCard && "items" in causeCard ? (causeCard as any).items[0] : "") ||
+    "None identified";
+  return {
+    ...m,
+    likely_medicine,
+    is_side_effect: !!causeCard,
+    summary,
+  };
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
   const user = await requireUser(req);
   if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    const { symptom, medicines, age, patientName } = await req.json();
+    const { symptom, language, followup_prompt } = await req.json();
+    if (!symptom) {
+      return new Response(JSON.stringify({ error: "symptom required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const ctx = await loadPatientContext(user.id);
+    const langInstruction = langInstructionFor(language);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const userPrompt = followup_prompt
+      ? `Patient context: ${summarizeContext(ctx)}
 
-    const medicineList = medicines
-      .map((m: { name: string; dosage: string; timing: string; food_instruction: string }) =>
-        `${m.name} ${m.dosage} (${m.timing}, ${m.food_instruction})`)
-      .join(", ");
+They are checking the symptom "${symptom}" and now ask: "${followup_prompt}".
 
-    const systemPrompt = `You are a medical safety assistant for elderly Indian patients.
-You have access to the patient's current medicine list.
-Check if the reported symptom could be a side effect of any medicine.
-Be cautious and always err on the side of safety.
-Never diagnose. Always recommend consulting a doctor for serious symptoms.
+Answer as their clinical pharmacist using 2-4 cards.`
+      : `Patient context: ${summarizeContext(ctx)}
 
-IMPORTANT: You must respond with a valid JSON object only, no markdown, no code fences. The JSON must have these fields:
-- is_side_effect: boolean
-- likely_medicine: string (name of the medicine most likely causing it, or "None identified")
-- urgency: one of "EMERGENCY", "URGENT", "MONITOR", "NORMAL"
-- urgency_color: one of "red", "orange", "yellow", "green"
-- what_to_do: array of exactly 3 short action strings
-- tamil_explanation: string (a brief explanation in Tamil language)
-- summary: string (one sentence summary in English)`;
+They report this symptom right now: "${symptom}".
 
-    const userPrompt = `Patient medicines: ${medicineList || "No medicines recorded"}.
-Patient age: ${age}. Reported symptom: ${symptom}.
+Use this card sequence:
+1. summary card with tone matching severity — one personalized sentence ("You take Telmisartan and reported dizziness…")
+2. severity card — severity (low/moderate/high/critical) and a single short what_to_do action. critical = call emergency. high = call doctor today. moderate = monitor 24h. low = likely safe.
+3. bullets card titled "Likely cause" listing 1-3 of their current medicines that could explain this, OR a short non-medicine reason. Skip if no plausible cause.
+4. steps card titled "What to do now" with 2-3 short numbered actions.
 
-1. Could this be a side effect of any of their medicines?
-2. Which medicine is most likely causing it?
-3. Is this an emergency or can it wait for a doctor visit?
-4. What should the patient do right now?
+Then 3 followups like "Review my medicines", "When to call doctor", "Track this symptom".`;
 
-Return ONLY the JSON object.`;
+    const assistant = await callAssistant(userPrompt, langInstruction);
+    const derived = deriveUrgency(assistant);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+    return new Response(
+      JSON.stringify({
+        assistant,
+        ...derived,
+        what_to_do:
+          (assistant.cards.find((c) => c.kind === "steps") as any)?.steps || [],
+        tamil_explanation: "",
+        patient_name: ctx.name,
       }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please try again later." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
-    }
-
-    const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
-
-    // Parse JSON from response, handling possible markdown fences
-    let parsed;
-    try {
-      const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      console.error("Failed to parse AI response:", content);
-      parsed = {
-        is_side_effect: false,
-        likely_medicine: "Unable to determine",
-        urgency: "MONITOR",
-        urgency_color: "yellow",
-        what_to_do: ["Consult your doctor", "Monitor symptoms for 24 hours", "Stay hydrated and rest"],
-        tamil_explanation: "மருத்துவரை அணுகவும்",
-        summary: "Unable to fully analyze. Please consult your doctor.",
-      };
-    }
-
-    return new Response(JSON.stringify({ ...parsed, patient_name: patientName }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("symptom-checker error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const status = (e as any).status || 500;
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });

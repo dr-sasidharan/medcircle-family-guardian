@@ -1,87 +1,94 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAssistant, langInstructionFor } from "../_shared/assistant.ts";
+import { loadPatientContext, summarizeContext } from "../_shared/context.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 async function requireUser(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.slice(7);
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
   return data.user;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+function assistantToMarkdown(assistant: any, name: string): string {
+  const lines: string[] = [`# Doctor Visit Summary — ${name}`, ""];
+  if (assistant.greeting) lines.push(assistant.greeting, "");
+  for (const c of assistant.cards || []) {
+    if (c.title) lines.push(`## ${c.emoji ? c.emoji + " " : ""}${c.title}`);
+    if (c.subtitle) lines.push(`_${c.subtitle}_`);
+    if (c.body) lines.push(c.body);
+    if (c.items?.length) {
+      for (const it of c.items) lines.push(`- ${it}`);
+    }
+    if (c.steps?.length) {
+      c.steps.forEach((s: string, i: number) => lines.push(`${i + 1}. ${s}`));
+    }
+    if (c.severity) lines.push(`**Severity:** ${c.severity}`);
+    if (c.what_to_do) lines.push(`**Action:** ${c.what_to_do}`);
+    if (c.label && c.value) lines.push(`**${c.label}:** ${c.value}`);
+    lines.push("");
+  }
+  if (assistant.disclaimer) lines.push("---", assistant.disclaimer);
+  return lines.join("\n").trim();
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
-  const _user = await requireUser(req);
-  if (!_user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const user = await requireUser(req);
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
-
   try {
-    const { name, age, medicines, missedDoses, allergies, language } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const langMap: Record<string, string> = { ta: "Tamil", hi: "Hindi", ml: "Malayalam" };
-    const langInstruction = langMap[language] ? `Write in ${langMap[language]}.` : "Write in English.";
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { language, followup_prompt } = await req.json().catch(() => ({}));
+    const ctx = await loadPatientContext(user.id);
+    const langInstruction = langInstructionFor(language);
 
-    const medList = medicines.map((m: any) => `${m.name} ${m.dosage} (${m.timing})`).join(", ");
-    const missedList = missedDoses.length > 0 ? missedDoses.join(", ") : "None this week";
-    const allergyList = allergies?.length > 0 ? allergies.join(", ") : "None reported";
+    const userPrompt = followup_prompt
+      ? `Patient context: ${summarizeContext(ctx)}
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a medical summary assistant. Generate concise, professional doctor visit summaries. ${langInstruction} Return plain text, under 400 words.`
-          },
-          {
-            role: "user",
-            content: `Generate a doctor visit summary for:
-Patient: ${name}, Age: ${age}
-Current Medicines: ${medList}
-Missed Doses This Week: ${missedList}
-Known Allergies: ${allergyList}
+Their follow-up question for the doctor visit: "${followup_prompt}". Answer in 2-3 cards.`
+      : `Patient context: ${summarizeContext(ctx)}
 
-Include: 1) Current medicine list with dosages, 2) Adherence summary this week, 3) Potential interaction warnings, 4) 3-4 suggested questions for the doctor. Keep it under 400 words, plain text format, professional but warm.`
-          }
-        ],
-      }),
-    });
+Generate a concise doctor-visit briefing for them as their clinical pharmacist.
 
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error("AI gateway error");
-    }
+Use this card sequence:
+1. hero card with emoji "🩺", title "Visit Brief", subtitle = "For ${ctx.name}, age ${ctx.age ?? "?"}".
+2. bullets card titled "Current medicines" — list each active medicine on one short line with dosage and timing.
+3. summary card titled "Adherence" with tone matching performance — 1 short sentence about last 7 days (mention missed dose count).
+4. bullets card titled "Ask your doctor" — 3-4 short questions tailored to their meds and conditions.
 
-    const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content || "Unable to generate summary.";
+Then 2-3 followups like "Add another question", "Print friendly version", "Email this summary".`;
 
-    return new Response(JSON.stringify({ summary }), {
+    const assistant = await callAssistant(userPrompt, langInstruction);
+    const summary = assistantToMarkdown(assistant, ctx.name);
+
+    return new Response(JSON.stringify({ summary, assistant }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("doctor-summary error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const status = (e as any).status || 500;
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
