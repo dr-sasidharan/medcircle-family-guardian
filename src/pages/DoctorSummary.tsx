@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { ArrowLeft, FileText, Share2, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
+import AIResponseCards, { type AssistantResponse } from "@/components/AIResponseCards";
 
 const DoctorSummary = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [summary, setSummary] = useState("");
+  const [assistant, setAssistant] = useState<AssistantResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
 
@@ -39,18 +41,12 @@ const DoctorSummary = () => {
       const missedDoses = (missed || []).map((d: any) => `${d.scheduled_date} ${d.scheduled_time}`);
 
       const { data, error } = await supabase.functions.invoke("doctor-summary", {
-        body: {
-          name: profile.name,
-          age: profile.age,
-          medicines: (medicines || []).map((m: any) => ({ name: m.name, dosage: m.dosage, timing: m.timing })),
-          missedDoses,
-          allergies: profile.allergies || [],
-          language,
-        },
+        body: { language },
       });
 
       if (error) throw error;
-      setSummary(data.summary);
+      setSummary(data.summary || "");
+      setAssistant(data.assistant || null);
       setGenerated(true);
     } catch (e: any) {
       console.error("Summary error:", e);
@@ -106,13 +102,14 @@ const DoctorSummary = () => {
           </div>
         ) : (
           <div className="space-y-4 animate-fade-in">
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText size={20} className="text-primary" />
-                <h2 className="text-base font-bold text-foreground">Your Summary</h2>
-              </div>
-              <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">{summary}</div>
-            </div>
+            {assistant && <AIResponseCards data={assistant} />}
+            <details className="bg-card border border-border rounded-2xl p-5">
+              <summary className="flex items-center gap-2 cursor-pointer">
+                <FileText size={18} className="text-primary" />
+                <span className="text-sm font-bold text-foreground">Full text version</span>
+              </summary>
+              <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed mt-3">{summary}</div>
+            </details>
             <div className="flex gap-3">
               <button onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-3.5 text-sm font-bold hover:opacity-90 transition-opacity">

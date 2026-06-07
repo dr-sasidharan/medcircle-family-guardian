@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { ArrowLeft, Search, ShieldCheck, ShieldAlert, AlertTriangle, Loader2, Eye, BadgeCheck, AlertCircle, X, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import AIResponseCards, { type AssistantResponse } from "@/components/AIResponseCards";
 
 interface RxNormInteraction {
   severity: string;
@@ -22,6 +23,7 @@ interface InteractionResult {
   rxcui1: string | null;
   rxcui2: string | null;
   rxnorm_interactions: RxNormInteraction[];
+  assistant?: AssistantResponse;
 }
 
 const verdictConfig = {
@@ -163,6 +165,21 @@ const DrugInteraction = () => {
                 </div>
               )}
             </div>
+
+            {result.assistant && (
+              <AIResponseCards
+                data={result.assistant}
+                onFollowup={async (prompt) => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke("drug-interaction", {
+                      body: { medicine1: med1, medicine2: med2, language, followup_prompt: prompt },
+                    });
+                    if (error) throw error;
+                    setResult(data);
+                  } catch { toast.error("Could not load follow-up"); }
+                }}
+              />
+            )}
 
             {/* Result Card */}
             <div className={`${config.bg} ${config.border} border-2 rounded-2xl p-6`}>

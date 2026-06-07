@@ -1,113 +1,81 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAssistant, langInstructionFor } from "../_shared/assistant.ts";
+import { loadPatientContext, summarizeContext } from "../_shared/context.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 async function requireUser(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.slice(7);
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
   return data.user;
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
-  const _user = await requireUser(req);
-  if (!_user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const user = await requireUser(req);
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
-
   try {
-    const { medicines, age, name, language } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { language, followup_prompt } = await req.json().catch(() => ({}));
+    const ctx = await loadPatientContext(user.id);
+    const langInstruction = langInstructionFor(language);
 
-    const langInstruction = language === "ta" ? "Respond in Tamil." : language === "hi" ? "Respond in Hindi." : "Respond in English.";
+    const userPrompt = followup_prompt
+      ? `Patient context: ${summarizeContext(ctx)}
 
-    const medicineList = medicines.map((m: any) => `${m.name} ${m.dosage} (${m.timing}, ${m.food_instruction})`).join(", ");
+Their follow-up question: "${followup_prompt}". Answer as their AI health coach in 2-3 cards.`
+      : `Patient context: ${summarizeContext(ctx)}
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a health tips assistant for elderly patients. ${langInstruction} Always return valid JSON only, no markdown.`
-          },
-          {
-            role: "user",
-            content: `Patient ${name}, age ${age}, takes: ${medicineList}. Generate 3 health tips: one food interaction warning, one timing tip, one lifestyle tip. Max 2 sentences each. Warm simple language. Return JSON: {"tips":[{"type":"food"|"timing"|"lifestyle","title":"short title","content":"english tip","tamil_content":"tamil tip"}]}`
-          }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_health_tips",
-              description: "Return 3 health tips for the patient",
-              parameters: {
-                type: "object",
-                properties: {
-                  tips: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: { type: "string", enum: ["food", "timing", "lifestyle"] },
-                        title: { type: "string" },
-                        content: { type: "string" },
-                        tamil_content: { type: "string" }
-                      },
-                      required: ["type", "title", "content", "tamil_content"],
-                      additionalProperties: false
-                    }
-                  }
-                },
-                required: ["tips"],
-                additionalProperties: false
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "return_health_tips" } }
+Generate today's proactive health coaching for them as their AI health coach.
+
+Use this card sequence:
+1. summary card titled "Good morning ${ctx.name}" (or appropriate time) — 1 short sentence highlighting today's key thing for them.
+2. severity card ONLY IF something needs attention (missed doses, risky food/medicine interaction in their list, no recent symptom check) — severity low/moderate/high, what_to_do = 1 short action.
+3. bullets card titled "Today's tips" — 2-3 personalized tips that reference their specific medicines or conditions (timing tip, food tip, lifestyle tip). Each under 8 words.
+
+Then 3 followups like "Log blood pressure", "Review my medicines", "What's my next dose".`;
+
+    const assistant = await callAssistant(userPrompt, langInstruction);
+
+    // Legacy: keep `tips` array so older callers still render something.
+    const bullets = assistant.cards.find((c) => c.kind === "bullets") as any;
+    const tips = (bullets?.items || []).slice(0, 3).map(
+      (item: string, i: number) => ({
+        type: ["food", "timing", "lifestyle"][i] || "lifestyle",
+        title: item.split(":")[0]?.slice(0, 40) || `Tip ${i + 1}`,
+        content: item,
+        tamil_content: item,
       }),
-    });
+    );
 
-    if (!response.ok) {
-      const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const t = await response.text();
-      console.error("AI error:", status, t);
-      throw new Error("AI gateway error");
-    }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    const tips = toolCall ? JSON.parse(toolCall.function.arguments) : { tips: [] };
-
-    return new Response(JSON.stringify(tips), {
+    return new Response(JSON.stringify({ assistant, tips }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("health-insights error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const status = (e as any).status || 500;
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
