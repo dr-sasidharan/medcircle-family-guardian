@@ -5,6 +5,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Stethoscope, AlertTriangle, Loader2, Languages, History, Clock } from "lucide-react";
 import { toast } from "sonner";
+import AIResponseCards, { type AssistantResponse } from "@/components/AIResponseCards";
 
 const QUICK_SYMPTOMS = [
   "Dizziness", "Nausea", "Headache", "Stomach Pain", "Fatigue",
@@ -20,6 +21,7 @@ interface SymptomResult {
   tamil_explanation: string;
   summary: string;
   patient_name?: string;
+  assistant?: AssistantResponse;
 }
 
 interface HistoryItem {
@@ -288,6 +290,13 @@ const SymptomChecker = () => {
                 <a href="tel:108" className="block w-full bg-red-600 text-white rounded-2xl py-4 text-center text-xl font-heading font-extrabold shadow-xl animate-pulse">
                   🚨 Call 108 — Emergency
                 </a>
+              )}
+
+              {result.assistant && (
+                <AIResponseCards
+                  data={result.assistant}
+                  onFollowup={(prompt) => { setSymptom(prompt); checkSymptom(prompt); }}
+                />
               )}
 
               {result.is_side_effect && (

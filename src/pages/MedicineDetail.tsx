@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
+import AIResponseCards, { type AssistantResponse } from "@/components/AIResponseCards";
 import {
   ArrowLeft, AlertTriangle, Pencil, Check, X, Trash2,
   Sparkles, Shield, Activity, Sun, CloudSun, Moon, Utensils,
@@ -25,6 +26,7 @@ interface MedicineInfo {
   side_effects: string[];
   foods_to_avoid: string[];
   drug_interactions: string;
+  assistant?: AssistantResponse;
 }
 
 const MedicineDetail = () => {
@@ -41,6 +43,25 @@ const MedicineDetail = () => {
   const [editTiming, setEditTiming] = useState("");
   const [editFood, setEditFood] = useState("");
   const [saving, setSaving] = useState(false);
+  const [followupAssistant, setFollowupAssistant] = useState<AssistantResponse | null>(null);
+  const [followupLoading, setFollowupLoading] = useState(false);
+
+  const askFollowup = async (prompt: string) => {
+    if (!medicine) return;
+    setFollowupLoading(true);
+    setFollowupAssistant(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("medicine-info", {
+        body: { medicine_name: medicine.name, dosage: medicine.dosage, language, followup_prompt: prompt },
+      });
+      if (error) throw error;
+      if (data?.assistant) setFollowupAssistant(data.assistant);
+    } catch (e) {
+      toast.error("Could not load follow-up");
+    } finally {
+      setFollowupLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMedicine = async () => {
@@ -390,70 +411,16 @@ const MedicineDetail = () => {
           </div>
         )}
 
-        {info && (
-          <>
-            {/* TIMELINE */}
-            <div className="relative glass-panel rounded-[20px] p-5 overflow-hidden animate-fade-up" style={{ animationDelay: "180ms" }}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
-                  <Clock size={13} className="text-teal-600" />
-                </div>
-                <h3 className="font-display font-bold text-sm text-slate-900">Medicine Timeline</h3>
-              </div>
-              <div className="relative pl-5">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-teal-400 via-cyan-400 to-slate-200" />
-                {[
-                  { Icon: Target, color: "#14B8A6", title: "Purpose", body: info.purpose },
-                  { Icon: Pill, color: "#22D3EE", title: "How to take", body: info.how_to_take },
-                  { Icon: Zap, color: "#f59e0b", title: "Side effects", list: info.side_effects },
-                  { Icon: Apple, color: "#f43f5e", title: "Foods to avoid", list: info.foods_to_avoid },
-                ].map((s, i) => (
-                  <div key={i} className="relative pb-5 last:pb-0">
-                    <div className="absolute -left-[18px] top-0.5 w-4 h-4 rounded-full border-2 border-white shadow-md flex items-center justify-center"
-                      style={{ background: s.color }}>
-                      <s.Icon size={9} className="text-white" />
-                    </div>
-                    <p className="text-[10px] font-bold mb-1" style={{ color: s.color }}>{s.title}</p>
-                    {s.body && <p className="text-sm text-slate-700 leading-relaxed">{s.body}</p>}
-                    {s.list && (
-                      <ul className="space-y-1 mt-1">
-                        {s.list.map((x, j) => (
-                          <li key={j} className="flex items-start gap-2 text-sm text-slate-700">
-                            <span className="mt-1.5 w-1 h-1 rounded-full shrink-0" style={{ background: s.color }} />
-                            {x}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+        {info?.assistant && (
+          <div className="animate-fade-up" style={{ animationDelay: "180ms" }}>
+            <AIResponseCards data={info.assistant} onFollowup={askFollowup} />
+          </div>
+        )}
 
-            {/* DRUG INTERACTION WARNING */}
-            <div className="relative rounded-[20px] p-5 overflow-hidden animate-fade-up card-hover"
-              style={{
-                background: "linear-gradient(135deg, rgba(255,241,242,0.85), rgba(255,228,230,0.7))",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid rgba(244,63,94,0.25)",
-                animationDelay: "240ms",
-              }}>
-              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-rose-300/40 blur-3xl" />
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-200 flex items-center justify-center">
-                    <AlertTriangle size={14} className="text-rose-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-rose-600">Drug Interaction</p>
-                    <p className="font-display font-bold text-sm text-rose-900">Important warning</p>
-                  </div>
-                </div>
-                <p className="text-[14px] text-rose-900/90 leading-relaxed">{info.drug_interactions}</p>
-              </div>
-            </div>
-          </>
+        {(followupLoading || followupAssistant) && (
+          <div className="animate-fade-up">
+            <AIResponseCards data={followupAssistant} loading={followupLoading} onFollowup={askFollowup} />
+          </div>
         )}
 
         {!infoLoading && !info && (
