@@ -29,6 +29,11 @@ import ResetPassword from "./pages/ResetPassword";
 import NotificationLog from "./pages/NotificationLog";
 import HospitalBooking from "./pages/HospitalBooking";
 import NotFound from "./pages/NotFound";
+import Family from "./pages/Family";
+import FamilyEdit from "./pages/FamilyEdit";
+import CaregiverManagement from "./pages/CaregiverManagement";
+import InviteCaregiver from "./pages/InviteCaregiver";
+import AcceptInvite from "./pages/AcceptInvite";
 import AnimatedPage from "./components/AnimatedPage";
 
 const queryClient = new QueryClient();
@@ -68,6 +73,12 @@ const App = () => (
                   <Route path="/notifications" element={<P><NotificationLog /></P>} />
                   <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
+                  <Route path="/family" element={<P><Family /></P>} />
+                  <Route path="/family/new" element={<P><FamilyEdit /></P>} />
+                  <Route path="/family/:id/edit" element={<P><FamilyEdit /></P>} />
+                  <Route path="/family/:id/caregivers" element={<P><CaregiverManagement /></P>} />
+                  <Route path="/family/:id/invite" element={<P><InviteCaregiver /></P>} />
+                  <Route path="/invite/:token" element={<AcceptInvite />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatedPage>

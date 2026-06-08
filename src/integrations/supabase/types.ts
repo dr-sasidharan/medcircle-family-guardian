@@ -69,6 +69,213 @@ export type Database = {
           },
         ]
       }
+      caregiver_audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          profile_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_audit_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_token: string
+          invited_by: string
+          invitee_email: string | null
+          invitee_phone: string | null
+          method: string
+          permissions_template: Json | null
+          profile_id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_token?: string
+          invited_by: string
+          invitee_email?: string | null
+          invitee_phone?: string | null
+          method?: string
+          permissions_template?: Json | null
+          profile_id: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string
+          invitee_email?: string | null
+          invitee_phone?: string | null
+          method?: string
+          permissions_template?: Json | null
+          profile_id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_invitations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_notifications: {
+        Row: {
+          caregiver_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          profile_id: string | null
+          type: string
+        }
+        Insert: {
+          caregiver_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          profile_id?: string | null
+          type: string
+        }
+        Update: {
+          caregiver_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          profile_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_permissions: {
+        Row: {
+          can_add_medicines: boolean
+          can_add_reports: boolean
+          can_edit_medicines: boolean
+          can_manage_appointments: boolean
+          can_view_adherence: boolean
+          can_view_alerts: boolean
+          can_view_appointments: boolean
+          can_view_medicines: boolean
+          can_view_reports: boolean
+          caregiver_id: string
+          created_at: string
+          email_notifications: boolean
+          id: string
+          invitation_id: string | null
+          profile_id: string
+          push_notifications: boolean
+          role: string
+          sms_notifications: boolean
+          updated_at: string
+        }
+        Insert: {
+          can_add_medicines?: boolean
+          can_add_reports?: boolean
+          can_edit_medicines?: boolean
+          can_manage_appointments?: boolean
+          can_view_adherence?: boolean
+          can_view_alerts?: boolean
+          can_view_appointments?: boolean
+          can_view_medicines?: boolean
+          can_view_reports?: boolean
+          caregiver_id: string
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          invitation_id?: string | null
+          profile_id: string
+          push_notifications?: boolean
+          role?: string
+          sms_notifications?: boolean
+          updated_at?: string
+        }
+        Update: {
+          can_add_medicines?: boolean
+          can_add_reports?: boolean
+          can_edit_medicines?: boolean
+          can_manage_appointments?: boolean
+          can_view_adherence?: boolean
+          can_view_alerts?: boolean
+          can_view_appointments?: boolean
+          can_view_medicines?: boolean
+          can_view_reports?: boolean
+          caregiver_id?: string
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          invitation_id?: string | null
+          profile_id?: string
+          push_notifications?: boolean
+          role?: string
+          sms_notifications?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_permissions_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "caregiver_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caregiver_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caretaker_links: {
         Row: {
           caretaker_user_id: string
@@ -250,6 +457,111 @@ export type Database = {
             columns: ["medicine_id"]
             isOneToOne: false
             referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_profiles: {
+        Row: {
+          age: number | null
+          allergies: string[] | null
+          allow_emergency_access: boolean
+          blood_group: string | null
+          conditions: string[] | null
+          created_at: string
+          doctor_name: string | null
+          doctor_phone: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          is_self: boolean
+          name: string
+          owner_id: string
+          relationship: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          allergies?: string[] | null
+          allow_emergency_access?: boolean
+          blood_group?: string | null
+          conditions?: string[] | null
+          created_at?: string
+          doctor_name?: string | null
+          doctor_phone?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          is_self?: boolean
+          name: string
+          owner_id: string
+          relationship?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          allergies?: string[] | null
+          allow_emergency_access?: boolean
+          blood_group?: string | null
+          conditions?: string[] | null
+          created_at?: string
+          doctor_name?: string | null
+          doctor_phone?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          is_self?: boolean
+          name?: string
+          owner_id?: string
+          relationship?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      family_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          related_profile_id: string
+          relationship_label: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          related_profile_id: string
+          relationship_label?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          related_profile_id?: string
+          relationship_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_relationships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_relationships_related_profile_id_fkey"
+            columns: ["related_profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -689,6 +1001,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_caregiver_invitation: { Args: { _token: string }; Returns: Json }
+      decline_caregiver_invitation: { Args: { _token: string }; Returns: Json }
       get_linked_patient_ids: { Args: never; Returns: string[] }
       get_my_doctor_id: { Args: never; Returns: string }
       get_my_profile_id: { Args: never; Returns: string }
@@ -699,7 +1013,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_caregiver_of_profile: {
+        Args: { _profile_id: string }
+        Returns: boolean
+      }
+      is_family_profile_owner: {
+        Args: { _profile_id: string }
+        Returns: boolean
+      }
       is_my_medicine: { Args: { _medicine_id: string }; Returns: boolean }
+      lookup_caregiver_invitation: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          id: string
+          inviter_email: string
+          method: string
+          permissions_template: Json
+          profile_id: string
+          profile_name: string
+          role: string
+          status: string
+        }[]
+      }
       lookup_patient_by_medcircle_code: {
         Args: { _code: string }
         Returns: {
