@@ -73,6 +73,12 @@ const App = () => (
                   <Route path="/notifications" element={<P><NotificationLog /></P>} />
                   <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
+                  <Route path="/family" element={<P><Family /></P>} />
+                  <Route path="/family/new" element={<P><FamilyEdit /></P>} />
+                  <Route path="/family/:id/edit" element={<P><FamilyEdit /></P>} />
+                  <Route path="/family/:id/caregivers" element={<P><CaregiverManagement /></P>} />
+                  <Route path="/family/:id/invite" element={<P><InviteCaregiver /></P>} />
+                  <Route path="/invite/:token" element={<AcceptInvite />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatedPage>
