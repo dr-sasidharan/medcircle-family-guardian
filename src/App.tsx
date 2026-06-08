@@ -29,6 +29,11 @@ import ResetPassword from "./pages/ResetPassword";
 import NotificationLog from "./pages/NotificationLog";
 import HospitalBooking from "./pages/HospitalBooking";
 import NotFound from "./pages/NotFound";
+import Family from "./pages/Family";
+import FamilyEdit from "./pages/FamilyEdit";
+import CaregiverManagement from "./pages/CaregiverManagement";
+import InviteCaregiver from "./pages/InviteCaregiver";
+import AcceptInvite from "./pages/AcceptInvite";
 import AnimatedPage from "./components/AnimatedPage";
 
 const queryClient = new QueryClient();
