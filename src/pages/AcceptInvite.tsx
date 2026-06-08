@@ -48,7 +48,7 @@ export default function AcceptInvite() {
       setLoading(true);
       const { data, error } = await supabase.rpc("lookup_caregiver_invitation", { _token: token });
       if (error) toast.error(error.message);
-      setInv((data && data[0]) || null);
+      setInv(((data && (data as any)[0]) || null) as Invitation | null);
       setLoading(false);
     })();
   }, [token]);
