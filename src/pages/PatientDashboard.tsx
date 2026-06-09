@@ -8,6 +8,8 @@ import BottomNav from "@/components/BottomNav";
 import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
+import FamilyOverviewCard from "@/components/FamilyOverviewCard";
+import WhoNeedsAttention from "@/components/WhoNeedsAttention";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell,
@@ -287,7 +289,7 @@ const PatientDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => navigate("/notifications")} className="p-2 rounded-lg hover:bg-white/10"><Bell size={16} className="text-white" /></button>
+            <button onClick={() => navigate("/caregiver-notifications")} className="p-2 rounded-lg hover:bg-white/10"><Bell size={16} className="text-white" /></button>
             <button onClick={() => navigate("/settings")} className="p-2 rounded-lg hover:bg-white/10"><Settings size={16} className="text-white" /></button>
             <LanguageToggle />
           </div>
@@ -338,6 +340,10 @@ const PatientDashboard = () => {
           )}
         </div>
       </section>
+
+      {/* === Family Overview + Who Needs Attention === */}
+      <FamilyOverviewCard />
+      <WhoNeedsAttention />
 
       {/* === SECTION 2: AI Health Alerts === */}
       <section className="px-4 mt-4">

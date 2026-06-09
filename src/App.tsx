@@ -31,6 +31,9 @@ import HospitalBooking from "./pages/HospitalBooking";
 import NotFound from "./pages/NotFound";
 import Family from "./pages/Family";
 import FamilyEdit from "./pages/FamilyEdit";
+import FamilyDashboard from "./pages/FamilyDashboard";
+import FamilyAI from "./pages/FamilyAI";
+import CaregiverNotifications from "./pages/CaregiverNotifications";
 import CaregiverManagement from "./pages/CaregiverManagement";
 import InviteCaregiver from "./pages/InviteCaregiver";
 import AcceptInvite from "./pages/AcceptInvite";
@@ -71,9 +74,12 @@ const App = () => (
                   <Route path="/admin" element={<P><AdminDashboard /></P>} />
                   <Route path="/symptoms" element={<P><SymptomChecker /></P>} />
                   <Route path="/notifications" element={<P><NotificationLog /></P>} />
+                  <Route path="/caregiver-notifications" element={<P><CaregiverNotifications /></P>} />
                   <Route path="/hospital-booking" element={<P><HospitalBooking /></P>} />
                   <Route path="/emergency/:token" element={<EmergencyCard />} />
                   <Route path="/family" element={<P><Family /></P>} />
+                  <Route path="/family/dashboard" element={<P><FamilyDashboard /></P>} />
+                  <Route path="/family/ai" element={<P><FamilyAI /></P>} />
                   <Route path="/family/new" element={<P><FamilyEdit /></P>} />
                   <Route path="/family/:id/edit" element={<P><FamilyEdit /></P>} />
                   <Route path="/family/:id/caregivers" element={<P><CaregiverManagement /></P>} />

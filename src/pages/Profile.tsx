@@ -201,13 +201,13 @@ const Profile = () => {
 
       {/* Quick Links */}
       <div className="px-4 mt-6 space-y-3">
-        <button onClick={() => navigate("/family")}
+        <button onClick={() => navigate("/family/dashboard")}
           className="w-full bg-card border border-border rounded-2xl p-4 text-left flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
           style={{ borderLeftWidth: "4px", borderLeftColor: "hsl(258, 90%, 66%)" }}>
           <div className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center bg-violet-100"><Users size={20} className="text-violet-500" /></div>
           <div>
-            <h3 className="font-bold text-[15px] text-foreground">Family & Caregivers</h3>
-            <p className="text-xs text-muted-foreground">Manage profiles, invite caregivers</p>
+            <h3 className="font-bold text-[15px] text-foreground">Family Healthcare Center</h3>
+            <p className="text-xs text-muted-foreground">Dashboard · AI Companion · Caregivers</p>
           </div>
         </button>
         <button onClick={() => navigate("/doctor-summary")}
