@@ -159,30 +159,42 @@ export type Database = {
       }
       caregiver_notifications: {
         Row: {
+          action_url: string | null
           caregiver_id: string
+          category: string
           created_at: string
           id: string
           is_read: boolean
           message: string
+          metadata: Json
           profile_id: string | null
+          severity: string
           type: string
         }
         Insert: {
+          action_url?: string | null
           caregiver_id: string
+          category?: string
           created_at?: string
           id?: string
           is_read?: boolean
           message: string
+          metadata?: Json
           profile_id?: string | null
+          severity?: string
           type: string
         }
         Update: {
+          action_url?: string | null
           caregiver_id?: string
+          category?: string
           created_at?: string
           id?: string
           is_read?: boolean
           message?: string
+          metadata?: Json
           profile_id?: string | null
+          severity?: string
           type?: string
         }
         Relationships: [
@@ -420,6 +432,7 @@ export type Database = {
       doses: {
         Row: {
           created_at: string
+          family_profile_id: string | null
           id: string
           medicine_id: string
           missed: boolean
@@ -431,6 +444,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          family_profile_id?: string | null
           id?: string
           medicine_id: string
           missed?: boolean
@@ -442,6 +456,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          family_profile_id?: string | null
           id?: string
           medicine_id?: string
           missed?: boolean
@@ -452,6 +467,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "doses_family_profile_id_fkey"
+            columns: ["family_profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doses_medicine_id_fkey"
             columns: ["medicine_id"]
@@ -652,6 +674,7 @@ export type Database = {
       medicine_refills: {
         Row: {
           created_at: string
+          family_profile_id: string | null
           id: string
           medicine_id: string
           refill_date: string | null
@@ -661,6 +684,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          family_profile_id?: string | null
           id?: string
           medicine_id: string
           refill_date?: string | null
@@ -670,6 +694,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          family_profile_id?: string | null
           id?: string
           medicine_id?: string
           refill_date?: string | null
@@ -678,6 +703,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medicine_refills_family_profile_id_fkey"
+            columns: ["family_profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medicine_refills_medicine_id_fkey"
             columns: ["medicine_id"]
@@ -691,12 +723,14 @@ export type Database = {
         Row: {
           created_at: string
           dosage: string
+          family_profile_id: string | null
           food_instruction: string
           id: string
           is_active: boolean
           name: string
           photo_url: string | null
           purpose: string | null
+          tablets_per_dose: number
           timing: string
           updated_at: string
           user_id: string | null
@@ -704,12 +738,14 @@ export type Database = {
         Insert: {
           created_at?: string
           dosage: string
+          family_profile_id?: string | null
           food_instruction?: string
           id?: string
           is_active?: boolean
           name: string
           photo_url?: string | null
           purpose?: string | null
+          tablets_per_dose?: number
           timing: string
           updated_at?: string
           user_id?: string | null
@@ -717,17 +753,27 @@ export type Database = {
         Update: {
           created_at?: string
           dosage?: string
+          family_profile_id?: string | null
           food_instruction?: string
           id?: string
           is_active?: boolean
           name?: string
           photo_url?: string | null
           purpose?: string | null
+          tablets_per_dose?: number
           timing?: string
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medicines_family_profile_id_fkey"
+            columns: ["family_profile_id"]
+            isOneToOne: false
+            referencedRelation: "family_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patient_profiles: {
         Row: {
@@ -863,6 +909,36 @@ export type Database = {
           send_count?: number
           verified?: boolean
           window_started_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1002,7 +1078,27 @@ export type Database = {
     }
     Functions: {
       accept_caregiver_invitation: { Args: { _token: string }; Returns: Json }
+      caregiver_has_perm: {
+        Args: { _perm: string; _profile_id: string }
+        Returns: boolean
+      }
       decline_caregiver_invitation: { Args: { _token: string }; Returns: Json }
+      family_member_status: {
+        Args: { _date?: string; _profile_id: string }
+        Returns: Json
+      }
+      get_family_overview: {
+        Args: never
+        Returns: {
+          conditions: string[]
+          is_owner: boolean
+          is_self: boolean
+          name: string
+          profile_id: string
+          relationship: string
+          status: Json
+        }[]
+      }
       get_linked_patient_ids: { Args: never; Returns: string[] }
       get_my_doctor_id: { Args: never; Returns: string }
       get_my_profile_id: { Args: never; Returns: string }
@@ -1043,6 +1139,7 @@ export type Database = {
           name: string
         }[]
       }
+      scan_refills_for_owner: { Args: { _owner?: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
