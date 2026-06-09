@@ -154,7 +154,7 @@ function AssistantBubble({ json, onChip }: { json: string; onChip: (s: string) =
   if (!parsed) {
     return <div className="text-sm text-muted-foreground">…</div>;
   }
-  return <AIResponseCards response={parsed} onFollowup={onChip} />;
+  return <AIResponseCards data={parsed} onFollowup={(prompt) => onChip(prompt)} />;
 }
 
 function safeParse(s: string): any | null {

@@ -37,7 +37,7 @@ export default function WhoNeedsAttention() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
     // run refill scan opportunistically
-    await supabase.rpc("scan_refills_for_owner").catch(() => null);
+    try { await supabase.rpc("scan_refills_for_owner"); } catch { /* ignore */ }
     const { data } = await supabase
       .from("caregiver_notifications")
       .select("id, profile_id, category, severity, message, created_at, action_url")
