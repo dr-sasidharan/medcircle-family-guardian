@@ -8,6 +8,8 @@ import BottomNav from "@/components/BottomNav";
 import EmergencyInfoButton from "@/components/EmergencyInfoButton";
 import RefillBanner from "@/components/RefillBanner";
 import DailyInsights from "@/components/DailyInsights";
+import FamilyOverviewCard from "@/components/FamilyOverviewCard";
+import WhoNeedsAttention from "@/components/WhoNeedsAttention";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Check, ScanLine, HelpCircle, FlaskConical, Pill, Settings, AlertTriangle, Bell,
