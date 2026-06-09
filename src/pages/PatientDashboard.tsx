@@ -289,7 +289,7 @@ const PatientDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => navigate("/notifications")} className="p-2 rounded-lg hover:bg-white/10"><Bell size={16} className="text-white" /></button>
+            <button onClick={() => navigate("/caregiver-notifications")} className="p-2 rounded-lg hover:bg-white/10"><Bell size={16} className="text-white" /></button>
             <button onClick={() => navigate("/settings")} className="p-2 rounded-lg hover:bg-white/10"><Settings size={16} className="text-white" /></button>
             <LanguageToggle />
           </div>
@@ -340,6 +340,10 @@ const PatientDashboard = () => {
           )}
         </div>
       </section>
+
+      {/* === Family Overview + Who Needs Attention === */}
+      <FamilyOverviewCard />
+      <WhoNeedsAttention />
 
       {/* === SECTION 2: AI Health Alerts === */}
       <section className="px-4 mt-4">
